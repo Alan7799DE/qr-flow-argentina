@@ -1,54 +1,116 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { QrCode, Link2, Wand2, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { QrCode, Link2, Wand2, ArrowRight, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { useCreateQR } from "@/hooks/useQRCodes";
 import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import QRCodeLib from "qrcode";
+
+const urlSchema = z.string().url("Ingresá una URL válida (ej: https://tusitio.com)");
+const nameSchema = z.string().min(1, "El nombre es requerido").max(100, "Máximo 100 caracteres");
 
 export default function CreateQR() {
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const createQR = useCreateQR();
+
   const [name, setName] = useState("");
   const [destinationUrl, setDestinationUrl] = useState("");
+  const [color, setColor] = useState("#000000");
   const [showUtm, setShowUtm] = useState(false);
   const [utmSource, setUtmSource] = useState("");
   const [utmMedium, setUtmMedium] = useState("");
   const [utmCampaign, setUtmCampaign] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; url?: string }>({});
+  const [qrPreview, setQrPreview] = useState<string>("");
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!name || !destinationUrl) {
-      toast({
-        variant: "destructive",
-        title: "Campos requeridos",
-        description: "Completá el nombre y la URL de destino.",
-      });
-      return;
-    }
+  // Generate QR preview
+  useEffect(() => {
+    const generatePreview = async () => {
+      if (!destinationUrl) {
+        setQrPreview("");
+        return;
+      }
 
-    setIsLoading(true);
+      try {
+        const finalUrl = buildFinalUrl();
+        if (!finalUrl) return;
 
-    // TODO: Implement actual QR creation
-    setTimeout(() => {
-      toast({
-        title: "¡QR creado!",
-        description: "Tu código QR fue creado exitosamente.",
-      });
-      setIsLoading(false);
-    }, 1500);
-  };
+        const dataUrl = await QRCodeLib.toDataURL(finalUrl, {
+          width: 200,
+          margin: 2,
+          color: {
+            dark: color,
+            light: "#ffffff",
+          },
+        });
+        setQrPreview(dataUrl);
+      } catch {
+        setQrPreview("");
+      }
+    };
+
+    const timeout = setTimeout(generatePreview, 300);
+    return () => clearTimeout(timeout);
+  }, [destinationUrl, color, utmSource, utmMedium, utmCampaign]);
 
   const buildFinalUrl = () => {
     if (!destinationUrl) return "";
     
-    const url = new URL(destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`);
+    try {
+      const url = new URL(destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`);
+      
+      if (utmSource) url.searchParams.set("utm_source", utmSource);
+      if (utmMedium) url.searchParams.set("utm_medium", utmMedium);
+      if (utmCampaign) url.searchParams.set("utm_campaign", utmCampaign);
+      
+      return url.toString();
+    } catch {
+      return "";
+    }
+  };
+
+  const validate = () => {
+    const newErrors: typeof errors = {};
+
+    const nameResult = nameSchema.safeParse(name);
+    if (!nameResult.success) {
+      newErrors.name = nameResult.error.errors[0].message;
+    }
+
+    const urlToValidate = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
+    const urlResult = urlSchema.safeParse(urlToValidate);
+    if (!urlResult.success) {
+      newErrors.url = urlResult.error.errors[0].message;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (utmSource) url.searchParams.set("utm_source", utmSource);
-    if (utmMedium) url.searchParams.set("utm_medium", utmMedium);
-    if (utmCampaign) url.searchParams.set("utm_campaign", utmCampaign);
-    
-    return url.toString();
+    if (!validate()) return;
+
+    const finalUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
+
+    try {
+      await createQR.mutateAsync({
+        name,
+        destination_url: finalUrl,
+        color,
+        utm_source: utmSource || undefined,
+        utm_medium: utmMedium || undefined,
+        utm_campaign: utmCampaign || undefined,
+      });
+      navigate("/dashboard");
+    } catch {
+      // Error is handled by the mutation
+    }
   };
 
   return (
@@ -72,10 +134,15 @@ export default function CreateQR() {
               placeholder="Ej: Campaña de verano 2024"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              className={errors.name ? "border-destructive" : ""}
             />
-            <p className="text-sm text-muted-foreground">
-              Un nombre para identificar este QR en tu dashboard
-            </p>
+            {errors.name ? (
+              <p className="text-sm text-destructive">{errors.name}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Un nombre para identificar este QR en tu dashboard
+              </p>
+            )}
           </div>
 
           {/* Destination URL */}
@@ -85,16 +152,40 @@ export default function CreateQR() {
               <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="url"
-                type="url"
+                type="text"
                 placeholder="https://tu-sitio.com/landing"
                 value={destinationUrl}
                 onChange={(e) => setDestinationUrl(e.target.value)}
-                className="pl-10"
+                className={`pl-10 ${errors.url ? "border-destructive" : ""}`}
               />
             </div>
-            <p className="text-sm text-muted-foreground">
-              Podés cambiar esta URL en cualquier momento
-            </p>
+            {errors.url ? (
+              <p className="text-sm text-destructive">{errors.url}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Podés cambiar esta URL en cualquier momento
+              </p>
+            )}
+          </div>
+
+          {/* Color picker */}
+          <div className="space-y-2">
+            <Label htmlFor="color">Color del QR</Label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                id="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="w-10 h-10 rounded-lg border cursor-pointer"
+              />
+              <Input
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="w-32"
+                placeholder="#000000"
+              />
+            </div>
           </div>
 
           {/* UTM Builder Toggle */}
@@ -142,7 +233,7 @@ export default function CreateQR() {
           )}
 
           {/* Preview URL */}
-          {destinationUrl && (
+          {destinationUrl && buildFinalUrl() && (
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm font-medium text-foreground mb-1">URL final:</p>
               <p className="text-sm text-muted-foreground break-all">
@@ -152,15 +243,21 @@ export default function CreateQR() {
           )}
         </div>
 
-        {/* QR Preview placeholder */}
+        {/* QR Preview */}
         <div className="bg-card rounded-xl border p-6">
           <h3 className="text-lg font-semibold text-foreground mb-4">Vista previa</h3>
-          <div className="aspect-square max-w-[200px] mx-auto bg-muted rounded-xl flex items-center justify-center">
-            <QrCode className="w-16 h-16 text-muted-foreground/50" />
+          <div className="aspect-square max-w-[200px] mx-auto bg-muted rounded-xl flex items-center justify-center overflow-hidden">
+            {qrPreview ? (
+              <img src={qrPreview} alt="QR Preview" className="w-full h-full object-contain" />
+            ) : (
+              <QrCode className="w-16 h-16 text-muted-foreground/50" />
+            )}
           </div>
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            El QR se generará al guardar
-          </p>
+          {!qrPreview && (
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              Ingresá una URL para ver la vista previa
+            </p>
+          )}
         </div>
 
         {/* Actions */}
@@ -170,10 +267,19 @@ export default function CreateQR() {
             variant="hero"
             size="lg"
             className="flex-1"
-            disabled={isLoading}
+            disabled={createQR.isPending}
           >
-            {isLoading ? "Creando..." : "Crear QR"}
-            <ArrowRight className="w-4 h-4" />
+            {createQR.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Creando...
+              </>
+            ) : (
+              <>
+                Crear QR
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </Button>
         </div>
       </form>
