@@ -14,6 +14,12 @@ import Settings from "./pages/dashboard/Settings";
 import ActivatePage from "./pages/ActivatePage";
 import RedirectPage from "./pages/RedirectPage";
 import NotFound from "./pages/NotFound";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPlans from "./pages/admin/AdminPlans";
+import AdminConfig from "./pages/admin/AdminConfig";
+import AdminWebhooks from "./pages/admin/AdminWebhooks";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +40,15 @@ const App = () => (
             <Route path="qr/:id" element={<QRDetail />} />
             <Route path="billing" element={<Billing />} />
             <Route path="settings" element={<Settings />} />
+          </Route>
+
+          {/* Admin routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="plans" element={<AdminPlans />} />
+            <Route path="config" element={<AdminConfig />} />
+            <Route path="webhooks" element={<AdminWebhooks />} />
           </Route>
 
           {/* QR Redirect and Activation */}
