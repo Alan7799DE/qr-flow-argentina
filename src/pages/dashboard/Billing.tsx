@@ -1,17 +1,61 @@
 import { Button } from "@/components/ui/button";
-import { CreditCard, Check, AlertCircle, Loader2, ExternalLink } from "lucide-react";
+import { CreditCard, Check, AlertCircle, Loader2, ExternalLink, XCircle } from "lucide-react";
 import { usePlans, useSubscription } from "@/hooks/useSubscription";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 export default function Billing() {
   const { data: plans, isLoading: loadingPlans } = usePlans();
   const { data: subscription, isLoading: loadingSubscription, refetch } = useSubscription();
   const [subscribingTo, setSubscribingTo] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const isLoading = loadingPlans || loadingSubscription;
+
+  const handleCancelSubscription = async () => {
+    setIsCancelling(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Debes iniciar sesión para cancelar la suscripción");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('cancel-subscription');
+
+      if (error) {
+        console.error('Cancel subscription error:', error);
+        toast.error("Error al cancelar la suscripción");
+        return;
+      }
+
+      if (data?.success) {
+        toast.success("Suscripción cancelada exitosamente");
+        refetch();
+      } else {
+        toast.error(data?.error || "Error al cancelar la suscripción");
+      }
+    } catch (err) {
+      console.error('Cancel subscription error:', err);
+      toast.error("Error al procesar la cancelación");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   const handleSubscribe = async (planId: string) => {
     setSubscribingTo(planId);
@@ -77,6 +121,48 @@ export default function Billing() {
                   ? new Date(subscription.current_period_end).toLocaleDateString("es-AR")
                   : "N/A"}
               </p>
+              
+              {/* Cancel subscription button */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-3 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                    disabled={isCancelling}
+                  >
+                    {isCancelling ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Cancelando...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Cancelar suscripción
+                      </>
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Cancelar suscripción?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Al cancelar tu suscripción, todos tus códigos QR dejarán de funcionar inmediatamente. 
+                      Esta acción no se puede deshacer, pero podés volver a suscribirte en cualquier momento.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Mantener suscripción</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleCancelSubscription}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Sí, cancelar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         ) : subscription?.status === "pending" ? (
