@@ -6,6 +6,80 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Verify Mercado Pago webhook signature
+async function verifyMercadoPagoSignature(
+  xSignature: string | null,
+  xRequestId: string | null,
+  dataId: string,
+  webhookSecret: string
+): Promise<boolean> {
+  if (!xSignature || !xRequestId) {
+    console.error('Missing x-signature or x-request-id headers');
+    return false;
+  }
+
+  try {
+    // Parse the x-signature header: ts=xxx,v1=xxx
+    const signatureParts: Record<string, string> = {};
+    const parts = xSignature.split(',');
+    
+    for (const part of parts) {
+      const [key, value] = part.split('=');
+      if (key && value) {
+        signatureParts[key.trim()] = value.trim();
+      }
+    }
+
+    const ts = signatureParts['ts'];
+    const v1 = signatureParts['v1'];
+
+    if (!ts || !v1) {
+      console.error('Invalid x-signature format, missing ts or v1');
+      return false;
+    }
+
+    // Build the manifest string as per Mercado Pago docs
+    // Template: id:[data.id];request-id:[x-request-id];ts:[ts];
+    const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+
+    // Calculate HMAC-SHA256
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(webhookSecret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+
+    const signature = await crypto.subtle.sign(
+      'HMAC',
+      key,
+      encoder.encode(manifest)
+    );
+
+    // Convert to hex string
+    const hashArray = Array.from(new Uint8Array(signature));
+    const calculatedSignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // Compare signatures
+    const isValid = calculatedSignature === v1;
+    
+    if (!isValid) {
+      console.error('Signature mismatch', {
+        calculated: calculatedSignature,
+        received: v1,
+        manifest: manifest
+      });
+    }
+
+    return isValid;
+  } catch (error) {
+    console.error('Error verifying signature:', error);
+    return false;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -14,6 +88,7 @@ serve(async (req) => {
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   const MERCADOPAGO_ACCESS_TOKEN = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN');
+  const MERCADOPAGO_WEBHOOK_SECRET = Deno.env.get('MERCADOPAGO_WEBHOOK_SECRET');
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !MERCADOPAGO_ACCESS_TOKEN) {
     console.error('Missing environment variables');
@@ -23,11 +98,63 @@ serve(async (req) => {
     );
   }
 
+  if (!MERCADOPAGO_WEBHOOK_SECRET) {
+    console.error('Missing MERCADOPAGO_WEBHOOK_SECRET');
+    return new Response(
+      JSON.stringify({ error: 'Webhook secret not configured' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
+    // Get headers for signature verification
+    const xSignature = req.headers.get('x-signature');
+    const xRequestId = req.headers.get('x-request-id');
+
     const body = await req.json();
     console.log('Webhook received:', JSON.stringify(body));
+
+    // Get the data.id for signature verification
+    const dataId = body.data?.id?.toString() || '';
+
+    // Verify the webhook signature
+    const isValidSignature = await verifyMercadoPagoSignature(
+      xSignature,
+      xRequestId,
+      dataId,
+      MERCADOPAGO_WEBHOOK_SECRET
+    );
+
+    if (!isValidSignature) {
+      console.error('Invalid webhook signature - rejecting request', {
+        xSignature: xSignature?.substring(0, 20) + '...',
+        xRequestId,
+        dataId
+      });
+      
+      // Log failed verification attempt
+      await supabase.from('webhook_logs').insert({
+        provider: 'mercadopago',
+        event_type: 'signature_verification_failed',
+        payload: { 
+          type: body.type,
+          data_id: dataId,
+          has_signature: !!xSignature,
+          has_request_id: !!xRequestId
+        },
+        processed: false,
+        error_message: 'Invalid or missing webhook signature'
+      });
+
+      return new Response(
+        JSON.stringify({ error: 'Invalid signature' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Webhook signature verified successfully');
 
     // Log the webhook for debugging
     await supabase.from('webhook_logs').insert({
