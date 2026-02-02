@@ -1,13 +1,52 @@
 import { Button } from "@/components/ui/button";
-import { CreditCard, Check, AlertCircle, Loader2 } from "lucide-react";
+import { CreditCard, Check, AlertCircle, Loader2, ExternalLink } from "lucide-react";
 import { usePlans, useSubscription } from "@/hooks/useSubscription";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Billing() {
   const { data: plans, isLoading: loadingPlans } = usePlans();
-  const { data: subscription, isLoading: loadingSubscription } = useSubscription();
+  const { data: subscription, isLoading: loadingSubscription, refetch } = useSubscription();
+  const [subscribingTo, setSubscribingTo] = useState<string | null>(null);
 
   const isLoading = loadingPlans || loadingSubscription;
+
+  const handleSubscribe = async (planId: string) => {
+    setSubscribingTo(planId);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Debes iniciar sesión para suscribirte");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-subscription', {
+        body: { plan_id: planId },
+      });
+
+      if (error) {
+        console.error('Subscription error:', error);
+        toast.error("Error al crear la suscripción");
+        return;
+      }
+
+      if (data?.init_point) {
+        // Redirect to Mercado Pago checkout
+        window.location.href = data.init_point;
+      } else {
+        toast.error("No se pudo obtener el link de pago");
+      }
+    } catch (err) {
+      console.error('Subscription error:', err);
+      toast.error("Error al procesar la suscripción");
+    } finally {
+      setSubscribingTo(null);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -40,6 +79,26 @@ export default function Billing() {
               </p>
             </div>
           </div>
+        ) : subscription?.status === "pending" ? (
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 text-warning animate-spin" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-foreground">Suscripción pendiente</h2>
+              <p className="text-muted-foreground mt-1">
+                Estamos esperando la confirmación del pago. Esto puede demorar unos minutos.
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => refetch()}
+              >
+                Verificar estado
+              </Button>
+            </div>
+          </div>
         ) : (
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
@@ -64,9 +123,11 @@ export default function Billing() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans?.map((plan, index) => {
+          {plans?.map((plan) => {
             const isCurrentPlan = subscription?.plan_id === plan.id && subscription.status === "active";
+            const isPendingPlan = subscription?.plan_id === plan.id && subscription.status === "pending";
             const isPro = plan.slug === "pro";
+            const isSubscribing = subscribingTo === plan.id;
 
             const features = [
               `${plan.qr_limit} QRs`,
@@ -96,6 +157,13 @@ export default function Billing() {
                     </span>
                   </div>
                 )}
+                {isPendingPlan && (
+                  <div className="text-center mb-4">
+                    <span className="inline-block px-3 py-1 rounded-full bg-warning/10 text-warning text-sm font-medium">
+                      Pago pendiente
+                    </span>
+                  </div>
+                )}
 
                 <h3 className="text-xl font-semibold text-foreground text-center mb-2">
                   {plan.name}
@@ -120,9 +188,24 @@ export default function Billing() {
                 <Button
                   variant={isPro ? "hero" : "outline"}
                   className="w-full"
-                  disabled={isCurrentPlan}
+                  disabled={isCurrentPlan || isPendingPlan || isSubscribing}
+                  onClick={() => handleSubscribe(plan.id)}
                 >
-                  {isCurrentPlan ? "Plan actual" : `Elegir ${plan.name}`}
+                  {isSubscribing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Procesando...
+                    </>
+                  ) : isCurrentPlan ? (
+                    "Plan actual"
+                  ) : isPendingPlan ? (
+                    "Esperando pago"
+                  ) : (
+                    <>
+                      Elegir {plan.name}
+                      <ExternalLink className="w-4 h-4 ml-2" />
+                    </>
+                  )}
                 </Button>
               </div>
             );
@@ -138,7 +221,7 @@ export default function Billing() {
         </div>
         <p className="text-muted-foreground">
           Los pagos se procesan de forma segura a través de Mercado Pago. 
-          La integración con Mercado Pago se configurará próximamente.
+          Aceptamos tarjetas de crédito, débito y otros medios de pago locales.
         </p>
       </div>
     </div>
