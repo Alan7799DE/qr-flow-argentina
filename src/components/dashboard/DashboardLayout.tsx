@@ -10,10 +10,12 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useIsAdmin } from "@/hooks/useAdmin";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -29,6 +31,7 @@ export default function DashboardLayout() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { data: isAdmin } = useIsAdmin();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -124,6 +127,18 @@ export default function DashboardLayout() {
                 </Link>
               );
             })}
+            
+            {/* Admin link */}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={() => setIsSidebarOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors mt-4 border-t border-sidebar-border pt-4 text-destructive hover:bg-destructive/10"
+              >
+                <Shield className="w-5 h-5" />
+                <span className="font-medium">Panel Admin</span>
+              </Link>
+            )}
           </nav>
 
           {/* User section */}
