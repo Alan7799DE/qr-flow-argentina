@@ -1,82 +1,21 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+
+// Get Supabase URL from environment
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://pktcejvlpocglkrsjnow.supabase.co";
 
 export default function RedirectPage() {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleRedirect = async () => {
-      if (!slug) {
-        setError("URL inválida");
-        return;
-      }
+    if (!slug) return;
 
-      try {
-        // Call the edge function
-        const response = await supabase.functions.invoke("redirect", {
-          body: { slug },
-        });
-
-        // The edge function handles the redirect via 302, but since we're calling
-        // it via the SDK, we get the response data instead. 
-        // We need to handle the redirect client-side.
-        
-        // Actually, for QR scans, users will hit the edge function URL directly,
-        // not through this React page. This page is just a fallback.
-        
-        // Fetch QR info directly
-        const { data: qr, error: qrError } = await supabase
-          .from("qr_codes")
-          .select("destination_url, status, utm_source, utm_medium, utm_campaign")
-          .eq("slug", slug)
-          .maybeSingle();
-
-        if (qrError || !qr) {
-          setError("QR no encontrado");
-          return;
-        }
-
-        if (qr.status === "paused" || qr.status === "expired") {
-          navigate(`/activate/${slug}`);
-          return;
-        }
-
-        // Build final URL with UTMs
-        let destinationUrl = qr.destination_url;
-        try {
-          const url = new URL(destinationUrl);
-          if (qr.utm_source) url.searchParams.set("utm_source", qr.utm_source);
-          if (qr.utm_medium) url.searchParams.set("utm_medium", qr.utm_medium);
-          if (qr.utm_campaign) url.searchParams.set("utm_campaign", qr.utm_campaign);
-          destinationUrl = url.toString();
-        } catch {
-          // Use original URL if parsing fails
-        }
-
-        // Redirect
-        window.location.href = destinationUrl;
-      } catch (err) {
-        console.error("Redirect error:", err);
-        setError("Error al procesar el QR");
-      }
-    };
-
-    handleRedirect();
-  }, [slug, navigate]);
-
-  if (error) {
-    return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
-        <div className="text-center">
-          <p className="text-lg text-muted-foreground">{error}</p>
-        </div>
-      </div>
-    );
-  }
+    // Redirect directly to the edge function for proper analytics tracking
+    // The edge function handles: status check, scan recording, UTM params, and final redirect
+    const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/redirect/${slug}`;
+    window.location.href = edgeFunctionUrl;
+  }, [slug]);
 
   return (
     <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
