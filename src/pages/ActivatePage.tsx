@@ -20,6 +20,7 @@ export default function ActivatePage() {
 
   const [user, setUser] = useState<User | null>(null);
   const [qr, setQr] = useState<QRInfo | null>(null);
+  const [hasSubscription, setHasSubscription] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -45,13 +46,39 @@ export default function ActivatePage() {
         }
       }
 
+      // Check subscription status if user is logged in
+      if (user) {
+        const { data: subscription } = await supabase
+          .from("subscriptions")
+          .select("status")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .maybeSingle();
+        
+        setHasSubscription(!!subscription);
+      }
+
       setIsLoading(false);
     };
 
     loadData();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
       setUser(session?.user ?? null);
+      
+      // Re-check subscription when auth changes
+      if (session?.user) {
+        const { data: sub } = await supabase
+          .from("subscriptions")
+          .select("status")
+          .eq("user_id", session.user.id)
+          .eq("status", "active")
+          .maybeSingle();
+        
+        setHasSubscription(!!sub);
+      } else {
+        setHasSubscription(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -67,7 +94,13 @@ export default function ActivatePage() {
         .update({ status: "active" })
         .eq("id", qr.id);
 
-      if (error) throw error;
+      if (error) {
+        // RLS will block this if no active subscription
+        if (error.message.includes("row-level security") || error.code === "42501") {
+          throw new Error("Necesitás una suscripción activa para reactivar este QR.");
+        }
+        throw error;
+      }
 
       toast({
         title: "¡QR reactivado!",
@@ -114,6 +147,8 @@ export default function ActivatePage() {
   }
 
   const isOwner = user && qr && user.id === qr.user_id;
+  const isPaused = qr?.status === "paused";
+  const canReactivate = isOwner && hasSubscription;
 
   return (
     <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
@@ -173,8 +208,8 @@ export default function ActivatePage() {
               <Link to="/dashboard">Ir a mi dashboard</Link>
             </Button>
           </>
-        ) : qr?.status === "paused" ? (
-          // Owner and QR is paused
+        ) : isPaused && canReactivate ? (
+          // Owner with subscription and QR is paused - can reactivate
           <>
             <p className="text-muted-foreground mb-6">
               Pausaste este QR manualmente. ¿Querés reactivarlo?
@@ -198,11 +233,13 @@ export default function ActivatePage() {
             </Button>
           </>
         ) : (
-          // Owner but subscription needed
+          // Owner but needs subscription to reactivate
           <>
             <p className="text-muted-foreground mb-6">
-              Tu período de prueba terminó o tu suscripción venció. 
-              Suscribite a un plan para reactivar este QR.
+              {isPaused 
+                ? "Necesitás una suscripción activa para reactivar este QR."
+                : "Tu período de prueba terminó o tu suscripción venció. Suscribite a un plan para reactivar este QR."
+              }
             </p>
             <div className="flex flex-col gap-3">
               <Button variant="hero" asChild>
