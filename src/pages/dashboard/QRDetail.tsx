@@ -1,0 +1,374 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { 
+  QrCode, 
+  Link2, 
+  ArrowLeft, 
+  Loader2, 
+  Download, 
+  RefreshCw, 
+  Trash2,
+  Pause,
+  Play,
+  Copy,
+  Check,
+  ExternalLink
+} from "lucide-react";
+import { useQRCode, useUpdateQR, useDeleteQR, useRegenerateSlug } from "@/hooks/useQRCodes";
+import { useScanStats } from "@/hooks/useScanStats";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import QRCodeLib from "qrcode";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+const statusColors = {
+  trial_active: "bg-warning/10 text-warning border-warning/20",
+  active: "bg-success/10 text-success border-success/20",
+  paused: "bg-muted text-muted-foreground",
+  expired: "bg-destructive/10 text-destructive border-destructive/20",
+};
+
+const statusLabels = {
+  trial_active: "Trial",
+  active: "Activo",
+  paused: "Pausado",
+  expired: "Vencido",
+};
+
+export default function QRDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const { data: qr, isLoading } = useQRCode(id || "");
+  const { data: stats, isLoading: loadingStats } = useScanStats(id || "");
+  const updateQR = useUpdateQR();
+  const deleteQR = useDeleteQR();
+  const regenerateSlug = useRegenerateSlug();
+
+  const [destinationUrl, setDestinationUrl] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState("");
+
+  const baseUrl = window.location.origin;
+  const redirectUrl = qr ? `${baseUrl}/r/${qr.slug}` : "";
+
+  useEffect(() => {
+    if (qr) {
+      setDestinationUrl(qr.destination_url);
+    }
+  }, [qr]);
+
+  useEffect(() => {
+    if (redirectUrl) {
+      QRCodeLib.toDataURL(redirectUrl, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: qr?.color || "#000000",
+          light: "#ffffff",
+        },
+      }).then(setQrDataUrl);
+    }
+  }, [redirectUrl, qr?.color]);
+
+  const handleSaveUrl = async () => {
+    if (!qr) return;
+    await updateQR.mutateAsync({ id: qr.id, destination_url: destinationUrl });
+    setIsEditing(false);
+  };
+
+  const handleTogglePause = async () => {
+    if (!qr) return;
+    const newStatus = qr.status === "paused" ? "active" : "paused";
+    await updateQR.mutateAsync({ id: qr.id, status: newStatus });
+  };
+
+  const handleRegenerateSlug = async () => {
+    if (!qr) return;
+    await regenerateSlug.mutateAsync({ id: qr.id, name: qr.name });
+  };
+
+  const handleDelete = async () => {
+    if (!qr) return;
+    await deleteQR.mutateAsync(qr.id);
+    navigate("/dashboard");
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(redirectUrl);
+    setCopied(true);
+    toast({ title: "URL copiada" });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = async (format: "png" | "svg") => {
+    if (!qr) return;
+
+    if (format === "png") {
+      const dataUrl = await QRCodeLib.toDataURL(redirectUrl, {
+        width: 1024,
+        margin: 4,
+        color: { dark: qr.color || "#000000", light: "#ffffff" },
+      });
+      const link = document.createElement("a");
+      link.download = `${qr.slug}.png`;
+      link.href = dataUrl;
+      link.click();
+    } else {
+      const svg = await QRCodeLib.toString(redirectUrl, {
+        type: "svg",
+        margin: 4,
+        color: { dark: qr.color || "#000000", light: "#ffffff" },
+      });
+      const blob = new Blob([svg], { type: "image/svg+xml" });
+      const link = document.createElement("a");
+      link.download = `${qr.slug}.svg`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  if (!qr) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">QR no encontrado</p>
+        <Button variant="ghost" asChild className="mt-4">
+          <Link to="/dashboard">Volver al dashboard</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const statCards = [
+    { label: "24h", value: stats?.last24h ?? 0 },
+    { label: "7 días", value: stats?.last7d ?? 0 },
+    { label: "14 días", value: stats?.last14d ?? 0 },
+    { label: "21 días", value: stats?.last21d ?? 0 },
+    { label: "30 días", value: stats?.last30d ?? 0 },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" asChild>
+          <Link to="/dashboard">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+        </Button>
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-foreground">{qr.name}</h1>
+            <Badge className={statusColors[qr.status]}>
+              {statusLabels[qr.status]}
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Creado el {new Date(qr.created_at).toLocaleDateString("es-AR")}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - QR and Actions */}
+        <div className="space-y-6">
+          {/* QR Preview */}
+          <div className="bg-card rounded-xl border p-6">
+            <div className="aspect-square max-w-[250px] mx-auto bg-white rounded-xl flex items-center justify-center p-4">
+              {qrDataUrl ? (
+                <img src={qrDataUrl} alt="QR Code" className="w-full h-full object-contain" />
+              ) : (
+                <QrCode className="w-16 h-16 text-muted-foreground/50" />
+              )}
+            </div>
+
+            {/* Download buttons */}
+            <div className="flex gap-2 mt-4">
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => handleDownload("png")}>
+                <Download className="w-4 h-4" />
+                PNG
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => handleDownload("svg")}>
+                <Download className="w-4 h-4" />
+                SVG
+              </Button>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="bg-card rounded-xl border p-6 space-y-3">
+            <h3 className="font-semibold text-foreground mb-4">Acciones</h3>
+            
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={handleTogglePause}
+              disabled={updateQR.isPending}
+            >
+              {qr.status === "paused" ? (
+                <>
+                  <Play className="w-4 h-4" />
+                  Reactivar QR
+                </>
+              ) : (
+                <>
+                  <Pause className="w-4 h-4" />
+                  Pausar QR
+                </>
+              )}
+            </Button>
+
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={handleRegenerateSlug}
+              disabled={regenerateSlug.isPending}
+            >
+              <RefreshCw className={`w-4 h-4 ${regenerateSlug.isPending ? "animate-spin" : ""}`} />
+              Regenerar slug
+            </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="w-full justify-start">
+                  <Trash2 className="w-4 h-4" />
+                  Eliminar QR
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar este QR?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. Se eliminarán todos los datos y estadísticas de este QR.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+
+        {/* Right Column - Stats and URL */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Redirect URL */}
+          <div className="bg-card rounded-xl border p-6">
+            <h3 className="font-semibold text-foreground mb-4">URL del QR</h3>
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+              <code className="flex-1 text-sm truncate">{redirectUrl}</code>
+              <Button variant="ghost" size="icon" onClick={handleCopy}>
+                {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+              </Button>
+              <Button variant="ghost" size="icon" asChild>
+                <a href={redirectUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </Button>
+            </div>
+          </div>
+
+          {/* Destination URL */}
+          <div className="bg-card rounded-xl border p-6">
+            <h3 className="font-semibold text-foreground mb-4">URL de destino</h3>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={destinationUrl}
+                  onChange={(e) => {
+                    setDestinationUrl(e.target.value);
+                    setIsEditing(true);
+                  }}
+                  className="pl-10"
+                />
+              </div>
+              {isEditing && (
+                <Button onClick={handleSaveUrl} disabled={updateQR.isPending}>
+                  {updateQR.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar"}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="bg-card rounded-xl border p-6">
+            <h3 className="font-semibold text-foreground mb-4">Estadísticas</h3>
+            <div className="grid grid-cols-5 gap-4">
+              {statCards.map((stat, i) => (
+                <div key={i} className="text-center p-3 rounded-lg bg-muted">
+                  {loadingStats ? (
+                    <Skeleton className="h-8 w-12 mx-auto" />
+                  ) : (
+                    <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Chart placeholder */}
+            <div className="mt-6 h-32 rounded-lg bg-muted/30 flex items-end justify-between p-4 gap-1">
+              {stats?.dailyScans.map((day, i) => {
+                const maxCount = Math.max(...stats.dailyScans.map(d => d.count), 1);
+                const height = (day.count / maxCount) * 100;
+                return (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-t bg-primary/60 transition-all hover:bg-primary"
+                    style={{ height: `${Math.max(height, 4)}%` }}
+                    title={`${day.date}: ${day.count} escaneos`}
+                  />
+                );
+              })}
+            </div>
+            <p className="text-center text-xs text-muted-foreground mt-2">Últimos 30 días</p>
+          </div>
+
+          {/* Trial info */}
+          {qr.status === "trial_active" && qr.trial_expires_at && (
+            <div className="bg-warning/10 border border-warning/20 rounded-xl p-4">
+              <p className="text-sm text-warning font-medium">
+                ⏳ Período de prueba vence el {new Date(qr.trial_expires_at).toLocaleDateString("es-AR")}
+              </p>
+              <p className="text-sm text-warning/80 mt-1">
+                Suscribite a un plan para mantener tu QR activo.
+              </p>
+              <Button variant="default" size="sm" className="mt-3" asChild>
+                <Link to="/dashboard/billing">Ver planes</Link>
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
