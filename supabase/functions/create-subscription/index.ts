@@ -114,7 +114,7 @@ serve(async (req) => {
     if (!mpResponse.ok) {
       console.error('Mercado Pago error:', mpData);
       return new Response(
-        JSON.stringify({ error: 'Failed to create subscription', details: mpData }),
+        JSON.stringify({ error: 'No se pudo crear la suscripción. Por favor intentá nuevamente.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -158,9 +158,9 @@ serve(async (req) => {
 
   } catch (error: unknown) {
     console.error('Error in create-subscription:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    // Return generic error message to client, keep details server-side only
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'Ocurrió un error al procesar tu solicitud. Por favor intentá nuevamente.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
