@@ -1,6 +1,50 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+
+// UTM parameter validation schema - alphanumeric, hyphens, underscores, spaces only
+// Max 255 characters to match database constraint
+const utmParamSchema = z.string()
+  .max(255, "Máximo 255 caracteres")
+  .regex(/^[a-zA-Z0-9\-_\s]*$/, "Solo se permiten letras, números, guiones, guiones bajos y espacios")
+  .optional()
+  .nullable()
+  .transform(val => val === "" ? null : val);
+
+// Validation function for UTM parameters
+export function validateUtmParams(params: {
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_term?: string | null;
+  utm_content?: string | null;
+}): { valid: boolean; errors: Record<string, string> } {
+  const errors: Record<string, string> = {};
+  
+  const fields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const;
+  
+  for (const field of fields) {
+    const value = params[field];
+    if (value) {
+      const result = utmParamSchema.safeParse(value);
+      if (!result.success) {
+        errors[field] = result.error.errors[0].message;
+      }
+    }
+  }
+  
+  return { valid: Object.keys(errors).length === 0, errors };
+}
+
+// Sanitize UTM parameter - remove any potentially dangerous characters
+function sanitizeUtmParam(value: string | null | undefined): string | null {
+  if (!value) return null;
+  // Remove any characters that aren't alphanumeric, hyphens, underscores, or spaces
+  const sanitized = value.replace(/[^a-zA-Z0-9\-_\s]/g, '').trim();
+  // Truncate to 255 characters
+  return sanitized.substring(0, 255) || null;
+}
 
 export interface QRCode {
   id: string;
@@ -135,6 +179,20 @@ export function useCreateQR() {
         attempts++;
       }
 
+      // Validate UTM parameters before insert
+      const utmValidation = validateUtmParams({
+        utm_source: data.utm_source,
+        utm_medium: data.utm_medium,
+        utm_campaign: data.utm_campaign,
+        utm_term: data.utm_term,
+        utm_content: data.utm_content,
+      });
+      
+      if (!utmValidation.valid) {
+        const firstError = Object.values(utmValidation.errors)[0];
+        throw new Error(`Error en parámetros UTM: ${firstError}`);
+      }
+
       const { data: qr, error } = await supabase
         .from("qr_codes")
         .insert({
@@ -143,11 +201,11 @@ export function useCreateQR() {
           slug,
           destination_url: data.destination_url,
           color: data.color || "#000000",
-          utm_source: data.utm_source || null,
-          utm_medium: data.utm_medium || null,
-          utm_campaign: data.utm_campaign || null,
-          utm_term: data.utm_term || null,
-          utm_content: data.utm_content || null,
+          utm_source: sanitizeUtmParam(data.utm_source),
+          utm_medium: sanitizeUtmParam(data.utm_medium),
+          utm_campaign: sanitizeUtmParam(data.utm_campaign),
+          utm_term: sanitizeUtmParam(data.utm_term),
+          utm_content: sanitizeUtmParam(data.utm_content),
           trial_notice_at: trialNoticeAt.toISOString(),
           trial_expires_at: trialExpiresAt.toISOString(),
         })
@@ -180,9 +238,31 @@ export function useUpdateQR() {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: UpdateQRData) => {
+      // Validate UTM parameters before update
+      const utmValidation = validateUtmParams({
+        utm_source: data.utm_source,
+        utm_medium: data.utm_medium,
+        utm_campaign: data.utm_campaign,
+        utm_term: data.utm_term,
+        utm_content: data.utm_content,
+      });
+      
+      if (!utmValidation.valid) {
+        const firstError = Object.values(utmValidation.errors)[0];
+        throw new Error(`Error en parámetros UTM: ${firstError}`);
+      }
+
+      // Sanitize UTM params if they exist in the update
+      const sanitizedData = { ...data };
+      if ('utm_source' in data) sanitizedData.utm_source = sanitizeUtmParam(data.utm_source);
+      if ('utm_medium' in data) sanitizedData.utm_medium = sanitizeUtmParam(data.utm_medium);
+      if ('utm_campaign' in data) sanitizedData.utm_campaign = sanitizeUtmParam(data.utm_campaign);
+      if ('utm_term' in data) sanitizedData.utm_term = sanitizeUtmParam(data.utm_term);
+      if ('utm_content' in data) sanitizedData.utm_content = sanitizeUtmParam(data.utm_content);
+
       const { data: qr, error } = await supabase
         .from("qr_codes")
-        .update(data)
+        .update(sanitizedData)
         .eq("id", id)
         .select()
         .single();
