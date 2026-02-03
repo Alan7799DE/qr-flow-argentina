@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { QrCode, Link2, Wand2, ArrowRight, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
-import { useCreateQR } from "@/hooks/useQRCodes";
+import { useCreateQR, validateUtmParams } from "@/hooks/useQRCodes";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import QRCodeLib from "qrcode";
@@ -24,7 +24,7 @@ export default function CreateQR() {
   const [utmSource, setUtmSource] = useState("");
   const [utmMedium, setUtmMedium] = useState("");
   const [utmCampaign, setUtmCampaign] = useState("");
-  const [errors, setErrors] = useState<{ name?: string; url?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; url?: string; utm_source?: string; utm_medium?: string; utm_campaign?: string }>({});
   const [qrPreview, setQrPreview] = useState<string>("");
 
   // Generate QR preview
@@ -85,6 +85,17 @@ export default function CreateQR() {
     const urlResult = urlSchema.safeParse(urlToValidate);
     if (!urlResult.success) {
       newErrors.url = urlResult.error.errors[0].message;
+    }
+
+    // Validate UTM parameters
+    const utmValidation = validateUtmParams({
+      utm_source: utmSource || undefined,
+      utm_medium: utmMedium || undefined,
+      utm_campaign: utmCampaign || undefined,
+    });
+    
+    if (!utmValidation.valid) {
+      Object.assign(newErrors, utmValidation.errors);
     }
 
     setErrors(newErrors);
@@ -209,7 +220,12 @@ export default function CreateQR() {
                   placeholder="google"
                   value={utmSource}
                   onChange={(e) => setUtmSource(e.target.value)}
+                  maxLength={255}
+                  className={errors.utm_source ? "border-destructive" : ""}
                 />
+                {errors.utm_source && (
+                  <p className="text-sm text-destructive">{errors.utm_source}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="utm_medium">utm_medium</Label>
@@ -218,7 +234,12 @@ export default function CreateQR() {
                   placeholder="qr"
                   value={utmMedium}
                   onChange={(e) => setUtmMedium(e.target.value)}
+                  maxLength={255}
+                  className={errors.utm_medium ? "border-destructive" : ""}
                 />
+                {errors.utm_medium && (
+                  <p className="text-sm text-destructive">{errors.utm_medium}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="utm_campaign">utm_campaign</Label>
@@ -227,7 +248,12 @@ export default function CreateQR() {
                   placeholder="verano2024"
                   value={utmCampaign}
                   onChange={(e) => setUtmCampaign(e.target.value)}
+                  maxLength={255}
+                  className={errors.utm_campaign ? "border-destructive" : ""}
                 />
+                {errors.utm_campaign && (
+                  <p className="text-sm text-destructive">{errors.utm_campaign}</p>
+                )}
               </div>
             </div>
           )}
