@@ -31,13 +31,24 @@ function parseUserAgent(ua: string | null): { deviceType: string; os: string } {
   return { deviceType, os };
 }
 
-// Hash IP for privacy
+// Hash IP for privacy using HMAC for better cryptographic properties
 async function hashIP(ip: string): Promise<string> {
+  const IP_HASH_SECRET = Deno.env.get("IP_HASH_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
   const encoder = new TextEncoder();
-  const data = encoder.encode(ip + Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.slice(0, 16));
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.slice(0, 8).map(b => b.toString(16).padStart(2, "0")).join("");
+  
+  // Use HMAC-SHA256 for better security against rainbow table attacks
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(IP_HASH_SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(ip));
+  const hashArray = Array.from(new Uint8Array(signature));
+  // Use 16 bytes (32 hex chars) instead of 8 for better security
+  return hashArray.slice(0, 16).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 serve(async (req) => {
