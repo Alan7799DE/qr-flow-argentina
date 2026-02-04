@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -302,7 +303,7 @@ serve(async (req) => {
         }
       }
 
-      // If subscription is now active, activate all user's QR codes
+      // If subscription is now active, activate all user's QR codes and send confirmation email
       if (subscriptionStatus === 'active') {
         console.log(`Activating all QR codes for user ${user_id}`);
         
@@ -321,6 +322,92 @@ serve(async (req) => {
           console.error('Error activating QR codes:', qrError);
         } else {
           console.log('QR codes activated successfully');
+        }
+
+        // Send subscription confirmation email
+        const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+        if (RESEND_API_KEY) {
+          try {
+            // Get user profile
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('user_id', user_id)
+              .maybeSingle();
+
+            // Get plan details
+            const { data: plan } = await supabase
+              .from('plans')
+              .select('name, qr_limit, price_ars')
+              .eq('id', plan_id)
+              .maybeSingle();
+
+            if (profile?.email && plan) {
+              const resend = new Resend(RESEND_API_KEY);
+              
+              await resend.emails.send({
+                from: 'QRapido <noreply@qrapido.com>',
+                to: [profile.email],
+                subject: '✅ ¡Tu suscripción está activa!',
+                html: `
+                  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h1 style="color: #1a1a1a; font-size: 24px;">¡Hola${profile.full_name ? ` ${profile.full_name}` : ''}!</h1>
+                    
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                      Tu suscripción al plan <strong>${plan.name}</strong> ya está activa. ¡Gracias por confiar en QRapido!
+                    </p>
+                    
+                    <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; padding: 20px; margin: 24px 0; color: white;">
+                      <h2 style="margin: 0 0 16px; font-size: 20px;">Tu plan incluye:</h2>
+                      <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+                        <li>Hasta <strong>${plan.qr_limit}</strong> códigos QR activos</li>
+                        <li>Estadísticas detalladas de escaneos</li>
+                        <li>QRs dinámicos (podés cambiar el destino cuando quieras)</li>
+                        <li>Soporte prioritario</li>
+                      </ul>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                      Todos tus códigos QR existentes ahora están <strong>activos permanentemente</strong> mientras mantengas tu suscripción.
+                    </p>
+                    
+                    <a href="https://id-preview--3f5def87-dd2f-4360-a5cd-69f9aeb7f186.lovable.app/dashboard" 
+                       style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
+                      Ir a mi dashboard
+                    </a>
+                    
+                    <div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 20px;">
+                      <p style="color: #999; font-size: 14px; margin: 0;">
+                        Monto mensual: <strong style="color: #333;">$${plan.price_ars.toLocaleString('es-AR')} ARS</strong>
+                      </p>
+                      <p style="color: #999; font-size: 14px; margin: 8px 0 0;">
+                        Si tenés alguna pregunta, respondé a este email.
+                      </p>
+                    </div>
+                    
+                    <p style="color: #333; font-size: 14px; margin-top: 20px;">
+                      — El equipo de QRapido
+                    </p>
+                  </div>
+                `,
+              });
+
+              console.log(`Subscription confirmation email sent to ${profile.email}`);
+
+              // Log email sent
+              await supabase
+                .from('email_logs')
+                .insert({
+                  user_id,
+                  email_type: 'subscription_confirmation',
+                  metadata: { plan_id, plan_name: plan.name }
+                });
+            }
+          } catch (emailError) {
+            console.error('Error sending subscription confirmation email:', emailError);
+          }
+        } else {
+          console.log('RESEND_API_KEY not configured, skipping confirmation email');
         }
       }
 
