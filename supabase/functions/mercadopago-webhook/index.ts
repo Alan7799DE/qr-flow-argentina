@@ -19,15 +19,18 @@ async function verifyMercadoPagoSignature(
   }
 
   try {
+    const normalizedSecret = webhookSecret.trim();
+
     // Parse the x-signature header: ts=xxx,v1=xxx
     const signatureParts: Record<string, string> = {};
     const parts = xSignature.split(',');
     
     for (const part of parts) {
-      const [key, value] = part.split('=');
-      if (key && value) {
-        signatureParts[key.trim()] = value.trim();
-      }
+      // Split only on the first '=' (defensive: values could contain '=' in other formats)
+      const match = part.trim().match(/^([^=]+)=(.+)$/);
+      if (!match) continue;
+      const [, key, value] = match;
+      signatureParts[key.trim()] = value.trim();
     }
 
     const ts = signatureParts['ts'];
@@ -46,7 +49,7 @@ async function verifyMercadoPagoSignature(
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey(
       'raw',
-      encoder.encode(webhookSecret),
+      encoder.encode(normalizedSecret),
       { name: 'HMAC', hash: 'SHA-256' },
       false,
       ['sign']
@@ -63,7 +66,7 @@ async function verifyMercadoPagoSignature(
     const calculatedSignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
     // Compare signatures
-    const isValid = calculatedSignature === v1;
+    const isValid = calculatedSignature.toLowerCase() === v1.toLowerCase();
     
     if (!isValid) {
       console.error('Signature mismatch', {
