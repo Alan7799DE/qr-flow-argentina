@@ -44,6 +44,9 @@ export default function Billing() {
       } else if (data?.current_status === 'cancelled') {
         toast.info("La suscripción fue cancelada");
         refetch();
+      } else if (data?.status === 'no_pending') {
+        toast.info("No hay suscripción pendiente");
+        refetch();
       } else {
         toast.info("El pago aún está pendiente de confirmación");
       }
