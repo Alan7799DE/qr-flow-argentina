@@ -93,9 +93,11 @@ export default function AdminUsers() {
                         <td className="py-4">
                           <div>
                             <p className="font-medium text-foreground">
-                              {user.full_name || "Sin nombre"}
+                              {user.full_name || user.email}
                             </p>
-                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                            {user.full_name && (
+                              <p className="text-sm text-muted-foreground">{user.email}</p>
+                            )}
                           </div>
                         </td>
                         <td className="py-4">
