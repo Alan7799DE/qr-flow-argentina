@@ -5,23 +5,25 @@ export function useIsAdmin() {
   return useQuery({
     queryKey: ["is-admin"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return false;
 
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
+      try {
+        // Server-side admin verification via edge function
+        const { data, error } = await supabase.functions.invoke('verify-admin');
 
-      if (error) {
-        console.error("Error checking admin status:", error);
+        if (error) {
+          console.error("Error verifying admin status:", error);
+          return false;
+        }
+
+        return data?.isAdmin === true;
+      } catch (error) {
+        console.error("Error calling verify-admin function:", error);
         return false;
       }
-
-      return !!data;
     },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 }
 
