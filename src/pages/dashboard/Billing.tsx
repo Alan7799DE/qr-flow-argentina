@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { CreditCard, Check, AlertCircle, Loader2, ExternalLink, XCircle } from "lucide-react";
+import { CreditCard, Check, AlertCircle, Loader2, ExternalLink, XCircle, RefreshCw } from "lucide-react";
 import { usePlans, useSubscription } from "@/hooks/useSubscription";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
@@ -16,13 +16,44 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
 export default function Billing() {
   const { data: plans, isLoading: loadingPlans } = usePlans();
   const { data: subscription, isLoading: loadingSubscription, refetch } = useSubscription();
   const [subscribingTo, setSubscribingTo] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
   const isLoading = loadingPlans || loadingSubscription;
+
+  const handleCheckSubscriptionStatus = async () => {
+    setIsCheckingStatus(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription-status');
+
+      if (error) {
+        console.error('Check status error:', error);
+        toast.error("Error al verificar el estado");
+        return;
+      }
+
+      if (data?.current_status === 'active') {
+        toast.success("¡Suscripción activada!");
+        refetch();
+      } else if (data?.current_status === 'cancelled') {
+        toast.info("La suscripción fue cancelada");
+        refetch();
+      } else {
+        toast.info("El pago aún está pendiente de confirmación");
+      }
+    } catch (err) {
+      console.error('Check status error:', err);
+      toast.error("Error al verificar el estado");
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  };
 
   const handleCancelSubscription = async () => {
     setIsCancelling(true);
@@ -179,9 +210,20 @@ export default function Billing() {
                 variant="outline" 
                 size="sm" 
                 className="mt-2"
-                onClick={() => refetch()}
+                onClick={handleCheckSubscriptionStatus}
+                disabled={isCheckingStatus}
               >
-                Verificar estado
+                {isCheckingStatus ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Verificando...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Verificar estado
+                  </>
+                )}
               </Button>
             </div>
           </div>
