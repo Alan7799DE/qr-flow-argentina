@@ -21,5 +21,8 @@ verify_jwt = false
 [functions.process-trial-expirations]
 verify_jwt = false
 
+[functions.admin-users]
+verify_jwt = false
+
 [functions.verify-admin]
 verify_jwt = false

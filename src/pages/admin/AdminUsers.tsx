@@ -1,34 +1,14 @@
-import { useAdminUsers, AdminUser } from "@/hooks/useAdmin";
+import { useAdminUsers } from "@/hooks/useAdmin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Users, Search, QrCode } from "lucide-react";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 
 export default function AdminUsers() {
   const { data: users, isLoading } = useAdminUsers();
   const [search, setSearch] = useState("");
-
-  // Get QR counts for all users
-  const { data: qrCounts } = useQuery({
-    queryKey: ["admin-qr-counts"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("qr_codes")
-        .select("user_id");
-
-      if (error) throw error;
-
-      const counts: Record<string, number> = {};
-      data.forEach((qr) => {
-        counts[qr.user_id] = (counts[qr.user_id] || 0) + 1;
-      });
-      return counts;
-    },
-  });
 
   const filteredUsers = users?.filter(
     (user) =>
@@ -86,7 +66,7 @@ export default function AdminUsers() {
                 <tbody className="divide-y">
                   {filteredUsers?.map((user) => {
                     const sub = user.subscription;
-                    const qrCount = qrCounts?.[user.user_id] || 0;
+                    const qrCount = user.qr_count || 0;
 
                     return (
                       <tr key={user.id} className="hover:bg-muted/50">
