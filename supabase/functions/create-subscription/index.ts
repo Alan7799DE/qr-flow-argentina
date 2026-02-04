@@ -6,6 +6,29 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// Cancel a preapproval in Mercado Pago
+async function cancelMPPreapproval(preapprovalId: string, accessToken: string): Promise<boolean> {
+  try {
+    console.log(`Cancelling MP preapproval: ${preapprovalId}`);
+    const response = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: 'cancelled' }),
+    });
+    
+    const data = await response.json();
+    console.log(`MP cancel response for ${preapprovalId}:`, JSON.stringify(data));
+    
+    return response.ok;
+  } catch (error) {
+    console.error(`Error cancelling MP preapproval ${preapprovalId}:`, error);
+    return false;
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -71,6 +94,19 @@ serve(async (req) => {
       );
     }
 
+    // Check for existing subscription and cancel pending preapproval if exists
+    const { data: existingSub } = await supabase
+      .from('subscriptions')
+      .select('id, status, mercadopago_preapproval_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    // If there's a pending subscription with a preapproval, cancel it in MP first
+    if (existingSub?.status === 'pending' && existingSub?.mercadopago_preapproval_id) {
+      console.log(`User ${user.id} has pending subscription, cancelling old preapproval...`);
+      await cancelMPPreapproval(existingSub.mercadopago_preapproval_id, MERCADOPAGO_ACCESS_TOKEN);
+    }
+
     // Get user profile for email
     const { data: profile } = await supabase
       .from('profiles')
@@ -120,12 +156,6 @@ serve(async (req) => {
     }
 
     // Create or update subscription record with pending status
-    const { data: existingSub } = await supabase
-      .from('subscriptions')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
     if (existingSub) {
       await supabase
         .from('subscriptions')
