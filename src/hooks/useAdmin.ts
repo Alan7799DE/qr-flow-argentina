@@ -42,43 +42,27 @@ export interface AdminUser {
   } | null;
 }
 
+export interface AdminUserWithQRCount extends AdminUser {
+  qr_count: number;
+}
+
 export function useAdminUsers() {
   return useQuery({
     queryKey: ["admin-users"],
-    queryFn: async (): Promise<AdminUser[]> => {
-      // Get profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+    queryFn: async (): Promise<AdminUserWithQRCount[]> => {
+      // Server-side admin verification and data retrieval via edge function
+      const { data, error } = await supabase.functions.invoke('admin-users');
 
-      if (profilesError) throw profilesError;
+      if (error) {
+        console.error("Error fetching admin users:", error);
+        throw new Error("Failed to fetch user data");
+      }
 
-      // Get subscriptions with plans
-      const { data: subscriptions, error: subsError } = await supabase
-        .from("subscriptions")
-        .select("*, plans(name)");
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
-      if (subsError) throw subsError;
-
-      // Map subscriptions to users
-      const subsMap = new Map(
-        subscriptions?.map((sub) => [
-          sub.user_id,
-          {
-            id: sub.id,
-            status: sub.status,
-            plan_id: sub.plan_id,
-            current_period_end: sub.current_period_end,
-            plan_name: (sub.plans as { name: string } | null)?.name || null,
-          },
-        ])
-      );
-
-      return profiles.map((profile) => ({
-        ...profile,
-        subscription: subsMap.get(profile.user_id) || null,
-      }));
+      return data.users || [];
     },
   });
 }
