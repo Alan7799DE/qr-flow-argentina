@@ -116,11 +116,24 @@ serve(async (req) => {
     const xSignature = req.headers.get('x-signature');
     const xRequestId = req.headers.get('x-request-id');
 
-    const body = await req.json();
-    console.log('Webhook received:', JSON.stringify(body));
+    // Parse URL to get query params (MP may send data.id in query)
+    const url = new URL(req.url);
+    const queryDataId = url.searchParams.get('data.id') || url.searchParams.get('id');
 
-    // Get the data.id for signature verification
-    const dataId = body.data?.id?.toString() || '';
+    const body = await req.json();
+    
+    // Log everything for debugging
+    console.log('=== WEBHOOK DEBUG START ===');
+    console.log('Headers x-signature:', xSignature);
+    console.log('Headers x-request-id:', xRequestId);
+    console.log('Query params:', Object.fromEntries(url.searchParams.entries()));
+    console.log('Body:', JSON.stringify(body));
+    console.log('=== WEBHOOK DEBUG END ===');
+
+    // Get the data.id - priority: query param > body.data.id
+    const dataId = queryDataId || body.data?.id?.toString() || '';
+    
+    console.log('Using dataId for signature:', dataId);
 
     // Verify the webhook signature
     const isValidSignature = await verifyMercadoPagoSignature(
@@ -132,9 +145,11 @@ serve(async (req) => {
 
     if (!isValidSignature) {
       console.error('Invalid webhook signature - rejecting request', {
-        xSignature: xSignature?.substring(0, 20) + '...',
+        xSignature: xSignature?.substring(0, 30) + '...',
         xRequestId,
-        dataId
+        dataId,
+        queryDataId,
+        bodyDataId: body.data?.id
       });
       
       // Log failed verification attempt
@@ -144,6 +159,8 @@ serve(async (req) => {
         payload: { 
           type: body.type,
           data_id: dataId,
+          query_data_id: queryDataId,
+          body_data_id: body.data?.id,
           has_signature: !!xSignature,
           has_request_id: !!xRequestId
         },
