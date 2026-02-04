@@ -35,12 +35,18 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  // Validate cron secret for security
+  // Validate authorization - accept either CRON_SECRET or service role key
   const CRON_SECRET = Deno.env.get('CRON_SECRET');
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   const providedSecret = req.headers.get('x-cron-secret');
+  const authHeader = req.headers.get('Authorization');
+  const bearerToken = authHeader?.replace('Bearer ', '');
 
-  if (!CRON_SECRET || providedSecret !== CRON_SECRET) {
-    console.error('Unauthorized access attempt - invalid or missing cron secret');
+  const isValidCronSecret = CRON_SECRET && providedSecret === CRON_SECRET;
+  const isValidServiceRole = SUPABASE_SERVICE_ROLE_KEY && bearerToken === SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!isValidCronSecret && !isValidServiceRole) {
+    console.error('Unauthorized access attempt - invalid or missing credentials');
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
