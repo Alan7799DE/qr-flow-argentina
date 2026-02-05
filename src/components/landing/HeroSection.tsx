@@ -2,6 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, QrCode, BarChart3, Zap } from "lucide-react";
 
+const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+  e.preventDefault();
+  const element = document.getElementById(sectionId);
+  if (element) {
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+};
+
 export function HeroSection() {
   return (
     <section className="relative min-h-screen gradient-hero pt-24 pb-16 overflow-hidden">
@@ -38,7 +46,7 @@ export function HeroSection() {
               </Link>
             </Button>
             <Button variant="hero-outline" size="xl" asChild>
-              <a href="#pricing">Ver precios</a>
+              <a href="#pricing" onClick={(e) => scrollToSection(e, "pricing")}>Ver precios</a>
             </Button>
           </div>
 
