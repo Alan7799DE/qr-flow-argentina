@@ -38,7 +38,7 @@ export function HeroSection() {
               </Link>
             </Button>
             <Button variant="hero-outline" size="xl" asChild>
-              <Link to="#pricing">Ver precios</Link>
+              <a href="#pricing">Ver precios</a>
             </Button>
           </div>
 
