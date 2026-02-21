@@ -111,9 +111,13 @@ export function useQRCodes() {
   return useQuery({
     queryKey: ["qr-codes"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user logged in");
+
       const { data, error } = await supabase
         .from("qr_codes")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
