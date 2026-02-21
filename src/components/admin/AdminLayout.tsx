@@ -56,6 +56,7 @@ export default function AdminLayout() {
   const navItems = [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
     { to: "/admin/users", icon: Users, label: "Usuarios" },
+    { to: "/admin/qr-codes", icon: QrCode, label: "Códigos QR" },
     { to: "/admin/plans", icon: CreditCard, label: "Planes" },
     { to: "/admin/config", icon: Settings, label: "Configuración" },
     { to: "/admin/webhooks", icon: Webhook, label: "Webhooks" },

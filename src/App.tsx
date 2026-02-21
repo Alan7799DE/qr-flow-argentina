@@ -20,6 +20,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminConfig from "./pages/admin/AdminConfig";
 import AdminWebhooks from "./pages/admin/AdminWebhooks";
+import AdminQRCodes from "./pages/admin/AdminQRCodes";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="plans" element={<AdminPlans />} />
+            <Route path="qr-codes" element={<AdminQRCodes />} />
             <Route path="config" element={<AdminConfig />} />
             <Route path="webhooks" element={<AdminWebhooks />} />
           </Route>
