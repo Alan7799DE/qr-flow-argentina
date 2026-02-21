@@ -32,7 +32,7 @@ export default function AdminDashboard() {
       bgColor: "bg-success/10",
     },
     {
-      title: "Planes Activos",
+      title: "Planes Ofrecidos",
       value: plans?.filter((p) => p.is_active).length || 0,
       icon: TrendingUp,
       color: "text-warning",
