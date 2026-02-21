@@ -35,13 +35,19 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  // Validate authorization - only accept service role key for security
+  // Validate authorization - accept service role key or CRON_SECRET
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const CRON_SECRET = Deno.env.get('CRON_SECRET');
   const authHeader = req.headers.get('Authorization');
   const bearerToken = authHeader?.replace('Bearer ', '');
 
-  if (!bearerToken || bearerToken !== SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('Unauthorized access attempt - invalid or missing service role key');
+  const isAuthorized = bearerToken && (
+    bearerToken === SUPABASE_SERVICE_ROLE_KEY || 
+    bearerToken === CRON_SECRET
+  );
+
+  if (!isAuthorized) {
+    console.error('Unauthorized access attempt - invalid or missing authorization');
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
