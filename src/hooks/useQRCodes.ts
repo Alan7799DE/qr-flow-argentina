@@ -219,11 +219,18 @@ export function useCreateQR() {
       if (error) throw error;
       return qr as QRCode;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["qr-codes"] });
       toast({
         title: "¡QR creado!",
         description: "Tu código QR fue creado exitosamente.",
+      });
+
+      // Send first QR welcome email (fire and forget)
+      supabase.functions.invoke('send-first-qr-email', {
+        body: { qr_name: data.name },
+      }).catch(() => {
+        // Silently ignore email errors
       });
     },
     onError: (error: Error) => {
