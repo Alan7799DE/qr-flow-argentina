@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +50,40 @@ const statusLabels = {
   paused: "Pausado",
   expired: "Vencido",
 };
+
+function AccountTrialBanner() {
+  const { data: profile } = useQuery({
+    queryKey: ["account-trial"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("trial_expires_at")
+        .eq("user_id", user.id)
+        .single();
+      return data;
+    },
+  });
+
+  if (!profile?.trial_expires_at) return null;
+  const expiryDate = new Date(profile.trial_expires_at as string);
+  if (expiryDate <= new Date()) return null;
+
+  return (
+    <div className="bg-warning/10 border border-warning/20 rounded-xl p-4">
+      <p className="text-sm text-warning font-medium">
+        ⏳ Tu período de prueba vence el {expiryDate.toLocaleDateString("es-AR")}
+      </p>
+      <p className="text-sm text-warning/80 mt-1">
+        Suscribite a un plan para mantener tus QRs activos.
+      </p>
+      <Button variant="default" size="sm" className="mt-3" asChild>
+        <Link to="/dashboard/billing">Ver planes</Link>
+      </Button>
+    </div>
+  );
+}
 
 export default function QRDetail() {
   const { id } = useParams<{ id: string }>();
@@ -353,20 +389,8 @@ export default function QRDetail() {
             <p className="text-center text-xs text-muted-foreground mt-2">Últimos 30 días</p>
           </div>
 
-          {/* Trial info */}
-          {qr.status === "trial_active" && qr.trial_expires_at && (
-            <div className="bg-warning/10 border border-warning/20 rounded-xl p-4">
-              <p className="text-sm text-warning font-medium">
-                ⏳ Período de prueba vence el {new Date(qr.trial_expires_at).toLocaleDateString("es-AR")}
-              </p>
-              <p className="text-sm text-warning/80 mt-1">
-                Suscribite a un plan para mantener tu QR activo.
-              </p>
-              <Button variant="default" size="sm" className="mt-3" asChild>
-                <Link to="/dashboard/billing">Ver planes</Link>
-              </Button>
-            </div>
-          )}
+          {/* Trial info - account level */}
+          <AccountTrialBanner />
         </div>
       </div>
     </div>

@@ -105,7 +105,7 @@ export function useAllQRStats() {
       // Get user's QR codes
       const { data: qrs, error: qrError } = await supabase
         .from("qr_codes")
-        .select("id, total_scans_cached, trial_expires_at, status");
+        .select("id, total_scans_cached, status");
 
       if (qrError) throw qrError;
 
@@ -133,18 +133,29 @@ export function useAllQRStats() {
         .in("qr_code_id", qrIds)
         .gte("scanned_at", day7.toISOString());
 
-      // Find next expiry for trial QRs
-      const trialQRs = qrs.filter(q => q.status === "trial_active" && q.trial_expires_at);
-      const sortedExpiries = trialQRs
-        .map(q => new Date(q.trial_expires_at!))
-        .filter(d => d > now)
-        .sort((a, b) => a.getTime() - b.getTime());
+      // Get account-level trial expiry from profile
+      const { data: { user } } = await supabase.auth.getUser();
+      let nextExpiry: string | null = null;
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("trial_expires_at")
+          .eq("user_id", user.id)
+          .single();
+        
+        if (profile?.trial_expires_at) {
+          const expiryDate = new Date(profile.trial_expires_at as string);
+          if (expiryDate > now) {
+            nextExpiry = expiryDate.toLocaleDateString("es-AR");
+          }
+        }
+      }
 
       return {
         activeQRs: qrs.filter(q => q.status === "active" || q.status === "trial_active").length,
         scansToday: scans24h?.length || 0,
         scans7d: scans7d?.length || 0,
-        nextExpiry: sortedExpiries[0]?.toLocaleDateString("es-AR") || null,
+        nextExpiry,
       };
     },
     staleTime: 60000,

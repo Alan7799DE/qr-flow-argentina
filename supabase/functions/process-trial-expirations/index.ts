@@ -6,22 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface QRCode {
-  id: string;
-  name: string;
-  slug: string;
-  user_id: string;
-  trial_expires_at: string;
-  trial_notice_at: string;
-  trial_notice_sent: boolean;
-}
-
-interface UserQRs {
-  email: string;
-  full_name: string | null;
-  qrs: QRCode[];
-}
-
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -47,7 +31,7 @@ serve(async (req) => {
     );
   }
 
-  console.log('Starting trial expiration job...');
+  console.log('Starting account-level trial expiration job...');
 
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -65,113 +49,122 @@ serve(async (req) => {
     let expiredCount = 0;
     let notifiedCount = 0;
 
-    // Step 1: Expire QRs that have passed their trial_expires_at
-    console.log('Checking for expired trials...');
-    const { data: expiredQRs, error: expireError } = await supabase
-      .from('qr_codes')
-      .update({ 
-        status: 'expired',
-        updated_at: now 
-      })
-      .eq('status', 'trial_active')
-      .lte('trial_expires_at', now)
-      .select('id, name, user_id');
+    // Step 1: Expire accounts whose trial has passed
+    // Find profiles with expired trials that still have trial_active QRs
+    console.log('Checking for expired account trials...');
+    const { data: expiredProfiles, error: expiredError } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .not('trial_expires_at', 'is', null)
+      .lte('trial_expires_at', now);
 
-    if (expireError) {
-      console.error('Error expiring QRs:', expireError);
-    } else {
-      expiredCount = expiredQRs?.length || 0;
-      console.log(`Expired ${expiredCount} QR codes`);
-    }
-
-    // Step 2: Find QRs that need notice (trial_notice_at passed, not sent yet)
-    console.log('Checking for QRs needing notice...');
-    const { data: qrsNeedingNotice, error: noticeError } = await supabase
-      .from('qr_codes')
-      .select('id, name, slug, user_id, trial_expires_at, trial_notice_at, trial_notice_sent')
-      .eq('status', 'trial_active')
-      .eq('trial_notice_sent', false)
-      .lte('trial_notice_at', now);
-
-    if (noticeError) {
-      console.error('Error fetching QRs for notice:', noticeError);
-    } else if (qrsNeedingNotice && qrsNeedingNotice.length > 0) {
-      console.log(`Found ${qrsNeedingNotice.length} QRs needing notice`);
-
-      // Group QRs by user
-      const userQRsMap = new Map<string, QRCode[]>();
-      for (const qr of qrsNeedingNotice) {
-        const existing = userQRsMap.get(qr.user_id) || [];
-        existing.push(qr);
-        userQRsMap.set(qr.user_id, existing);
-      }
-
-      // Get user emails
-      const userIds = Array.from(userQRsMap.keys());
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, email, full_name')
-        .in('user_id', userIds);
-
-      // Send emails grouped by user
-      for (const [userId, qrs] of userQRsMap.entries()) {
-        const profile = profiles?.find(p => p.user_id === userId);
-        if (!profile?.email) {
-          console.log(`No email found for user ${userId}, skipping`);
-          continue;
-        }
-
-        // Check if user has active subscription (skip if they do)
+    if (expiredError) {
+      console.error('Error fetching expired profiles:', expiredError);
+    } else if (expiredProfiles && expiredProfiles.length > 0) {
+      for (const profile of expiredProfiles) {
+        // Check if user has an active subscription (skip if they do)
         const { data: subscription } = await supabase
           .from('subscriptions')
           .select('status')
-          .eq('user_id', userId)
+          .eq('user_id', profile.user_id)
           .eq('status', 'active')
           .maybeSingle();
 
         if (subscription) {
-          console.log(`User ${userId} has active subscription, skipping notice`);
-          // Mark as sent since they don't need the notice
-          await supabase
-            .from('qr_codes')
-            .update({ trial_notice_sent: true, updated_at: now })
-            .in('id', qrs.map(q => q.id));
+          console.log(`User ${profile.user_id} has active subscription, skipping expiration`);
           continue;
         }
 
-        // Send email
-        if (resend) {
-          try {
-            const qrNames = qrs.map(q => q.name).join(', ');
-            const expirationDate = new Date(qrs[0].trial_expires_at).toLocaleDateString('es-AR');
+        // Expire all trial_active QRs for this user
+        const { data: expired, error: expireErr } = await supabase
+          .from('qr_codes')
+          .update({ status: 'expired', updated_at: now })
+          .eq('user_id', profile.user_id)
+          .eq('status', 'trial_active')
+          .select('id');
 
+        if (expireErr) {
+          console.error(`Error expiring QRs for user ${profile.user_id}:`, expireErr);
+        } else {
+          expiredCount += expired?.length || 0;
+          console.log(`Expired ${expired?.length || 0} QRs for user ${profile.user_id}`);
+        }
+      }
+    }
+
+    // Step 2: Send notices for accounts approaching trial expiration
+    console.log('Checking for accounts needing trial notice...');
+    const { data: profilesNeedingNotice, error: noticeError } = await supabase
+      .from('profiles')
+      .select('user_id, email, full_name, trial_expires_at, trial_notice_sent')
+      .not('trial_notice_at', 'is', null)
+      .lte('trial_notice_at', now)
+      .eq('trial_notice_sent', false);
+
+    if (noticeError) {
+      console.error('Error fetching profiles for notice:', noticeError);
+    } else if (profilesNeedingNotice && profilesNeedingNotice.length > 0) {
+      console.log(`Found ${profilesNeedingNotice.length} accounts needing notice`);
+
+      for (const profile of profilesNeedingNotice) {
+        // Check if user has active subscription (skip if they do)
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select('status')
+          .eq('user_id', profile.user_id)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (subscription) {
+          console.log(`User ${profile.user_id} has active subscription, skipping notice`);
+          await supabase
+            .from('profiles')
+            .update({ trial_notice_sent: true } as any)
+            .eq('user_id', profile.user_id);
+          continue;
+        }
+
+        // Get user's QR names for the email
+        const { data: userQRs } = await supabase
+          .from('qr_codes')
+          .select('id, name')
+          .eq('user_id', profile.user_id)
+          .eq('status', 'trial_active');
+
+        const qrNames = userQRs?.map(q => q.name).join(', ') || 'tus QRs';
+        const qrCount = userQRs?.length || 0;
+        const expirationDate = new Date(profile.trial_expires_at!).toLocaleDateString('es-AR');
+
+        // Send email
+        if (resend && profile.email) {
+          try {
             await resend.emails.send({
               from: 'QRapido <onboarding@resend.dev>',
               to: [profile.email],
-              subject: '⚠️ Tus códigos QR están por expirar',
+              subject: '⚠️ Tu período de prueba está por expirar',
               html: `
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                   <h1 style="color: #1a1a1a; font-size: 24px;">Hola${profile.full_name ? ` ${profile.full_name}` : ''}!</h1>
                   
                   <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                    Te escribimos para avisarte que ${qrs.length > 1 ? 'tus códigos QR van' : 'tu código QR va'} a expirar pronto.
+                    Te escribimos para avisarte que tu período de prueba está por expirar.
                   </p>
                   
                   <div style="background: #f5f5f5; border-radius: 8px; padding: 16px; margin: 20px 0;">
                     <p style="margin: 0; color: #333; font-weight: 600;">
-                      ${qrs.length > 1 ? 'Códigos QR' : 'Código QR'}: ${qrNames}
+                      ${qrCount > 1 ? `${qrCount} códigos QR` : '1 código QR'}: ${qrNames}
                     </p>
                     <p style="margin: 8px 0 0; color: #666;">
-                      Fecha de expiración: ${expirationDate}
+                      Fecha de expiración de tu cuenta: ${expirationDate}
                     </p>
                   </div>
                   
                   <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                    Después de esta fecha, ${qrs.length > 1 ? 'estos QRs dejarán' : 'este QR dejará'} de funcionar y las personas que lo escaneen no podrán acceder al enlace.
+                    Después de esta fecha, todos tus QRs dejarán de funcionar y las personas que los escaneen no podrán acceder a los enlaces.
                   </p>
                   
                   <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                    <strong>¿Querés mantener${qrs.length > 1 ? 'los' : 'lo'} activo${qrs.length > 1 ? 's' : ''}?</strong> Elegí un plan de suscripción para que ${qrs.length > 1 ? 'sigan' : 'siga'} funcionando sin interrupciones.
+                    <strong>¿Querés mantenerlos activos?</strong> Elegí un plan de suscripción para que sigan funcionando sin interrupciones.
                   </p>
                   
                   <a href="https://creatuqr.lovable.app/dashboard/billing" 
@@ -190,16 +183,16 @@ serve(async (req) => {
               `,
             });
 
-            console.log(`Email sent to ${profile.email} for ${qrs.length} QRs`);
-            notifiedCount += qrs.length;
+            console.log(`Email sent to ${profile.email} for account trial expiration`);
+            notifiedCount++;
 
             // Log email sent
             await supabase
               .from('email_logs')
               .insert({
-                user_id: userId,
+                user_id: profile.user_id,
                 email_type: 'trial_expiration_notice',
-                metadata: { qr_ids: qrs.map(q => q.id), qr_names: qrs.map(q => q.name) }
+                metadata: { qr_ids: userQRs?.map(q => q.id) || [], qr_names: userQRs?.map(q => q.name) || [] }
               });
 
           } catch (emailError) {
@@ -207,11 +200,11 @@ serve(async (req) => {
           }
         }
 
-        // Mark QRs as notified
+        // Mark profile as notified
         await supabase
-          .from('qr_codes')
-          .update({ trial_notice_sent: true, updated_at: now })
-          .in('id', qrs.map(q => q.id));
+          .from('profiles')
+          .update({ trial_notice_sent: true } as any)
+          .eq('user_id', profile.user_id);
       }
     }
 

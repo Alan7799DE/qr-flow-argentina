@@ -153,19 +153,44 @@ export function useCreateQR() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user logged in");
 
-      // Get app config for trial settings
-      const { data: config } = await supabase
-        .from("app_config")
-        .select("trial_notice_days, trial_expire_days")
-        .eq("id", 1)
-        .maybeSingle();
+      // Check if user already has a trial (account-level trial)
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("trial_started_at, trial_expires_at")
+        .eq("user_id", user.id)
+        .single();
 
-      const trialNoticeDays = config?.trial_notice_days ?? 1;
-      const trialExpireDays = config?.trial_expire_days ?? 8;
+      let shouldStartTrial = false;
 
-      const now = new Date();
-      const trialNoticeAt = new Date(now.getTime() + trialNoticeDays * 24 * 60 * 60 * 1000);
-      const trialExpiresAt = new Date(now.getTime() + trialExpireDays * 24 * 60 * 60 * 1000);
+      // If user has no trial yet, start one on first QR creation
+      if (!profile?.trial_started_at) {
+        shouldStartTrial = true;
+
+        // Get app config for trial settings
+        const { data: config } = await supabase
+          .from("app_config")
+          .select("trial_notice_days, trial_expire_days")
+          .eq("id", 1)
+          .maybeSingle();
+
+        const trialNoticeDays = config?.trial_notice_days ?? 1;
+        const trialExpireDays = config?.trial_expire_days ?? 8;
+
+        const now = new Date();
+        const trialNoticeAt = new Date(now.getTime() + (trialExpireDays - trialNoticeDays) * 24 * 60 * 60 * 1000);
+        const trialExpiresAt = new Date(now.getTime() + trialExpireDays * 24 * 60 * 60 * 1000);
+
+        // Set trial on the profile (account level)
+        await supabase
+          .from("profiles")
+          .update({
+            trial_started_at: now.toISOString(),
+            trial_expires_at: trialExpiresAt.toISOString(),
+            trial_notice_at: trialNoticeAt.toISOString(),
+            trial_notice_sent: false,
+          } as any)
+          .eq("user_id", user.id);
+      }
 
       // Generate unique slug
       let slug = generateSlug(data.name);
@@ -210,28 +235,28 @@ export function useCreateQR() {
           utm_campaign: sanitizeUtmParam(data.utm_campaign),
           utm_term: sanitizeUtmParam(data.utm_term),
           utm_content: sanitizeUtmParam(data.utm_content),
-          trial_notice_at: trialNoticeAt.toISOString(),
-          trial_expires_at: trialExpiresAt.toISOString(),
         })
         .select()
         .single();
 
       if (error) throw error;
-      return qr as QRCode;
+      return { qr: qr as QRCode, isFirstQR: shouldStartTrial };
     },
-    onSuccess: (data) => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["qr-codes"] });
       toast({
         title: "¡QR creado!",
         description: "Tu código QR fue creado exitosamente.",
       });
 
-      // Send first QR welcome email (fire and forget)
-      supabase.functions.invoke('send-first-qr-email', {
-        body: { qr_name: data.name },
-      }).catch(() => {
-        // Silently ignore email errors
-      });
+      // Send first QR welcome email only on first QR (fire and forget)
+      if (result.isFirstQR) {
+        supabase.functions.invoke('send-first-qr-email', {
+          body: { qr_name: result.qr.name },
+        }).catch(() => {
+          // Silently ignore email errors
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
