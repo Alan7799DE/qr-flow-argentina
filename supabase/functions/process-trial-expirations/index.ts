@@ -174,7 +174,7 @@ serve(async (req) => {
                     <strong>¿Querés mantener${qrs.length > 1 ? 'los' : 'lo'} activo${qrs.length > 1 ? 's' : ''}?</strong> Elegí un plan de suscripción para que ${qrs.length > 1 ? 'sigan' : 'siga'} funcionando sin interrupciones.
                   </p>
                   
-                  <a href="https://id-preview--3f5def87-dd2f-4360-a5cd-69f9aeb7f186.lovable.app/dashboard/billing" 
+                  <a href="https://creatuqr.lovable.app/dashboard/billing" 
                      style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
                     Ver planes
                   </a>
