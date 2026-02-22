@@ -311,9 +311,6 @@ serve(async (req) => {
           .from('qr_codes')
           .update({
             status: 'active',
-            trial_expires_at: null,
-            trial_notice_at: null,
-            trial_notice_sent: false,
             updated_at: now,
           })
           .eq('user_id', user_id);
@@ -323,6 +320,16 @@ serve(async (req) => {
         } else {
           console.log('QR codes activated successfully');
         }
+
+        // Clear account-level trial since user now has a subscription
+        await supabase
+          .from('profiles')
+          .update({
+            trial_expires_at: null,
+            trial_notice_at: null,
+            trial_notice_sent: true,
+          } as any)
+          .eq('user_id', user_id);
 
         // Send subscription confirmation email
         const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
@@ -371,7 +378,7 @@ serve(async (req) => {
                       Todos tus códigos QR existentes ahora están <strong>activos permanentemente</strong> mientras mantengas tu suscripción.
                     </p>
                     
-                    <a href="https://id-preview--3f5def87-dd2f-4360-a5cd-69f9aeb7f186.lovable.app/dashboard" 
+                    <a href="https://creatuqr.lovable.app/dashboard" 
                        style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
                       Ir a mi dashboard
                     </a>

@@ -140,9 +140,6 @@ serve(async (req) => {
           .from('qr_codes')
           .update({
             status: 'active',
-            trial_expires_at: null,
-            trial_notice_at: null,
-            trial_notice_sent: false,
             updated_at: now,
           })
           .eq('user_id', user.id);
@@ -150,6 +147,16 @@ serve(async (req) => {
         if (qrError) {
           console.error('Error activating QR codes:', qrError);
         }
+
+        // Clear account-level trial since user now has a subscription
+        await supabase
+          .from('profiles')
+          .update({
+            trial_expires_at: null,
+            trial_notice_at: null,
+            trial_notice_sent: true,
+          } as any)
+          .eq('user_id', user.id);
       }
 
       const { error: updateError } = await supabase
