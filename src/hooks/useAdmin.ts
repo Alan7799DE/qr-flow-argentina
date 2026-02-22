@@ -2,28 +2,32 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export function useIsAdmin() {
+  const { data: session, isLoading: sessionLoading } = useQuery({
+    queryKey: ["auth-session"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session;
+    },
+    staleTime: 1000 * 60 * 2,
+  });
+
   return useQuery({
     queryKey: ["is-admin"],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return false;
-
       try {
-        // Server-side admin verification via edge function
         const { data, error } = await supabase.functions.invoke('verify-admin');
-
         if (error) {
           console.error("Error verifying admin status:", error);
           return false;
         }
-
         return data?.isAdmin === true;
       } catch (error) {
         console.error("Error calling verify-admin function:", error);
         return false;
       }
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    enabled: !!session && !sessionLoading,
+    staleTime: 1000 * 60 * 5,
   });
 }
 
