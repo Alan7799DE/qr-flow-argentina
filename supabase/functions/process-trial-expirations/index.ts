@@ -146,7 +146,7 @@ serve(async (req) => {
             const expirationDate = new Date(qrs[0].trial_expires_at).toLocaleDateString('es-AR');
 
             await resend.emails.send({
-              from: 'QRapido <noreply@qrapido.com>',
+              from: 'QRapido <onboarding@resend.dev>',
               to: [profile.email],
               subject: '⚠️ Tus códigos QR están por expirar',
               html: `
