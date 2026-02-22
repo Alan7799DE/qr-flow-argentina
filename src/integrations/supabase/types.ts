@@ -113,6 +113,10 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          trial_expires_at: string | null
+          trial_notice_at: string | null
+          trial_notice_sent: boolean | null
+          trial_started_at: string | null
           updated_at: string
           user_id: string
         }
@@ -121,6 +125,10 @@ export type Database = {
           email: string
           full_name?: string | null
           id?: string
+          trial_expires_at?: string | null
+          trial_notice_at?: string | null
+          trial_notice_sent?: boolean | null
+          trial_started_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -129,6 +137,10 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          trial_expires_at?: string | null
+          trial_notice_at?: string | null
+          trial_notice_sent?: boolean | null
+          trial_started_at?: string | null
           updated_at?: string
           user_id?: string
         }
