@@ -65,8 +65,8 @@ export default function QRDetail() {
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState("");
 
-  const baseUrl = window.location.origin;
-  const redirectUrl = qr ? `${baseUrl}/r/${qr.slug}` : "";
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://pktcejvlpocglkrsjnow.supabase.co";
+  const redirectUrl = qr ? `${supabaseUrl}/functions/v1/redirect/${qr.slug}` : "";
 
   useEffect(() => {
     if (qr) {
