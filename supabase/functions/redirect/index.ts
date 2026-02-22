@@ -104,9 +104,7 @@ serve(async (req) => {
     console.log(`[redirect] QR found: ${qr.id}, status: ${qr.status}`);
 
     // Get base URL for activation page
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const projectRef = supabaseUrl.match(/https:\/\/([^.]+)/)?.[1] ?? "";
-    const activateUrl = `https://id-preview--${projectRef}.lovable.app/activate/${slug}`;
+    const activateUrl = `https://creatuqr.lovable.app/activate/${slug}`;
 
     // Check if QR is active
     if (qr.status === "paused" || qr.status === "expired") {

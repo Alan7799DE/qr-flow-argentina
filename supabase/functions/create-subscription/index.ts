@@ -114,7 +114,7 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
-    const backUrl = req.headers.get('origin') || 'https://id-preview--3f5def87-dd2f-4360-a5cd-69f9aeb7f186.lovable.app';
+    const backUrl = req.headers.get('origin') || 'https://creatuqr.lovable.app';
 
     // Create Mercado Pago preapproval (subscription)
     const preapprovalPayload = {

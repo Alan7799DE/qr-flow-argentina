@@ -116,7 +116,7 @@ serve(async (req) => {
           </div>
           
           <p style="color: #666; font-size: 16px; line-height: 1.6;">
-            Tu QR está activo en período de prueba. Para mantenerlo funcionando sin interrupciones, podés elegir un plan en cualquier momento.
+            Tu cuenta está en período de prueba. Para mantener tus QRs funcionando sin interrupciones, podés elegir un plan en cualquier momento.
           </p>
           
           <a href="https://creatuqr.lovable.app/dashboard" 
