@@ -1,0 +1,1 @@
+CREATE INDEX idx_qr_codes_not_deleted ON public.qr_codes(user_id) WHERE deleted_at IS NULL;
