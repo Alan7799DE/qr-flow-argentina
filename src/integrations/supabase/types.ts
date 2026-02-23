@@ -270,6 +270,7 @@ export type Database = {
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
+          grace_period_ends_at: string | null
           id: string
           mercadopago_preapproval_id: string | null
           mercadopago_subscription_id: string | null
@@ -282,6 +283,7 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          grace_period_ends_at?: string | null
           id?: string
           mercadopago_preapproval_id?: string | null
           mercadopago_subscription_id?: string | null
@@ -294,6 +296,7 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          grace_period_ends_at?: string | null
           id?: string
           mercadopago_preapproval_id?: string | null
           mercadopago_subscription_id?: string | null

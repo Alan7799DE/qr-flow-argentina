@@ -18,10 +18,11 @@ export interface Subscription {
   id: string;
   user_id: string;
   plan_id: string;
-  status: "pending" | "active" | "cancelled" | "expired";
+  status: "pending" | "active" | "paused" | "cancelled" | "expired";
   mercadopago_subscription_id: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
+  grace_period_ends_at: string | null;
   created_at: string;
   plan?: Plan;
 }

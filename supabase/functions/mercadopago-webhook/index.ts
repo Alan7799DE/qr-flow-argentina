@@ -248,7 +248,7 @@ serve(async (req) => {
       } else if (mpStatus === 'cancelled') {
         subscriptionStatus = 'cancelled';
       } else if (mpStatus === 'paused') {
-        subscriptionStatus = 'cancelled';
+        subscriptionStatus = 'paused';
       }
 
       console.log(`Updating subscription for user ${user_id} to status ${subscriptionStatus}`);
@@ -268,18 +268,30 @@ serve(async (req) => {
       const periodEnd = new Date();
       periodEnd.setMonth(periodEnd.getMonth() + 1);
 
+      // Calculate grace period end for paused subscriptions
+      const gracePeriodEnd = new Date();
+      gracePeriodEnd.setHours(gracePeriodEnd.getHours() + 24);
+
       if (existingSub) {
+        const updateData: Record<string, unknown> = {
+          plan_id,
+          status: subscriptionStatus,
+          mercadopago_preapproval_id: preapprovalId,
+          mercadopago_subscription_id: preapproval.id,
+          current_period_start: subscriptionStatus === 'active' ? now : null,
+          current_period_end: subscriptionStatus === 'active' ? periodEnd.toISOString() : null,
+          updated_at: now,
+        };
+
+        if (subscriptionStatus === 'paused') {
+          updateData.grace_period_ends_at = gracePeriodEnd.toISOString();
+        } else {
+          updateData.grace_period_ends_at = null;
+        }
+
         const { error: updateError } = await supabase
           .from('subscriptions')
-          .update({
-            plan_id,
-            status: subscriptionStatus,
-            mercadopago_preapproval_id: preapprovalId,
-            mercadopago_subscription_id: preapproval.id,
-            current_period_start: subscriptionStatus === 'active' ? now : null,
-            current_period_end: subscriptionStatus === 'active' ? periodEnd.toISOString() : null,
-            updated_at: now,
-          })
+          .update(updateData)
           .eq('id', existingSub.id);
 
         if (updateError) {
@@ -296,6 +308,7 @@ serve(async (req) => {
             mercadopago_subscription_id: preapproval.id,
             current_period_start: subscriptionStatus === 'active' ? now : null,
             current_period_end: subscriptionStatus === 'active' ? periodEnd.toISOString() : null,
+            grace_period_ends_at: subscriptionStatus === 'paused' ? gracePeriodEnd.toISOString() : null,
           });
 
         if (insertError) {
@@ -415,6 +428,106 @@ serve(async (req) => {
           }
         } else {
           console.log('RESEND_API_KEY not configured, skipping confirmation email');
+        }
+      }
+
+      // If subscription is paused (payment failed), send payment failure email
+      if (subscriptionStatus === 'paused') {
+        console.log(`Payment failed for user ${user_id}, grace period until ${gracePeriodEnd.toISOString()}`);
+        
+        const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+        if (RESEND_API_KEY) {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('user_id', user_id)
+              .maybeSingle();
+
+            const { data: plan } = await supabase
+              .from('plans')
+              .select('name')
+              .eq('id', plan_id)
+              .maybeSingle();
+
+            const { data: userQRs } = await supabase
+              .from('qr_codes')
+              .select('id, name')
+              .eq('user_id', user_id)
+              .eq('status', 'active');
+
+            if (profile?.email) {
+              const resend = new Resend(RESEND_API_KEY);
+              const qrNames = userQRs?.map(q => q.name).join(', ') || 'tus QRs';
+              const qrCount = userQRs?.length || 0;
+              const graceDate = gracePeriodEnd.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+              await resend.emails.send({
+                from: 'QRapido <onboarding@resend.dev>',
+                to: [profile.email],
+                subject: '⚠️ Problema con tu pago — Tenés 24hs para resolverlo',
+                html: `
+                  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h1 style="color: #1a1a1a; font-size: 24px;">Hola${profile.full_name ? ` ${profile.full_name}` : ''}!</h1>
+                    
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                      Te informamos que hubo un problema al procesar el pago de tu suscripción${plan ? ` al plan <strong>${plan.name}</strong>` : ''}.
+                    </p>
+                    
+                    <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                      <p style="margin: 0; color: #92400e; font-weight: 600; font-size: 16px;">
+                        ⏳ Tus QRs siguen funcionando por las próximas 24 horas
+                      </p>
+                      <p style="margin: 8px 0 0; color: #92400e;">
+                        ${qrCount > 1 ? `${qrCount} códigos QR afectados` : '1 código QR afectado'}: ${qrNames}
+                      </p>
+                      <p style="margin: 8px 0 0; color: #92400e;">
+                        <strong>Fecha límite:</strong> ${graceDate}
+                      </p>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                      Si no se resuelve el pago antes de esa fecha, <strong>todos tus códigos QR dejarán de funcionar</strong> y las personas que los escaneen no podrán acceder a los enlaces.
+                    </p>
+                    
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                      <strong>¿Qué podés hacer?</strong>
+                    </p>
+                    <ul style="color: #666; font-size: 16px; line-height: 1.8;">
+                      <li>Verificá que tu medio de pago tenga fondos suficientes</li>
+                      <li>Actualizá tu tarjeta o medio de pago en Mercado Pago</li>
+                      <li>El cobro se reintentará automáticamente</li>
+                    </ul>
+                    
+                    <a href="https://creatuqr.lovable.app/dashboard/billing" 
+                       style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
+                      Ver mi suscripción
+                    </a>
+                    
+                    <p style="color: #999; font-size: 14px; margin-top: 30px;">
+                      Si tenés alguna pregunta, respondé a este email.
+                    </p>
+                    
+                    <p style="color: #333; font-size: 14px;">
+                      — El equipo de QRapido
+                    </p>
+                  </div>
+                `,
+              });
+
+              console.log(`Payment failure email sent to ${profile.email}`);
+
+              await supabase
+                .from('email_logs')
+                .insert({
+                  user_id,
+                  email_type: 'payment_failed_grace',
+                  metadata: { plan_id, grace_period_ends_at: gracePeriodEnd.toISOString(), qr_count: qrCount }
+                });
+            }
+          } catch (emailError) {
+            console.error('Error sending payment failure email:', emailError);
+          }
         }
       }
 
