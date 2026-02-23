@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.cleanup-trash]
 verify_jwt = false
+
+[functions.validate-email-domain]
+verify_jwt = false

@@ -75,6 +75,28 @@ export default function Auth() {
 
     try {
       if (isSignup) {
+        // Validate email domain has MX records
+        try {
+          const { data, error: fnError } = await supabase.functions.invoke("validate-email-domain", {
+            body: { email },
+          });
+
+          if (fnError) {
+            console.error("MX validation error:", fnError);
+            // On error, allow signup to proceed (fail-open)
+          } else if (data && !data.valid) {
+            toast({
+              variant: "destructive",
+              title: "Email inválido",
+              description: data.error || "El dominio del email no parece aceptar correos. Verificá que esté bien escrito.",
+            });
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          // Fail-open: if validation service is down, allow signup
+        }
+
         const { error } = await supabase.auth.signUp({
           email,
           password,
