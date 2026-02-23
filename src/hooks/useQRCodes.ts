@@ -83,6 +83,7 @@ export interface CreateQRData {
 
 export interface UpdateQRData {
   id: string;
+  expected_updated_at?: string;
   name?: string;
   destination_url?: string;
   color?: string;
@@ -299,7 +300,7 @@ export function useUpdateQR() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, ...data }: UpdateQRData) => {
+    mutationFn: async ({ id, expected_updated_at, ...data }: UpdateQRData) => {
       // Validate UTM parameters before update
       const utmValidation = validateUtmParams({
         utm_source: data.utm_source,
@@ -322,14 +323,25 @@ export function useUpdateQR() {
       if ('utm_term' in data) sanitizedData.utm_term = sanitizeUtmParam(data.utm_term);
       if ('utm_content' in data) sanitizedData.utm_content = sanitizeUtmParam(data.utm_content);
 
-      const { data: qr, error } = await supabase
+      let query = supabase
         .from("qr_codes")
         .update(sanitizedData)
-        .eq("id", id)
-        .select()
-        .single();
+        .eq("id", id);
 
-      if (error) throw error;
+      // Optimistic locking: only update if updated_at matches
+      if (expected_updated_at) {
+        query = query.eq("updated_at", expected_updated_at);
+      }
+
+      const { data: qr, error } = await query.select().single();
+
+      if (error) {
+        // If no rows matched, it means the QR was modified by another session
+        if (error.code === "PGRST116") {
+          throw new Error("Este QR fue modificado en otra sesión. Los datos se recargaron automáticamente.");
+        }
+        throw error;
+      }
       return qr as QRCode;
     },
     onSuccess: (data) => {
