@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.send-first-qr-email]
 verify_jwt = false
+
+[functions.cleanup-trash]
+verify_jwt = false
