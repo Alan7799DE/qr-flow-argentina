@@ -239,7 +239,7 @@ export default function QRDetail() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="Volver al dashboard">
           <Link to="/dashboard">
             <ArrowLeft className="w-5 h-5" />
           </Link>
@@ -264,7 +264,7 @@ export default function QRDetail() {
           <div className="bg-card rounded-xl border p-6">
             <div className="aspect-square max-w-[250px] mx-auto bg-white rounded-xl flex items-center justify-center p-4">
               {qrDataUrl ? (
-                <img src={qrDataUrl} alt="QR Code" className="w-full h-full object-contain" />
+                <img src={qrDataUrl} alt={`Código QR para ${qr.name}`} className="w-full h-full object-contain" />
               ) : (
                 <QrCode className="w-16 h-16 text-muted-foreground/50" />
               )}
@@ -348,10 +348,10 @@ export default function QRDetail() {
             <h3 className="font-semibold text-foreground mb-4">URL del QR</h3>
             <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
               <code className="flex-1 text-sm truncate">{redirectUrl}</code>
-              <Button variant="ghost" size="icon" onClick={handleCopy}>
+              <Button variant="ghost" size="icon" onClick={handleCopy} aria-label="Copiar URL del QR">
                 {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
               </Button>
-              <Button variant="ghost" size="icon" asChild>
+              <Button variant="ghost" size="icon" asChild aria-label="Abrir URL del QR en nueva pestaña">
                 <a href={redirectUrl} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="w-4 h-4" />
                 </a>
@@ -403,7 +403,7 @@ export default function QRDetail() {
             </div>
 
             {/* Chart placeholder */}
-            <div className="mt-6 h-32 rounded-lg bg-muted/30 flex items-end justify-between p-4 gap-1">
+            <div className="mt-6 h-32 rounded-lg bg-muted/30 flex items-end justify-between p-4 gap-1" role="group" aria-label="Gráfico de escaneos diarios">
               {stats?.dailyScans.map((day, i) => {
                 const maxCount = Math.max(...stats.dailyScans.map(d => d.count), 1);
                 const height = (day.count / maxCount) * 100;
@@ -413,6 +413,8 @@ export default function QRDetail() {
                     className="flex-1 rounded-t bg-primary/60 transition-all hover:bg-primary"
                     style={{ height: `${Math.max(height, 4)}%` }}
                     title={`${day.date}: ${day.count} escaneos`}
+                    role="img"
+                    aria-label={`${day.date}: ${day.count} escaneos`}
                   />
                 );
               })}

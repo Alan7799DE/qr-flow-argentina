@@ -31,16 +31,17 @@ export default function SettingsPage() {
         <h2 className="text-lg font-semibold text-foreground">Información de cuenta</h2>
         
         <div className="space-y-2">
-          <Label>Email</Label>
-          <Input value={user?.email || ""} disabled />
+          <Label htmlFor="settings-email">Email</Label>
+          <Input id="settings-email" value={user?.email || ""} disabled />
           <p className="text-sm text-muted-foreground">
             Tu email no puede ser modificado
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label>Cuenta creada</Label>
+          <Label htmlFor="settings-created">Cuenta creada</Label>
           <Input 
+            id="settings-created"
             value={user?.created_at ? new Date(user.created_at).toLocaleDateString("es-AR") : ""} 
             disabled 
           />
