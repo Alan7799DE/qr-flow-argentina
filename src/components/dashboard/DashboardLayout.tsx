@@ -12,11 +12,13 @@ import {
   Menu,
   X,
   Shield,
-  Trash2
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useIsAdmin } from "@/hooks/useAdmin";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -25,6 +27,43 @@ const navItems = [
   { icon: Settings, label: "Configuración", path: "/dashboard/settings" },
   { icon: Trash2, label: "Papelera", path: "/dashboard/trash" },
 ];
+
+function PaymentFailedBanner() {
+  const { data: subscription } = useSubscription();
+
+  if (!subscription || subscription.status !== 'paused' || !subscription.grace_period_ends_at) {
+    return null;
+  }
+
+  const graceEnd = new Date(subscription.grace_period_ends_at);
+  const now = new Date();
+  const hoursLeft = Math.max(0, Math.ceil((graceEnd.getTime() - now.getTime()) / (1000 * 60 * 60)));
+  const minutesLeft = Math.max(0, Math.ceil((graceEnd.getTime() - now.getTime()) / (1000 * 60)));
+
+  const timeText = hoursLeft > 1 
+    ? `${hoursLeft} horas` 
+    : minutesLeft > 0 
+      ? `${minutesLeft} minutos` 
+      : 'poco tiempo';
+
+  return (
+    <div className="mb-6 rounded-xl border border-warning/30 bg-warning/5 p-4 flex items-start gap-3">
+      <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+      <div className="flex-1">
+        <p className="font-semibold text-foreground">
+          Problema con tu pago
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          No pudimos procesar el cobro de tu suscripción. Tus QRs seguirán activos por <strong className="text-foreground">{timeText}</strong> más. 
+          Después de ese plazo se desactivarán automáticamente.
+        </p>
+        <Button variant="outline" size="sm" className="mt-3 border-warning/50 text-warning hover:bg-warning/10" asChild>
+          <Link to="/dashboard/billing">Ver facturación</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
@@ -180,6 +219,7 @@ export default function DashboardLayout() {
       {/* Main content */}
       <main className="lg:pl-64 pt-16 lg:pt-0 min-h-screen">
         <div className="p-6 lg:p-8">
+          <PaymentFailedBanner />
           <Outlet />
         </div>
       </main>
