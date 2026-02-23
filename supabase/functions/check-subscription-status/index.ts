@@ -114,8 +114,10 @@ serve(async (req) => {
     
     if (mpStatus === 'authorized') {
       newStatus = 'active';
-    } else if (mpStatus === 'cancelled' || mpStatus === 'paused') {
+    } else if (mpStatus === 'cancelled') {
       newStatus = 'cancelled';
+    } else if (mpStatus === 'paused') {
+      newStatus = 'paused';
     }
 
     // Update subscription if status changed
@@ -129,6 +131,16 @@ serve(async (req) => {
         mercadopago_subscription_id: preapproval.id,
         updated_at: now,
       };
+
+      // Clear grace period if re-activated
+      if (newStatus === 'active') {
+        updateData.grace_period_ends_at = null;
+      } else if (newStatus === 'paused') {
+        // Set grace period if not already set
+        const gracePeriodEnd = new Date();
+        gracePeriodEnd.setHours(gracePeriodEnd.getHours() + 24);
+        updateData.grace_period_ends_at = gracePeriodEnd.toISOString();
+      }
 
       if (newStatus === 'active') {
         updateData.current_period_start = now;

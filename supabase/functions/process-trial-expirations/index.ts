@@ -294,13 +294,114 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Job completed. Expired: ${expiredCount}, Notified: ${notifiedCount}`);
+    // Step 3: Expire paused subscriptions past grace period
+    let gracePeriodExpiredCount = 0;
+    console.log('Checking for paused subscriptions past grace period...');
+
+    const { data: pausedSubs, error: pausedError } = await supabase
+      .from('subscriptions')
+      .select('id, user_id, plan_id')
+      .eq('status', 'paused')
+      .not('grace_period_ends_at', 'is', null)
+      .lte('grace_period_ends_at', now);
+
+    if (pausedError) {
+      console.error('Error fetching paused subscriptions:', pausedError);
+    } else if (pausedSubs && pausedSubs.length > 0) {
+      console.log(`Found ${pausedSubs.length} paused subscriptions past grace period`);
+
+      for (const sub of pausedSubs) {
+        // Update subscription to cancelled
+        const { error: cancelErr } = await supabase
+          .from('subscriptions')
+          .update({ status: 'cancelled', grace_period_ends_at: null, updated_at: now })
+          .eq('id', sub.id);
+
+        if (cancelErr) {
+          console.error(`Error cancelling subscription ${sub.id}:`, cancelErr);
+          continue;
+        }
+
+        // Expire all active QRs for this user
+        const { data: expiredQRs, error: qrErr } = await supabase
+          .from('qr_codes')
+          .update({ status: 'expired', updated_at: now })
+          .eq('user_id', sub.user_id)
+          .eq('status', 'active')
+          .select('id, name');
+
+        if (qrErr) {
+          console.error(`Error expiring QRs for user ${sub.user_id}:`, qrErr);
+        } else {
+          gracePeriodExpiredCount += expiredQRs?.length || 0;
+          console.log(`Grace period expired: cancelled sub ${sub.id}, expired ${expiredQRs?.length || 0} QRs`);
+
+          // Send grace period expired email
+          if (resend && expiredQRs && expiredQRs.length > 0) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('user_id', sub.user_id)
+              .single();
+
+            if (profileData?.email) {
+              const qrNames = expiredQRs.map(q => q.name).join(', ') || 'tus QRs';
+              try {
+                await resend.emails.send({
+                  from: 'QRapido <onboarding@resend.dev>',
+                  to: [profileData.email],
+                  subject: '❌ Tus QRs fueron desactivados por falta de pago',
+                  html: `
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                      <h1 style="color: #1a1a1a; font-size: 24px;">Hola${profileData.full_name ? ` ${profileData.full_name}` : ''}!</h1>
+                      <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                        El período de gracia de 24 horas finalizó y no pudimos procesar tu pago.
+                      </p>
+                      <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                        <p style="margin: 0; color: #991b1b; font-weight: 600;">
+                          QRs desactivados: ${qrNames}
+                        </p>
+                        <p style="margin: 8px 0 0; color: #991b1b;">
+                          Las personas que escaneen estos QRs ya no podrán acceder a los enlaces.
+                        </p>
+                      </div>
+                      <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                        <strong>Podés reactivarlos</strong> suscribiéndote nuevamente a un plan.
+                      </p>
+                      <a href="https://creatuqr.lovable.app/dashboard/billing" 
+                         style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
+                        Elegir un plan
+                      </a>
+                      <p style="color: #999; font-size: 14px; margin-top: 30px;">
+                        Si tenés alguna pregunta, respondé a este email.
+                      </p>
+                      <p style="color: #333; font-size: 14px;">— El equipo de QRapido</p>
+                    </div>
+                  `,
+                });
+                console.log(`Grace period expired email sent to ${profileData.email}`);
+                await supabase.from('email_logs').insert({
+                  user_id: sub.user_id,
+                  email_type: 'grace_period_expired',
+                  metadata: { qr_ids: expiredQRs.map(q => q.id) }
+                });
+              } catch (emailError) {
+                console.error(`Error sending grace period expired email:`, emailError);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    console.log(`Job completed. Expired: ${expiredCount}, Notified: ${notifiedCount}, Grace period expired: ${gracePeriodExpiredCount}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         expired_count: expiredCount,
         notified_count: notifiedCount,
+        grace_period_expired_count: gracePeriodExpiredCount,
         timestamp: now,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
