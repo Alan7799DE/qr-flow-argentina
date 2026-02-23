@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEOHead } from "@/components/SEOHead";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -307,6 +308,11 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
+      <SEOHead
+        title={isSignup ? "Crear cuenta" : "Iniciar sesión"}
+        description={isSignup ? "Creá tu cuenta en QRapido y empezá a generar QRs dinámicos gratis." : "Iniciá sesión en QRapido para gestionar tus códigos QR dinámicos."}
+        canonical="/auth"
+      />
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -bottom-1/2 -left-1/4 w-[600px] h-[600px] rounded-full bg-accent/5 blur-3xl" />
