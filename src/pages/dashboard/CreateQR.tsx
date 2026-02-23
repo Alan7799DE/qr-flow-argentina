@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { QrCode, Link2, Wand2, ArrowRight, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { QrCode, Link2, Wand2, ArrowRight, ChevronDown, ChevronUp, Loader2, AlertTriangle } from "lucide-react";
 import { useCreateQR, validateUtmParams } from "@/hooks/useQRCodes";
+import { useValidateUrl } from "@/hooks/useValidateUrl";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import QRCodeLib from "qrcode";
@@ -16,6 +17,7 @@ export default function CreateQR() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const createQR = useCreateQR();
+  const { validate: checkUrlReachability, isValidating: isValidatingUrl, result: urlValidation, clear: clearUrlValidation } = useValidateUrl();
 
   const [name, setName] = useState("");
   const [destinationUrl, setDestinationUrl] = useState("");
@@ -108,6 +110,19 @@ export default function CreateQR() {
     if (!validate()) return;
 
     const finalUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
+
+    // Validate URL reachability (non-blocking warning)
+    const urlCheck = await checkUrlReachability(finalUrl);
+    if (urlCheck && !urlCheck.reachable) {
+      // Show warning but still allow creation
+      toast({
+        variant: "destructive",
+        title: "Advertencia: URL posiblemente inaccesible",
+        description: urlCheck.status
+          ? `La URL respondió con código ${urlCheck.status}. Verificá que sea correcta.`
+          : urlCheck.error || "No se pudo verificar la URL de destino.",
+      });
+    }
 
     try {
       await createQR.mutateAsync({
@@ -293,9 +308,14 @@ export default function CreateQR() {
             variant="hero"
             size="lg"
             className="flex-1"
-            disabled={createQR.isPending}
+            disabled={createQR.isPending || isValidatingUrl}
           >
-            {createQR.isPending ? (
+            {isValidatingUrl ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Verificando URL...
+              </>
+            ) : createQR.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Creando...

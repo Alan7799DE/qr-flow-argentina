@@ -22,6 +22,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { useQRCode, useUpdateQR, useDeleteQR, useRegenerateSlug } from "@/hooks/useQRCodes";
+import { useValidateUrl } from "@/hooks/useValidateUrl";
 import { useScanStats } from "@/hooks/useScanStats";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -96,6 +97,7 @@ export default function QRDetail() {
   const updateQR = useUpdateQR();
   const deleteQR = useDeleteQR();
   const regenerateSlug = useRegenerateSlug();
+  const { validate: checkUrlReachability, isValidating: isValidatingUrl } = useValidateUrl();
 
   const [destinationUrl, setDestinationUrl] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -136,6 +138,18 @@ export default function QRDetail() {
       return;
     }
     setUrlError("");
+
+    // Validate URL reachability (non-blocking warning)
+    const urlCheck = await checkUrlReachability(finalUrl);
+    if (urlCheck && !urlCheck.reachable) {
+      toast({
+        variant: "destructive",
+        title: "Advertencia: URL posiblemente inaccesible",
+        description: urlCheck.status
+          ? `La URL respondió con código ${urlCheck.status}. Verificá que sea correcta.`
+          : urlCheck.error || "No se pudo verificar la URL de destino.",
+      });
+    }
     
     await updateQR.mutateAsync({ id: qr.id, destination_url: finalUrl, expected_updated_at: qr.updated_at });
     setDestinationUrl(finalUrl);
@@ -362,8 +376,8 @@ export default function QRDetail() {
                 />
               </div>
               {isEditing && (
-                <Button onClick={handleSaveUrl} disabled={updateQR.isPending}>
-                  {updateQR.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar"}
+                <Button onClick={handleSaveUrl} disabled={updateQR.isPending || isValidatingUrl}>
+                  {isValidatingUrl ? <Loader2 className="w-4 h-4 animate-spin" /> : updateQR.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar"}
                 </Button>
               )}
             </div>
