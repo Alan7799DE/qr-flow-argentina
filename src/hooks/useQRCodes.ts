@@ -67,6 +67,7 @@ export interface QRCode {
   last_scan_at: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 export interface CreateQRData {
@@ -118,10 +119,35 @@ export function useQRCodes() {
         .from("qr_codes")
         .select("*")
         .eq("user_id", user.id)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as QRCode[];
+    },
+  });
+}
+
+export function useDeletedQRCodes() {
+  return useQuery({
+    queryKey: ["qr-codes-deleted"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user logged in");
+
+      const { data, error } = await supabase
+        .from("qr_codes")
+        .select("*")
+        .eq("user_id", user.id)
+        .not("deleted_at", "is", null)
+        .order("deleted_at", { ascending: false });
+
+      if (error) throw error;
+      return (data as QRCode[]).filter((qr) => {
+        const deletedAt = new Date(qr.deleted_at!);
+        const sevenDaysLater = new Date(deletedAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+        return new Date() < sevenDaysLater;
+      });
     },
   });
 }
@@ -330,24 +356,57 @@ export function useDeleteQR() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Soft delete: set deleted_at timestamp and pause the QR
       const { error } = await supabase
         .from("qr_codes")
-        .delete()
+        .update({ deleted_at: new Date().toISOString(), status: "paused" } as any)
         .eq("id", id);
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["qr-codes"] });
+      queryClient.invalidateQueries({ queryKey: ["qr-codes-deleted"] });
       toast({
-        title: "QR eliminado",
-        description: "El código QR fue eliminado.",
+        title: "QR movido a papelera",
+        description: "Podés restaurarlo durante los próximos 7 días.",
       });
     },
     onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "Error al eliminar",
+        description: error.message,
+      });
+    },
+  });
+}
+
+export function useRestoreQR() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("qr_codes")
+        .update({ deleted_at: null } as any)
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["qr-codes"] });
+      queryClient.invalidateQueries({ queryKey: ["qr-codes-deleted"] });
+      toast({
+        title: "QR restaurado",
+        description: "El código QR fue restaurado exitosamente.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error al restaurar",
         description: error.message,
       });
     },

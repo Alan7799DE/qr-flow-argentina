@@ -150,6 +150,7 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string
+          deleted_at: string | null
           destination_url: string
           id: string
           last_scan_at: string | null
@@ -172,6 +173,7 @@ export type Database = {
         Insert: {
           color?: string | null
           created_at?: string
+          deleted_at?: string | null
           destination_url: string
           id?: string
           last_scan_at?: string | null
@@ -194,6 +196,7 @@ export type Database = {
         Update: {
           color?: string | null
           created_at?: string
+          deleted_at?: string | null
           destination_url?: string
           id?: string
           last_scan_at?: string | null

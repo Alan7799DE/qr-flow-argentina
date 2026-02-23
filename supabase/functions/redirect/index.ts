@@ -81,7 +81,7 @@ serve(async (req) => {
     // Fetch QR code by slug
     const { data: qr, error: qrError } = await supabase
       .from("qr_codes")
-      .select("id, destination_url, status, utm_source, utm_medium, utm_campaign, utm_term, utm_content, total_scans_cached")
+      .select("id, destination_url, status, deleted_at, utm_source, utm_medium, utm_campaign, utm_term, utm_content, total_scans_cached")
       .eq("slug", slug)
       .maybeSingle();
 
@@ -95,6 +95,15 @@ serve(async (req) => {
 
     if (!qr) {
       console.log(`[redirect] QR not found for slug: ${slug}`);
+      return new Response("QR not found", { 
+        status: 404, 
+        headers: corsHeaders 
+      });
+    }
+
+    // Skip soft-deleted QRs
+    if (qr.deleted_at) {
+      console.log(`[redirect] QR soft-deleted for slug: ${slug}`);
       return new Response("QR not found", { 
         status: 404, 
         headers: corsHeaders 

@@ -298,15 +298,15 @@ export default function QRDetail() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>¿Eliminar este QR?</AlertDialogTitle>
+                  <AlertDialogTitle>¿Mover este QR a la papelera?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta acción no se puede deshacer. Se eliminarán todos los datos y estadísticas de este QR.
+                    El QR será pausado y movido a la papelera. Podrás restaurarlo dentro de los próximos 7 días. Después de ese plazo se eliminará permanentemente.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction onClick={handleDelete}>
-                    Eliminar
+                    Mover a papelera
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
