@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { z } from "zod";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -123,9 +124,21 @@ export default function QRDetail() {
     }
   }, [redirectUrl, qr?.color]);
 
+  const [urlError, setUrlError] = useState("");
+
   const handleSaveUrl = async () => {
     if (!qr) return;
-    await updateQR.mutateAsync({ id: qr.id, destination_url: destinationUrl, expected_updated_at: qr.updated_at });
+    
+    const finalUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
+    const result = z.string().url("Ingresá una URL válida (ej: https://tusitio.com)").safeParse(finalUrl);
+    if (!result.success) {
+      setUrlError(result.error.errors[0].message);
+      return;
+    }
+    setUrlError("");
+    
+    await updateQR.mutateAsync({ id: qr.id, destination_url: finalUrl, expected_updated_at: qr.updated_at });
+    setDestinationUrl(finalUrl);
     setIsEditing(false);
   };
 
@@ -343,8 +356,9 @@ export default function QRDetail() {
                   onChange={(e) => {
                     setDestinationUrl(e.target.value);
                     setIsEditing(true);
+                    setUrlError("");
                   }}
-                  className="pl-10"
+                  className={`pl-10 ${urlError ? "border-destructive" : ""}`}
                 />
               </div>
               {isEditing && (
@@ -353,6 +367,9 @@ export default function QRDetail() {
                 </Button>
               )}
             </div>
+            {urlError && (
+              <p className="text-sm text-destructive mt-2">{urlError}</p>
+            )}
           </div>
 
           {/* Stats */}
