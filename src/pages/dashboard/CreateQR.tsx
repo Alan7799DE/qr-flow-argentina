@@ -210,6 +210,7 @@ export default function CreateQR() {
                 onChange={(e) => setColor(e.target.value)}
                 className="w-32"
                 placeholder="#000000"
+                aria-label="Código de color hexadecimal"
               />
             </div>
           </div>
@@ -289,7 +290,7 @@ export default function CreateQR() {
           <h3 className="text-lg font-semibold text-foreground mb-4">Vista previa</h3>
           <div className="aspect-square max-w-[200px] mx-auto bg-muted rounded-xl flex items-center justify-center overflow-hidden">
             {qrPreview ? (
-              <img src={qrPreview} alt="QR Preview" className="w-full h-full object-contain" />
+              <img src={qrPreview} alt="Vista previa del código QR" className="w-full h-full object-contain" />
             ) : (
               <QrCode className="w-16 h-16 text-muted-foreground/50" />
             )}

@@ -128,6 +128,8 @@ export default function DashboardLayout() {
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           className="p-2 text-foreground"
+          aria-label={isSidebarOpen ? "Cerrar menú lateral" : "Abrir menú lateral"}
+          aria-expanded={isSidebarOpen}
         >
           {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
@@ -149,7 +151,7 @@ export default function DashboardLayout() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 py-6 px-4 space-y-1">
+          <nav className="flex-1 py-6 px-4 space-y-1" aria-label="Dashboard">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
@@ -213,6 +215,8 @@ export default function DashboardLayout() {
         <div
           className="fixed inset-0 bg-black/50 z-30 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
+          role="presentation"
+          aria-hidden="true"
         />
       )}
 
