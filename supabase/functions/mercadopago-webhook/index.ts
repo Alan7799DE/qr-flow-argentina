@@ -268,9 +268,17 @@ serve(async (req) => {
       const periodEnd = new Date();
       periodEnd.setMonth(periodEnd.getMonth() + 1);
 
+      // Read grace period hours from app_config
+      const { data: appConfig } = await supabase
+        .from('app_config')
+        .select('grace_period_hours')
+        .eq('id', 1)
+        .single();
+      const gracePeriodHours = appConfig?.grace_period_hours ?? 24;
+
       // Calculate grace period end for paused subscriptions
       const gracePeriodEnd = new Date();
-      gracePeriodEnd.setHours(gracePeriodEnd.getHours() + 24);
+      gracePeriodEnd.setHours(gracePeriodEnd.getHours() + gracePeriodHours);
 
       if (existingSub) {
         const updateData: Record<string, unknown> = {

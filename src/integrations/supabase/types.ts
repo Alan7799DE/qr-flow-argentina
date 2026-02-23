@@ -17,6 +17,7 @@ export type Database = {
       app_config: {
         Row: {
           created_at: string
+          grace_period_hours: number
           id: number
           trial_expire_days: number
           trial_notice_days: number
@@ -24,6 +25,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          grace_period_hours?: number
           id?: number
           trial_expire_days?: number
           trial_notice_days?: number
@@ -31,6 +33,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          grace_period_hours?: number
           id?: number
           trial_expire_days?: number
           trial_notice_days?: number
