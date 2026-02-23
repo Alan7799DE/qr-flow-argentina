@@ -11,7 +11,8 @@ import {
   LogOut,
   Menu,
   X,
-  Shield
+  Shield,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +23,7 @@ const navItems = [
   { icon: Plus, label: "Crear QR", path: "/dashboard/create" },
   { icon: CreditCard, label: "Facturación", path: "/dashboard/billing" },
   { icon: Settings, label: "Configuración", path: "/dashboard/settings" },
+  { icon: Trash2, label: "Papelera", path: "/dashboard/trash" },
 ];
 
 export default function DashboardLayout() {
