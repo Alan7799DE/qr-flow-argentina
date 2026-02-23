@@ -75,6 +75,13 @@ serve(async (req) => {
           continue;
         }
 
+        // Get QR info before expiring (for the email)
+        const { data: userQRs } = await supabase
+          .from('qr_codes')
+          .select('id, name')
+          .eq('user_id', profile.user_id)
+          .eq('status', 'trial_active');
+
         // Expire all trial_active QRs for this user
         const { data: expired, error: expireErr } = await supabase
           .from('qr_codes')
@@ -88,6 +95,85 @@ serve(async (req) => {
         } else {
           expiredCount += expired?.length || 0;
           console.log(`Expired ${expired?.length || 0} QRs for user ${profile.user_id}`);
+
+          // Send trial expired email
+          if (resend && expired && expired.length > 0) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('user_id', profile.user_id)
+              .single();
+
+            if (profileData?.email) {
+              // Check if we already sent this email
+              const { data: existingLog } = await supabase
+                .from('email_logs')
+                .select('id')
+                .eq('user_id', profile.user_id)
+                .eq('email_type', 'trial_expired')
+                .maybeSingle();
+
+              if (!existingLog) {
+                const qrNames = userQRs?.map(q => q.name).join(', ') || 'tus QRs';
+                const qrCount = userQRs?.length || 0;
+
+                try {
+                  await resend.emails.send({
+                    from: 'QRapido <onboarding@resend.dev>',
+                    to: [profileData.email],
+                    subject: '❌ Tu período de prueba expiró',
+                    html: `
+                      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                        <h1 style="color: #1a1a1a; font-size: 24px;">Hola${profileData.full_name ? ` ${profileData.full_name}` : ''}!</h1>
+                        
+                        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                          Tu período de prueba en QRapido ha finalizado.
+                        </p>
+                        
+                        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                          <p style="margin: 0; color: #991b1b; font-weight: 600;">
+                            ${qrCount > 1 ? `${qrCount} códigos QR desactivados` : '1 código QR desactivado'}: ${qrNames}
+                          </p>
+                          <p style="margin: 8px 0 0; color: #991b1b;">
+                            Las personas que escaneen estos QRs ya no podrán acceder a los enlaces.
+                          </p>
+                        </div>
+                        
+                        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                          <strong>Podés reactivarlos en cualquier momento</strong> eligiendo un plan de suscripción. Tus QRs y estadísticas se mantienen guardados.
+                        </p>
+                        
+                        <a href="https://creatuqr.lovable.app/dashboard/billing" 
+                           style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
+                          Elegir un plan
+                        </a>
+                        
+                        <p style="color: #999; font-size: 14px; margin-top: 30px;">
+                          Si tenés alguna pregunta, respondé a este email.
+                        </p>
+                        
+                        <p style="color: #333; font-size: 14px;">
+                          — El equipo de QRapido
+                        </p>
+                      </div>
+                    `,
+                  });
+
+                  console.log(`Trial expired email sent to ${profileData.email}`);
+
+                  await supabase
+                    .from('email_logs')
+                    .insert({
+                      user_id: profile.user_id,
+                      email_type: 'trial_expired',
+                      metadata: { qr_ids: expired.map(q => q.id), qr_names: userQRs?.map(q => q.name) || [] }
+                    });
+                } catch (emailError) {
+                  console.error(`Error sending trial expired email to ${profileData.email}:`, emailError);
+                }
+              }
+            }
+          }
         }
       }
     }
