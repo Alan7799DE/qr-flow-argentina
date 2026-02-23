@@ -125,14 +125,14 @@ export default function QRDetail() {
 
   const handleSaveUrl = async () => {
     if (!qr) return;
-    await updateQR.mutateAsync({ id: qr.id, destination_url: destinationUrl });
+    await updateQR.mutateAsync({ id: qr.id, destination_url: destinationUrl, expected_updated_at: qr.updated_at });
     setIsEditing(false);
   };
 
   const handleTogglePause = async () => {
     if (!qr) return;
     const newStatus = qr.status === "paused" ? "active" : "paused";
-    await updateQR.mutateAsync({ id: qr.id, status: newStatus });
+    await updateQR.mutateAsync({ id: qr.id, status: newStatus, expected_updated_at: qr.updated_at });
   };
 
   const handleRegenerateSlug = async () => {
