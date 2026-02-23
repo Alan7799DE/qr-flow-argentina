@@ -223,8 +223,6 @@ export type Database = {
       }
       qr_scan_events: {
         Row: {
-          city: string | null
-          country: string | null
           device_type: string | null
           id: string
           ip_hash: string | null
@@ -235,8 +233,6 @@ export type Database = {
           user_agent: string | null
         }
         Insert: {
-          city?: string | null
-          country?: string | null
           device_type?: string | null
           id?: string
           ip_hash?: string | null
@@ -247,8 +243,6 @@ export type Database = {
           user_agent?: string | null
         }
         Update: {
-          city?: string | null
-          country?: string | null
           device_type?: string | null
           id?: string
           ip_hash?: string | null
