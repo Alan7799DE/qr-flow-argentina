@@ -15,12 +15,14 @@ export default function AdminConfig() {
   const queryClient = useQueryClient();
   const [trialNoticeDays, setTrialNoticeDays] = useState(1);
   const [trialExpireDays, setTrialExpireDays] = useState(8);
+  const [gracePeriodHours, setGracePeriodHours] = useState(24);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (config) {
       setTrialNoticeDays(config.trial_notice_days);
       setTrialExpireDays(config.trial_expire_days);
+      setGracePeriodHours((config as any).grace_period_hours ?? 24);
     }
   }, [config]);
 
@@ -37,8 +39,9 @@ export default function AdminConfig() {
         .update({
           trial_notice_days: trialNoticeDays,
           trial_expire_days: trialExpireDays,
+          grace_period_hours: gracePeriodHours,
           updated_at: new Date().toISOString(),
-        })
+        } as any)
         .eq("id", 1);
 
       if (error) throw error;
@@ -56,7 +59,8 @@ export default function AdminConfig() {
   const hasChanges =
     config &&
     (trialNoticeDays !== config.trial_notice_days ||
-      trialExpireDays !== config.trial_expire_days);
+      trialExpireDays !== config.trial_expire_days ||
+      gracePeriodHours !== ((config as any).grace_period_hours ?? 24));
 
   return (
     <div className="space-y-6">
@@ -118,6 +122,24 @@ export default function AdminConfig() {
                   </p>
                 </div>
               )}
+
+              <div className="border-t pt-6 space-y-2">
+                <Label htmlFor="grace-hours" className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-warning" />
+                  Período de gracia (horas)
+                </Label>
+                <Input
+                  id="grace-hours"
+                  type="number"
+                  min={1}
+                  max={168}
+                  value={gracePeriodHours}
+                  onChange={(e) => setGracePeriodHours(parseInt(e.target.value) || 24)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Horas que los QRs siguen activos después de un fallo de pago antes de desactivarse
+                </p>
+              </div>
 
               <Button
                 onClick={handleSave}

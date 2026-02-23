@@ -136,9 +136,15 @@ serve(async (req) => {
       if (newStatus === 'active') {
         updateData.grace_period_ends_at = null;
       } else if (newStatus === 'paused') {
-        // Set grace period if not already set
+        // Read grace period from app_config
+        const { data: appConfig } = await supabase
+          .from('app_config')
+          .select('grace_period_hours')
+          .eq('id', 1)
+          .single();
+        const gracePeriodHours = appConfig?.grace_period_hours ?? 24;
         const gracePeriodEnd = new Date();
-        gracePeriodEnd.setHours(gracePeriodEnd.getHours() + 24);
+        gracePeriodEnd.setHours(gracePeriodEnd.getHours() + gracePeriodHours);
         updateData.grace_period_ends_at = gracePeriodEnd.toISOString();
       }
 
