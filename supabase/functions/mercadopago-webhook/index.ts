@@ -185,6 +185,28 @@ serve(async (req) => {
       processed: false,
     });
 
+    // Purge old webhook logs - keep only the latest 300
+    const { count: webhookCount } = await supabase
+      .from('webhook_logs')
+      .select('*', { count: 'exact', head: true });
+
+    if (webhookCount && webhookCount > 300) {
+      const { data: oldLogs } = await supabase
+        .from('webhook_logs')
+        .select('id')
+        .order('created_at', { ascending: true })
+        .limit(webhookCount - 300);
+
+      if (oldLogs && oldLogs.length > 0) {
+        const idsToDelete = oldLogs.map((log: any) => log.id);
+        await supabase
+          .from('webhook_logs')
+          .delete()
+          .in('id', idsToDelete);
+        console.log(`Purged ${idsToDelete.length} old webhook logs`);
+      }
+    }
+
     // Handle different webhook types
     const { type, data } = body;
 
