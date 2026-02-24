@@ -1,81 +1,84 @@
 
 
-# Rediseno del Hero con QR Creator como protagonista (estilo QR.io)
+# Rediseno visual de las 3 secciones con tarjetas
 
 ## Resumen
 
-Redisenar el `HeroSection` y el `QRCreatorPublic` inspirandose en la estetica de QR.io: el creador de QR ocupa practicamente toda la pantalla como elemento principal, con un layout de dos paneles (formulario a la izquierda, preview + descarga a la derecha), pasos numerados, y el titulo/subtitulo reducidos a un encabezado compacto arriba del formulario. Se mantienen los colores azul/turquesa y la tipografia actual.
+Las tres secciones (Features, Benefits/Use Cases, FAQ) usan actualmente el mismo patron visual: tarjetas blancas con borde, icono, titulo y descripcion. Esto genera monotonia. El plan es darle a cada seccion una identidad visual distinta manteniendo la coherencia de marca.
 
-## Cambios
+## Cambios por seccion
 
-### 1. `src/components/landing/HeroSection.tsx` - Reestructurar layout
+### 1. FeaturesSection - Layout alternado con icono grande destacado
 
-- Eliminar el badge superior ("La forma mas facil..."), el h1 grande, el subtitulo largo, el boton "Ver precios" y el bloque de stats
-- Reemplazar por un encabezado compacto arriba del creador: titulo corto (ej: "Crea tu codigo QR") y subtitulo de una linea
-- El componente `<QRCreatorPublic />` ocupa todo el ancho disponible justo debajo, siendo lo primero visible tras el navbar
-- Reducir el `pt` para que el creador aparezca lo mas arriba posible (justo debajo del navbar fijo de 64px)
-- Mover los stats debajo del creador o eliminarlos del hero (pasarlos a la seccion de features)
+Reemplazar el grid uniforme de 6 tarjetas por un layout tipo "bento grid" asimetrico:
+- Las 2 primeras features ocupan media pantalla cada una (2 columnas grandes)
+- Las 4 restantes van en un grid de 2x2 debajo, mas compactas
+- Las tarjetas grandes tienen el icono mas prominente (48x48 con gradiente), y un borde izquierdo de color primary de 3px
+- Las tarjetas chicas son mas minimalistas: sin borde, fondo `muted/50`, icono inline con el titulo
+- Se elimina el hover de translate y se usa un hover de borde/color mas sutil
 
-### 2. `src/components/landing/QRCreatorPublic.tsx` - Rediseno estilo QR.io
+### 2. BenefitsSection - Beneficios como lista horizontal + Casos de uso como tarjetas con fondo de color
 
-Redisenar completamente el layout interno con pasos numerados y dos paneles:
+**Beneficios (primera mitad):**
+- Cambiar de grid de tarjetas a una lista de items horizontales (sin tarjeta)
+- Cada item: icono a la izquierda (circulo con gradiente), titulo y descripcion a la derecha
+- Layout en 2 columnas en desktop, 1 en mobile
+- Sin bordes ni sombras, solo separadores sutiles entre items
 
-**Panel izquierdo (formulario):**
-- **Paso 1 - "Completa el contenido"**: badge numerado verde/primary con el numero "1", titulo del paso, input de URL grande con placeholder "https://"
-- **Paso 2 - "Disena tu codigo QR"**: badge "2", selector de colores con los preset circles actuales + picker custom + input hex
-- **UTM Builder**: colapsable debajo del paso 2, con la misma mecanica actual
+**Casos de uso (segunda mitad):**
+- Cada tarjeta tiene un fondo de color distinto y suave (variaciones de primary/10, accent/10, success/10, warning/10, etc.)
+- El icono es mas grande (40x40) y del mismo color que el fondo pero mas saturado
+- Bordes redondeados mas generosos (rounded-3xl)
+- Sin borde visible, solo el color de fondo diferencia las tarjetas
 
-**Panel derecho (preview + descarga):**
-- **Paso 3 - "Descarga tu QR"**: badge "3", titulo
-- Preview del QR centrado en una tarjeta con borde sutil (fondo blanco, bordes redondeados, sin sombra excesiva, similar a QR.io)
-- Boton "Descargar codigo QR" debajo del preview, full-width dentro del panel derecho, usando variante `hero` con gradiente
+### 3. FAQSection - Ya usa accordion (no tarjetas)
 
-**Estetica general:**
-- Tarjeta contenedora con fondo blanco solido (no glass), bordes suaves, sombra sutil (`shadow-lg`)
-- Los badges de paso son circulos pequenos con el numero en color primary sobre fondo primary/10
-- Separadores sutiles entre pasos (linea horizontal fina)
-- El layout es `grid grid-cols-1 lg:grid-cols-[1fr_380px]` para que el panel derecho tenga ancho fijo
-- En mobile: el preview se mueve arriba del formulario
+El FAQ ya tiene un estilo diferenciado con accordion. Solo se le agrega un toque visual:
+- Envolverlo en una tarjeta contenedora con borde sutil y padding generoso
+- Agregar un icono decorativo grande y semitransparente de fondo (HelpCircle al 5% opacidad, posicion absoluta)
 
-### 3. Archivos afectados
+## Archivos afectados
 
 | Archivo | Accion |
 |---------|--------|
-| `src/components/landing/HeroSection.tsx` | Modificar (simplificar hero, QR creator primero) |
-| `src/components/landing/QRCreatorPublic.tsx` | Modificar (rediseno con pasos numerados, layout 2 paneles) |
+| `src/components/landing/FeaturesSection.tsx` | Modificar (bento grid) |
+| `src/components/landing/BenefitsSection.tsx` | Modificar (lista + tarjetas con color) |
+| `src/components/landing/FAQSection.tsx` | Modificar menor (tarjeta contenedora) |
 
-### Detalles de implementacion
+## Detalles tecnicos
 
-**Badge de paso numerado (componente inline):**
+**Bento grid de Features:**
 ```text
-[1] Completa el contenido
++---------------------------+---------------------------+
+|  [icon]                   |  [icon]                   |
+|  URLs editables           |  Analytics detallados     |
+|  Descripcion larga...     |  Descripcion larga...     |
++---------------------------+---------------------------+
++-----------+-----------+-----------+-----------+
+| [i] Desc  | [i] Desc  | [i] UTM   | [i] 99.9% |
+|  PNG/SVG  |  Slugs    |  Builder  |  Uptime   |
++-----------+-----------+-----------+-----------+
 ```
-Un circulo de 28x28px con el numero, color de fondo `bg-primary/10`, texto `text-primary`, font-bold. Titulo del paso en `text-lg font-semibold`.
+- Primera fila: `grid-cols-1 md:grid-cols-2`, tarjetas con `p-8`, borde izquierdo `border-l-4 border-primary`
+- Segunda fila: `grid-cols-2 lg:grid-cols-4`, tarjetas con `p-5`, fondo `bg-muted/50`, sin borde exterior
 
-**Layout del QR Creator:**
+**Beneficios como lista:**
 ```text
-+------------------------------------------+------------------+
-|  [1] Completa el contenido               | [3] Descarga     |
-|  [input URL .........................]   |                  |
-|  ─────────────────────────────────────   |  +------------+  |
-|  [2] Disena tu codigo QR                 |  |            |  |
-|  (o)(o)(o)(o)(o) [picker] [#hex]         |  |   QR IMG   |  |
-|  ─────────────────────────────────────   |  |            |  |
-|  > UTM Builder (colapsable)              |  +------------+  |
-|                                          |                  |
-|                                          | [Descargar QR]   |
-+------------------------------------------+------------------+
+[o] Editables en cualquier momento     [o] Analytics en tiempo real
+    Descripcion...                          Descripcion...
+─────────────────────────────────────  ─────────────────────────────
+[o] Creacion instantanea               [o] Compatibles con todos...
+    Descripcion...                          Descripcion...
 ```
+- Grid `grid-cols-1 md:grid-cols-2`, cada item es un `flex gap-4` con icono + texto
+- Separador `border-b border-border/50` en cada item, padding `py-5`
 
-**HeroSection simplificado:**
-```text
-[Navbar fijo]
-                    Crea tu codigo QR
-         Genera QRs dinamicos, editables y con analytics
-+-------------------------------------------------------+
-|              QR Creator (layout 2 paneles)             |
-+-------------------------------------------------------+
-```
+**Casos de uso con colores:**
+- Paleta de fondos: `bg-blue-50`, `bg-teal-50`, `bg-orange-50`, `bg-purple-50`, `bg-green-50`, `bg-rose-50` (light mode)
+- En dark mode: `dark:bg-blue-950/30`, etc.
+- Cada tarjeta `rounded-3xl p-6` sin `border`, solo fondo de color
 
-No se modifica ninguna logica de negocio (download, auth check, sessionStorage, UTM builder). Solo cambia la estructura visual y el orden de los elementos.
+**FAQ contenedora:**
+- Envolver el accordion en `<div className="bg-card rounded-2xl border p-8 relative overflow-hidden">`
+- Icono decorativo: `<HelpCircle className="absolute -right-8 -bottom-8 w-48 h-48 text-muted-foreground/5" />`
 
