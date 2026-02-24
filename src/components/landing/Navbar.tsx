@@ -25,7 +25,7 @@ export function Navbar() {
               Funciones
             </a>
             <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              Precios
+              Beneficios
             </a>
             <a href="#faq" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               FAQ
@@ -61,7 +61,7 @@ export function Navbar() {
                 Funciones
               </a>
               <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
-                Precios
+                Beneficios
               </a>
               <a href="#faq" className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2">
                 FAQ
