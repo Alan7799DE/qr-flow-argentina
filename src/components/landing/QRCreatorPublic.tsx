@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Link2, Download, QrCode, Wand2, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Link2, Download, QrCode, Wand2, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import QRCodeLib from "qrcode";
 
@@ -14,6 +15,14 @@ const PRESET_COLORS = [
   { value: "#16a34a", label: "Verde" },
   { value: "#7c3aed", label: "Violeta" },
 ];
+
+function StepBadge({ step }: { step: number }) {
+  return (
+    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
+      {step}
+    </span>
+  );
+}
 
 export function QRCreatorPublic() {
   const navigate = useNavigate();
@@ -70,7 +79,6 @@ export function QRCreatorPublic() {
       return;
     }
 
-    // Logged in – download directly
     const finalUrl = buildFinalUrl();
     if (!finalUrl) return;
     try {
@@ -89,19 +97,16 @@ export function QRCreatorPublic() {
   };
 
   return (
-    <div className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl shadow-xl p-6 sm:p-8">
-      {/* Badge */}
-      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-6">
-        <Sparkles className="w-3 h-3" />
-        Probalo gratis
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Form Column */}
-        <div className="space-y-5 order-2 lg:order-1">
-          {/* URL */}
-          <div className="space-y-2">
-            <Label htmlFor="public-url" className="text-sm font-medium">URL de destino</Label>
+    <div className="bg-background border border-border rounded-2xl shadow-lg p-6 sm:p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+        {/* Left panel - Form */}
+        <div className="space-y-6 order-2 lg:order-1">
+          {/* Step 1 */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <StepBadge step={1} />
+              <h2 className="text-lg font-semibold text-foreground">Completá el contenido</h2>
+            </div>
             <div className="relative">
               <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -115,45 +120,55 @@ export function QRCreatorPublic() {
             </div>
           </div>
 
-          {/* Color Picker */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Color del QR</Label>
-            <div className="flex items-center gap-2">
-              {PRESET_COLORS.map((c) => (
-                <button
-                  key={c.value}
-                  type="button"
-                  onClick={() => setColor(c.value)}
-                  className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
-                    color === c.value
-                      ? "border-primary scale-110 shadow-md"
-                      : "border-border hover:scale-105"
-                  }`}
-                  style={{ backgroundColor: c.value }}
-                  aria-label={c.label}
-                />
-              ))}
-              <div className="relative ml-1">
-                <input
-                  type="color"
+          <Separator />
+
+          {/* Step 2 */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <StepBadge step={2} />
+              <h2 className="text-lg font-semibold text-foreground">Diseñá tu código QR</h2>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Color del QR</Label>
+              <div className="flex items-center gap-2">
+                {PRESET_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setColor(c.value)}
+                    className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                      color === c.value
+                        ? "border-primary scale-110 shadow-md"
+                        : "border-border hover:scale-105"
+                    }`}
+                    style={{ backgroundColor: c.value }}
+                    aria-label={c.label}
+                  />
+                ))}
+                <div className="relative ml-1">
+                  <input
+                    type="color"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="w-8 h-8 rounded-full cursor-pointer border border-border appearance-none bg-transparent [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0"
+                    aria-label="Color personalizado"
+                  />
+                </div>
+                <Input
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
-                  className="w-8 h-8 rounded-full cursor-pointer border border-border appearance-none bg-transparent [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0"
-                  aria-label="Color personalizado"
+                  className="w-24 h-8 text-xs"
+                  placeholder="#000000"
+                  aria-label="Código hex"
                 />
               </div>
-              <Input
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="w-24 h-8 text-xs"
-                placeholder="#000000"
-                aria-label="Código hex"
-              />
             </div>
           </div>
 
-          {/* UTM Toggle */}
-          <div className="border-t border-border pt-4">
+          <Separator />
+
+          {/* UTM Builder */}
+          <div>
             <button
               type="button"
               onClick={() => setShowUtm(!showUtm)}
@@ -181,26 +196,19 @@ export function QRCreatorPublic() {
               </div>
             )}
           </div>
-
-          {/* Download Button */}
-          <Button
-            variant="hero"
-            size="xl"
-            className="w-full"
-            onClick={handleDownload}
-            disabled={!url}
-          >
-            <Download className="w-5 h-5" />
-            Descargar QR
-          </Button>
         </div>
 
-        {/* Preview Column */}
-        <div className="flex items-center justify-center order-1 lg:order-2">
+        {/* Right panel - Preview + Download */}
+        <div className="flex flex-col items-center gap-6 order-1 lg:order-2">
+          <div className="flex items-center gap-3 self-start">
+            <StepBadge step={3} />
+            <h2 className="text-lg font-semibold text-foreground">Descargá tu QR</h2>
+          </div>
+
           <div
             className={`w-full max-w-[280px] aspect-square rounded-2xl flex items-center justify-center transition-all duration-500 ${
               qrPreview
-                ? "bg-white p-4 shadow-glow border border-border/30"
+                ? "bg-white p-4 border border-border/30 shadow-sm"
                 : "bg-muted/50 border border-dashed border-border"
             }`}
           >
@@ -219,6 +227,17 @@ export function QRCreatorPublic() {
               </div>
             )}
           </div>
+
+          <Button
+            variant="hero"
+            size="xl"
+            className="w-full max-w-[280px]"
+            onClick={handleDownload}
+            disabled={!url}
+          >
+            <Download className="w-5 h-5" />
+            Descargar QR
+          </Button>
         </div>
       </div>
     </div>
