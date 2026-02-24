@@ -26,6 +26,35 @@ export default function CreateQR() {
   const [utmSource, setUtmSource] = useState("");
   const [utmMedium, setUtmMedium] = useState("");
   const [utmCampaign, setUtmCampaign] = useState("");
+
+  // Load pending QR data from sessionStorage (landing -> auth -> create flow)
+  useEffect(() => {
+    const pendingUrl = sessionStorage.getItem("pending_qr_url");
+    if (pendingUrl) {
+      setDestinationUrl(pendingUrl);
+      // Auto-generate name from domain
+      try {
+        const parsed = new URL(pendingUrl.startsWith("http") ? pendingUrl : `https://${pendingUrl}`);
+        setName(`QR - ${parsed.hostname}`);
+      } catch {
+        setName("QR - Mi sitio");
+      }
+    }
+    const pendingColor = sessionStorage.getItem("pending_qr_color");
+    if (pendingColor) setColor(pendingColor);
+    const ps = sessionStorage.getItem("pending_qr_utm_source");
+    if (ps) { setUtmSource(ps); setShowUtm(true); }
+    const pm = sessionStorage.getItem("pending_qr_utm_medium");
+    if (pm) { setUtmMedium(pm); setShowUtm(true); }
+    const pc = sessionStorage.getItem("pending_qr_utm_campaign");
+    if (pc) { setUtmCampaign(pc); setShowUtm(true); }
+    // Clean up
+    sessionStorage.removeItem("pending_qr_url");
+    sessionStorage.removeItem("pending_qr_color");
+    sessionStorage.removeItem("pending_qr_utm_source");
+    sessionStorage.removeItem("pending_qr_utm_medium");
+    sessionStorage.removeItem("pending_qr_utm_campaign");
+  }, []);
   const [errors, setErrors] = useState<{ name?: string; url?: string; utm_source?: string; utm_medium?: string; utm_campaign?: string }>({});
   const [qrPreview, setQrPreview] = useState<string>("");
 

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { ArrowRight, QrCode, BarChart3, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
+import { QRCreatorPublic } from "./QRCreatorPublic";
 
 const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
   e.preventDefault();
@@ -37,14 +37,8 @@ export function HeroSection() {
             Generá códigos QR editables, rastreá cada escaneo con analytics detallados y optimizá tus campañas. Todo desde una plataforma simple y poderosa.
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-            <Button variant="hero" size="xl" asChild>
-              <Link to="/auth?mode=signup">
-                Empezar gratis
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-            </Button>
+          {/* CTA Button */}
+          <div className="flex items-center justify-center mb-12 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
             <Button variant="hero-outline" size="xl" asChild>
               <a href="#pricing" onClick={(e) => scrollToSection(e, "pricing")}>Ver precios</a>
             </Button>
@@ -67,58 +61,9 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* Hero Visual */}
-        <div className="mt-16 max-w-5xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-          <div className="relative">
-            {/* Dashboard Preview Card */}
-            <div className="card-elevated p-6 sm:p-8">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center">
-                  <QrCode className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Mi QR de Marketing</h3>
-                  <p className="text-sm text-muted-foreground">qrapido.com/r/marketing-2024</p>
-                </div>
-                <div className="ml-auto px-3 py-1 rounded-full bg-success/10 text-success text-sm font-medium">
-                  Activo
-                </div>
-              </div>
-
-              {/* Analytics Preview */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                {[
-                  { label: "Últimas 24h", value: "234", icon: BarChart3 },
-                  { label: "7 días", value: "1.2K", icon: BarChart3 },
-                  { label: "30 días", value: "8.5K", icon: BarChart3 },
-                  { label: "Total", value: "45K", icon: BarChart3 },
-                ].map((stat, i) => (
-                  <div key={i} className="p-4 rounded-xl bg-muted/50 text-center">
-                    <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-                    <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Chart placeholder */}
-              <div className="h-32 rounded-lg bg-muted/30 flex items-end justify-between p-4 gap-1">
-                {Array.from({ length: 30 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 rounded-t bg-primary/60 transition-all hover:bg-primary"
-                    style={{ 
-                      height: `${20 + Math.random() * 80}%`,
-                      animationDelay: `${i * 0.02}s`
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Floating decoration */}
-            <div className="absolute -top-4 -right-4 w-20 h-20 rounded-2xl gradient-bg shadow-glow animate-float opacity-80" />
-            <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-xl bg-accent/20 blur-xl" />
-          </div>
+        {/* QR Creator */}
+        <div className="mt-12 max-w-4xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
+          <QRCreatorPublic />
         </div>
       </div>
     </section>
