@@ -38,7 +38,7 @@ export function Navbar() {
               <Link to="/auth">Iniciar sesión</Link>
             </Button>
             <Button variant="gradient" asChild>
-              <Link to="/auth?mode=signup">Empezar gratis</Link>
+              <Link to="/auth?mode=signup">Crear usuario</Link>
             </Button>
           </div>
 
@@ -71,7 +71,7 @@ export function Navbar() {
                   <Link to="/auth">Iniciar sesión</Link>
                 </Button>
                 <Button variant="gradient" asChild>
-                  <Link to="/auth?mode=signup">Empezar gratis</Link>
+                  <Link to="/auth?mode=signup">Crear usuario</Link>
                 </Button>
               </div>
             </div>
