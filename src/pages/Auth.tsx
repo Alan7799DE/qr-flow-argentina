@@ -32,15 +32,16 @@ export default function Auth() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
 
   useEffect(() => {
+    const redirectTo = searchParams.get("redirect") || "/dashboard";
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        navigate("/dashboard");
+        navigate(redirectTo);
       }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        navigate("/dashboard");
+        navigate(redirectTo);
       }
     });
 
