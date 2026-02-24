@@ -16,7 +16,7 @@ export function HeroSection() {
             Creá tu <span className="gradient-text">código QR</span>
           </h1>
           <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
-            Generá QRs dinámicos, editables y con analytics en tiempo real
+            Generá QRs dinámicos, editables y con <strong className="text-foreground">analytics</strong> en tiempo real
           </p>
         </div>
 
