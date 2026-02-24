@@ -1,79 +1,81 @@
 
-# Creador de QR interactivo en la landing page
+
+# Rediseno del Hero con QR Creator como protagonista (estilo QR.io)
 
 ## Resumen
 
-Reemplazar el mockup estatico del hero por un creador de QR funcional y visualmente atractivo. El visitante podra configurar su QR (URL, color, UTM) y ver la vista previa en tiempo real. Al clickear "Descargar QR", si no esta logueado se le pide registrarse, guardando los datos para recuperarlos post-login.
+Redisenar el `HeroSection` y el `QRCreatorPublic` inspirandose en la estetica de QR.io: el creador de QR ocupa practicamente toda la pantalla como elemento principal, con un layout de dos paneles (formulario a la izquierda, preview + descarga a la derecha), pasos numerados, y el titulo/subtitulo reducidos a un encabezado compacto arriba del formulario. Se mantienen los colores azul/turquesa y la tipografia actual.
 
 ## Cambios
 
-### 1. Nuevo componente: `src/components/landing/QRCreatorPublic.tsx`
+### 1. `src/components/landing/HeroSection.tsx` - Reestructurar layout
 
-Formulario de creacion de QR con estetica premium para la landing:
+- Eliminar el badge superior ("La forma mas facil..."), el h1 grande, el subtitulo largo, el boton "Ver precios" y el bloque de stats
+- Reemplazar por un encabezado compacto arriba del creador: titulo corto (ej: "Crea tu codigo QR") y subtitulo de una linea
+- El componente `<QRCreatorPublic />` ocupa todo el ancho disponible justo debajo, siendo lo primero visible tras el navbar
+- Reducir el `pt` para que el creador aparezca lo mas arriba posible (justo debajo del navbar fijo de 64px)
+- Mover los stats debajo del creador o eliminarlos del hero (pasarlos a la seccion de features)
 
-- **Layout**: Dos columnas en desktop (formulario a la izquierda, preview a la derecha), una columna en mobile (preview arriba, formulario abajo)
-- **Campos**: URL de destino (con icono de link), selector de color (color picker + hex input), UTM Builder colapsable (source, medium, campaign)
-- **Vista previa**: QR generado en tiempo real con la libreria `qrcode` (ya instalada), dentro de una tarjeta con fondo blanco, bordes redondeados y sombra glow animada
-- **Boton "Descargar QR"**: Gradiente con efecto hover. Al clickear:
-  - Verifica sesion con `supabase.auth.getUser()`
-  - Si logueado: genera imagen PNG 1024px y dispara descarga
-  - Si no logueado: guarda datos en `sessionStorage` (`pending_qr_*`) y redirige a `/auth?mode=signup&redirect=/dashboard/create`
-- **Estetica**: Tarjeta con `glass` + `shadow-xl`, inputs con estilo elevado, transiciones suaves, badge de "Probalo gratis" arriba del formulario
+### 2. `src/components/landing/QRCreatorPublic.tsx` - Rediseno estilo QR.io
 
-### 2. Modificar `src/components/landing/HeroSection.tsx`
+Redisenar completamente el layout interno con pasos numerados y dos paneles:
 
-- Eliminar el bloque "Dashboard Preview Card" (lineas 76-120 aprox) con el mockup de analytics
-- En su lugar, renderizar `<QRCreatorPublic />`
-- Mantener: badge superior, headline, subheadline y stats
-- Simplificar CTAs: eliminar el boton "Empezar gratis" (ahora el CTA es el formulario), mantener "Ver precios"
-- Eliminar las decoraciones flotantes (ya no hacen falta con el nuevo componente)
+**Panel izquierdo (formulario):**
+- **Paso 1 - "Completa el contenido"**: badge numerado verde/primary con el numero "1", titulo del paso, input de URL grande con placeholder "https://"
+- **Paso 2 - "Disena tu codigo QR"**: badge "2", selector de colores con los preset circles actuales + picker custom + input hex
+- **UTM Builder**: colapsable debajo del paso 2, con la misma mecanica actual
 
-### 3. Modificar `src/pages/Auth.tsx`
+**Panel derecho (preview + descarga):**
+- **Paso 3 - "Descarga tu QR"**: badge "3", titulo
+- Preview del QR centrado en una tarjeta con borde sutil (fondo blanco, bordes redondeados, sin sombra excesiva, similar a QR.io)
+- Boton "Descargar codigo QR" debajo del preview, full-width dentro del panel derecho, usando variante `hero` con gradiente
 
-- Leer el parametro `redirect` de la URL (`searchParams.get("redirect")`)
-- Post-login, redirigir a `redirect` en vez de siempre a `/dashboard`
-- Cambiar las lineas 36 y 43 donde hace `navigate("/dashboard")` para usar el redirect
+**Estetica general:**
+- Tarjeta contenedora con fondo blanco solido (no glass), bordes suaves, sombra sutil (`shadow-lg`)
+- Los badges de paso son circulos pequenos con el numero en color primary sobre fondo primary/10
+- Separadores sutiles entre pasos (linea horizontal fina)
+- El layout es `grid grid-cols-1 lg:grid-cols-[1fr_380px]` para que el panel derecho tenga ancho fijo
+- En mobile: el preview se mueve arriba del formulario
 
-### 4. Modificar `src/pages/dashboard/CreateQR.tsx`
-
-- Al montar, leer `sessionStorage` para las keys `pending_qr_url`, `pending_qr_color`, `pending_qr_utm_source`, `pending_qr_utm_medium`, `pending_qr_utm_campaign`
-- Si existen, pre-cargar los campos del formulario con esos valores
-- Limpiar el `sessionStorage` despues de cargar
-- Auto-generar un nombre basado en el dominio de la URL (ej: "QR - tusitio.com")
-
-### 5. Estetica del creador publico (detalles de diseno)
-
-- Tarjeta principal: `bg-card/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl` (estilo glass)
-- Preview del QR: fondo blanco puro con padding generoso, borde sutil, y `shadow-glow` cuando hay un QR generado
-- Cuando no hay URL: placeholder con icono QR grande semitransparente y texto "Ingresa una URL para ver tu QR"
-- Campo URL: tamano mas grande que lo normal (`h-12`), con icono de link integrado
-- Color picker: presentado como circulos de colores predefinidos (negro, azul, rojo, verde, violeta) + picker custom
-- UTM Builder: colapsable con animacion suave, separado visualmente con borde superior
-- Boton descargar: full-width, variante `hero` (gradiente), tamano `xl`, con icono de descarga
-- Animaciones: el QR aparece con fade-in al generarse, la tarjeta tiene hover sutil
-
-## Flujo del usuario
-
-```text
-Landing page -> Ve el creador de QR integrado en el hero
-    |
-    v
-Ingresa URL -> Ve preview del QR en tiempo real
-    |
-    v
-Clickea "Descargar QR"
-    |
-    +-- Logueado? --> Descarga PNG directo
-    |
-    +-- No logueado? --> sessionStorage + redirect a /auth?mode=signup
-                         --> Post-login: /dashboard/create con datos precargados
-```
-
-## Archivos afectados
+### 3. Archivos afectados
 
 | Archivo | Accion |
 |---------|--------|
-| `src/components/landing/QRCreatorPublic.tsx` | Crear (nuevo) |
-| `src/components/landing/HeroSection.tsx` | Modificar (reemplazar mockup por componente) |
-| `src/pages/Auth.tsx` | Modificar (soporte redirect post-login) |
-| `src/pages/dashboard/CreateQR.tsx` | Modificar (cargar datos de sessionStorage) |
+| `src/components/landing/HeroSection.tsx` | Modificar (simplificar hero, QR creator primero) |
+| `src/components/landing/QRCreatorPublic.tsx` | Modificar (rediseno con pasos numerados, layout 2 paneles) |
+
+### Detalles de implementacion
+
+**Badge de paso numerado (componente inline):**
+```text
+[1] Completa el contenido
+```
+Un circulo de 28x28px con el numero, color de fondo `bg-primary/10`, texto `text-primary`, font-bold. Titulo del paso en `text-lg font-semibold`.
+
+**Layout del QR Creator:**
+```text
++------------------------------------------+------------------+
+|  [1] Completa el contenido               | [3] Descarga     |
+|  [input URL .........................]   |                  |
+|  ─────────────────────────────────────   |  +------------+  |
+|  [2] Disena tu codigo QR                 |  |            |  |
+|  (o)(o)(o)(o)(o) [picker] [#hex]         |  |   QR IMG   |  |
+|  ─────────────────────────────────────   |  |            |  |
+|  > UTM Builder (colapsable)              |  +------------+  |
+|                                          |                  |
+|                                          | [Descargar QR]   |
++------------------------------------------+------------------+
+```
+
+**HeroSection simplificado:**
+```text
+[Navbar fijo]
+                    Crea tu codigo QR
+         Genera QRs dinamicos, editables y con analytics
++-------------------------------------------------------+
+|              QR Creator (layout 2 paneles)             |
++-------------------------------------------------------+
+```
+
+No se modifica ninguna logica de negocio (download, auth check, sessionStorage, UTM builder). Solo cambia la estructura visual y el orden de los elementos.
+
