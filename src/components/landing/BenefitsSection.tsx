@@ -41,43 +41,31 @@ const useCases = [
     icon: Utensils,
     title: "Restaurantes y bares",
     description: "Menús digitales actualizables al instante. Cambiá platos y precios sin reimprimir.",
-    bgClass: "bg-blue-50 dark:bg-blue-950/30",
-    iconClass: "text-blue-600 dark:text-blue-400",
   },
   {
     icon: Store,
     title: "Comercios y retail",
     description: "Promociones en vidrieras, catálogos de productos y programas de fidelización.",
-    bgClass: "bg-teal-50 dark:bg-teal-950/30",
-    iconClass: "text-teal-600 dark:text-teal-400",
   },
   {
     icon: Megaphone,
     title: "Marketing y publicidad",
     description: "Flyers, carteles y packaging con QRs que llevan a landing pages medibles.",
-    bgClass: "bg-orange-50 dark:bg-orange-950/30",
-    iconClass: "text-orange-600 dark:text-orange-400",
   },
   {
     icon: Building2,
     title: "Empresas y oficinas",
     description: "Tarjetas de presentación digitales, acceso a WiFi y formularios internos.",
-    bgClass: "bg-purple-50 dark:bg-purple-950/30",
-    iconClass: "text-purple-600 dark:text-purple-400",
   },
   {
     icon: GraduationCap,
     title: "Educación",
     description: "Material complementario, encuestas y recursos descargables para alumnos.",
-    bgClass: "bg-green-50 dark:bg-green-950/30",
-    iconClass: "text-green-600 dark:text-green-400",
   },
   {
     icon: Ticket,
     title: "Eventos",
     description: "Entradas digitales, agendas interactivas y feedback post-evento.",
-    bgClass: "bg-rose-50 dark:bg-rose-950/30",
-    iconClass: "text-rose-600 dark:text-rose-400",
   },
 ];
 
@@ -130,10 +118,10 @@ export function BenefitsSection() {
           {useCases.map((useCase, index) => (
             <div
               key={index}
-              className={`p-6 rounded-3xl ${useCase.bgClass} hover:scale-[1.02] transition-transform duration-300`}
+              className="p-6 rounded-xl bg-card border shadow-sm hover:shadow-md transition-all duration-300"
             >
-              <div className="mb-4">
-                <useCase.icon className={`w-10 h-10 ${useCase.iconClass}`} />
+              <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center mb-4">
+                <useCase.icon className="w-5 h-5 text-primary-foreground" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 {useCase.title}
