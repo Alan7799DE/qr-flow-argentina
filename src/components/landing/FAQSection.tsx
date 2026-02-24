@@ -51,19 +51,22 @@ export function FAQSection() {
           </p>
         </div>
 
-        {/* FAQ Accordion */}
-        <Accordion type="single" collapsible className="w-full">
-          {faqs.map((faq, index) => (
-            <AccordionItem key={index} value={`item-${index}`} className="border-b">
-              <AccordionTrigger className="text-left font-medium text-foreground hover:text-primary py-6">
-                {faq.question}
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground pb-6">
-                {faq.answer}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        {/* FAQ Accordion in container card */}
+        <div className="bg-card rounded-2xl border p-8 relative overflow-hidden">
+          <HelpCircle className="absolute -right-8 -bottom-8 w-48 h-48 text-muted-foreground/5 pointer-events-none" />
+          <Accordion type="single" collapsible className="w-full relative z-10">
+            {faqs.map((faq, index) => (
+              <AccordionItem key={index} value={`item-${index}`} className="border-b last:border-b-0">
+                <AccordionTrigger className="text-left font-medium text-foreground hover:text-primary py-6">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-6">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
       </div>
     </section>
   );

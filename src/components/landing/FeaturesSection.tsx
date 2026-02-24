@@ -1,30 +1,33 @@
 import { QrCode, BarChart3, Zap, Edit, Download, Shield, Link2, RefreshCw } from "lucide-react";
 
-const features = [
+const featuredItems = [
   {
     icon: Edit,
     title: "URLs editables",
-    description: "Cambiá el destino de tus QRs en cualquier momento sin tener que reimprimir.",
+    description: "Cambiá el destino de tus QRs en cualquier momento sin tener que reimprimir. Perfecto para promociones, menús y campañas que evolucionan.",
   },
   {
     icon: BarChart3,
     title: "Analytics detallados",
-    description: "Medí escaneos por día, dispositivo, ubicación y más métricas clave.",
+    description: "Medí escaneos por día, dispositivo, ubicación y más métricas clave. Tomá decisiones basadas en datos reales.",
   },
+];
+
+const compactItems = [
   {
     icon: Download,
     title: "Descarga en PNG/SVG",
     description: "Exportá tus QRs en alta resolución para impresión o uso digital.",
   },
   {
-    icon: Link2,
-    title: "UTM Builder",
-    description: "Agregá parámetros UTM automáticamente para trackear campañas en Google Analytics.",
-  },
-  {
     icon: RefreshCw,
     title: "Slugs personalizados",
     description: "Creá URLs amigables y regeneralas cuando quieras.",
+  },
+  {
+    icon: Link2,
+    title: "UTM Builder",
+    description: "Agregá parámetros UTM automáticamente para trackear campañas.",
   },
   {
     icon: Shield,
@@ -51,20 +54,40 @@ export function FeaturesSection() {
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {features.map((feature, index) => (
+        {/* Featured - 2 big cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {featuredItems.map((feature, index) => (
             <div
               key={index}
-              className="group p-6 rounded-2xl bg-card border shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              className="p-8 rounded-2xl bg-card border border-l-4 border-l-primary shadow-sm hover:shadow-md transition-shadow duration-300"
             >
-              <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center mb-5 shadow-md group-hover:shadow-glow transition-shadow">
+              <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center mb-5 shadow-md">
                 <feature.icon className="w-6 h-6 text-primary-foreground" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 {feature.title}
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground leading-relaxed">
+                {feature.description}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Compact - 4 small cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {compactItems.map((feature, index) => (
+            <div
+              key={index}
+              className="p-5 rounded-xl bg-muted/50 hover:bg-muted/80 transition-colors duration-300"
+            >
+              <div className="flex items-center gap-2.5 mb-3">
+                <feature.icon className="w-5 h-5 text-primary shrink-0" />
+                <h3 className="text-sm font-semibold text-foreground">
+                  {feature.title}
+                </h3>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {feature.description}
               </p>
             </div>
