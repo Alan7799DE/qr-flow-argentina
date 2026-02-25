@@ -25,6 +25,7 @@ import AdminPlans from "./pages/admin/AdminPlans";
 import AdminConfig from "./pages/admin/AdminConfig";
 import AdminWebhooks from "./pages/admin/AdminWebhooks";
 import AdminQRCodes from "./pages/admin/AdminQRCodes";
+import AdminDeletedUsers from "./pages/admin/AdminDeletedUsers";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<AdminUsers />} />
+              <Route path="deleted-users" element={<AdminDeletedUsers />} />
               <Route path="plans" element={<AdminPlans />} />
               <Route path="qr-codes" element={<AdminQRCodes />} />
               <Route path="config" element={<AdminConfig />} />

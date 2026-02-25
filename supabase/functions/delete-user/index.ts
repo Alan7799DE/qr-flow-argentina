@@ -30,7 +30,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify caller
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -52,7 +51,6 @@ Deno.serve(async (req) => {
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check permissions: user can delete themselves, or admin can delete anyone
     const isSelf = user.id === targetUserId;
 
     if (!isSelf) {
@@ -70,7 +68,6 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Prevent deleting other admins
       const { data: targetRole } = await adminClient
         .from("user_roles")
         .select("role")
@@ -86,19 +83,41 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Fetch target user info for the log
+    const { data: targetProfile } = await adminClient
+      .from("profiles")
+      .select("email, full_name")
+      .eq("user_id", targetUserId)
+      .maybeSingle();
+
+    // Count QRs
+    const { count: qrCount } = await adminClient
+      .from("qr_codes")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", targetUserId);
+
+    // Log the deletion before deleting data
+    await adminClient.from("deleted_users_log").insert({
+      user_id: targetUserId,
+      email: targetProfile?.email || "unknown",
+      full_name: targetProfile?.full_name || null,
+      qr_count: qrCount || 0,
+      deleted_by: user.id,
+      deleted_by_email: user.email || "unknown",
+      reason: isSelf ? "self_delete" : "admin_delete",
+    });
+
     // Delete related data in order
-    await adminClient.from("qr_scan_events")
-      .delete()
-      .in("qr_code_id", 
-        (await adminClient.from("qr_codes").select("id").eq("user_id", targetUserId)).data?.map(q => q.id) || []
-      );
+    const qrIds = (await adminClient.from("qr_codes").select("id").eq("user_id", targetUserId)).data?.map(q => q.id) || [];
+    if (qrIds.length > 0) {
+      await adminClient.from("qr_scan_events").delete().in("qr_code_id", qrIds);
+    }
     await adminClient.from("qr_codes").delete().eq("user_id", targetUserId);
     await adminClient.from("subscriptions").delete().eq("user_id", targetUserId);
     await adminClient.from("email_logs").delete().eq("user_id", targetUserId);
     await adminClient.from("user_roles").delete().eq("user_id", targetUserId);
     await adminClient.from("profiles").delete().eq("user_id", targetUserId);
 
-    // Delete from auth.users
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(targetUserId);
     if (deleteError) {
       console.error("Error deleting auth user:", deleteError);
