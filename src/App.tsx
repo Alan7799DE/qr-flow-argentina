@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -26,44 +28,66 @@ import AdminQRCodes from "./pages/admin/AdminQRCodes";
 
 const queryClient = new QueryClient();
 
+// Handles OAuth redirect after Google sign-in
+function OAuthRedirectHandler({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") {
+        const redirectPath = sessionStorage.getItem("oauth_redirect");
+        if (redirectPath) {
+          sessionStorage.removeItem("oauth_redirect");
+          navigate(redirectPath);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  return <>{children}</>;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          
-          {/* Dashboard routes */}
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="create" element={<CreateQR />} />
-            <Route path="qr/:id" element={<QRDetail />} />
-            <Route path="billing" element={<Billing />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="trash" element={<Trash />} />
-          </Route>
+        <OAuthRedirectHandler>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            
+            {/* Dashboard routes */}
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="create" element={<CreateQR />} />
+              <Route path="qr/:id" element={<QRDetail />} />
+              <Route path="billing" element={<Billing />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="trash" element={<Trash />} />
+            </Route>
 
-          {/* Admin routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="plans" element={<AdminPlans />} />
-            <Route path="qr-codes" element={<AdminQRCodes />} />
-            <Route path="config" element={<AdminConfig />} />
-            <Route path="webhooks" element={<AdminWebhooks />} />
-          </Route>
+            {/* Admin routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="plans" element={<AdminPlans />} />
+              <Route path="qr-codes" element={<AdminQRCodes />} />
+              <Route path="config" element={<AdminConfig />} />
+              <Route path="webhooks" element={<AdminWebhooks />} />
+            </Route>
 
-          {/* QR Redirect and Activation */}
-          <Route path="/r/:slug" element={<RedirectPage />} />
-          <Route path="/activate/:slug" element={<ActivatePage />} />
+            {/* QR Redirect and Activation */}
+            <Route path="/r/:slug" element={<RedirectPage />} />
+            <Route path="/activate/:slug" element={<ActivatePage />} />
 
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </OAuthRedirectHandler>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
