@@ -1,10 +1,12 @@
+import { useState, useEffect, useRef } from "react";
 import { QrCode, TrendingUp, Eye, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { useQRCodes } from "@/hooks/useQRCodes";
+import { useQRCodes, useCreateQR } from "@/hooks/useQRCodes";
 import { useAllQRStats } from "@/hooks/useScanStats";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DownloadQRDialog } from "@/components/dashboard/DownloadQRDialog";
 
 const statusColors = {
   trial_active: "bg-warning/10 text-warning",
@@ -23,6 +25,76 @@ const statusLabels = {
 export default function Dashboard() {
   const { data: qrCodes, isLoading: loadingQRs } = useQRCodes();
   const { data: stats, isLoading: loadingStats } = useAllQRStats();
+  const createQR = useCreateQR();
+  const pendingProcessed = useRef(false);
+
+  const [downloadDialog, setDownloadDialog] = useState<{
+    open: boolean;
+    url: string;
+    color: string;
+    name: string;
+  }>({ open: false, url: "", color: "#000000", name: "" });
+
+  // Auto-create QR from pending sessionStorage data (landing -> auth -> dashboard flow)
+  useEffect(() => {
+    if (pendingProcessed.current) return;
+    const pendingUrl = sessionStorage.getItem("pending_qr_url");
+    if (!pendingUrl) return;
+
+    pendingProcessed.current = true;
+
+    const pendingColor = sessionStorage.getItem("pending_qr_color") || "#000000";
+    const utmSource = sessionStorage.getItem("pending_qr_utm_source") || undefined;
+    const utmMedium = sessionStorage.getItem("pending_qr_utm_medium") || undefined;
+    const utmCampaign = sessionStorage.getItem("pending_qr_utm_campaign") || undefined;
+
+    // Clean up
+    sessionStorage.removeItem("pending_qr_url");
+    sessionStorage.removeItem("pending_qr_color");
+    sessionStorage.removeItem("pending_qr_utm_source");
+    sessionStorage.removeItem("pending_qr_utm_medium");
+    sessionStorage.removeItem("pending_qr_utm_campaign");
+
+    // Auto-generate name from domain
+    let name = "QR - Mi sitio";
+    const finalUrl = pendingUrl.startsWith("http") ? pendingUrl : `https://${pendingUrl}`;
+    try {
+      const parsed = new URL(finalUrl);
+      name = `QR - ${parsed.hostname}`;
+    } catch {
+      // keep default name
+    }
+
+    // Build URL with UTM params
+    let destinationWithUtm = finalUrl;
+    try {
+      const urlObj = new URL(finalUrl);
+      if (utmSource) urlObj.searchParams.set("utm_source", utmSource);
+      if (utmMedium) urlObj.searchParams.set("utm_medium", utmMedium);
+      if (utmCampaign) urlObj.searchParams.set("utm_campaign", utmCampaign);
+      destinationWithUtm = urlObj.toString();
+    } catch {
+      // keep original
+    }
+
+    createQR.mutateAsync({
+      name,
+      destination_url: finalUrl,
+      color: pendingColor,
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      utm_campaign: utmCampaign,
+    }).then(() => {
+      setDownloadDialog({
+        open: true,
+        url: destinationWithUtm,
+        color: pendingColor,
+        name,
+      });
+    }).catch(() => {
+      // Error handled by mutation
+    });
+  }, []);
 
   const statCards = [
     { label: "QRs activos", value: stats?.activeQRs ?? 0, icon: QrCode, color: "primary" },
@@ -33,6 +105,15 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Download Format Dialog */}
+      <DownloadQRDialog
+        open={downloadDialog.open}
+        onOpenChange={(open) => setDownloadDialog((prev) => ({ ...prev, open }))}
+        destinationUrl={downloadDialog.url}
+        color={downloadDialog.color}
+        fileName={downloadDialog.name}
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
