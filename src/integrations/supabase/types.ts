@@ -41,6 +41,42 @@ export type Database = {
         }
         Relationships: []
       }
+      deleted_users_log: {
+        Row: {
+          deleted_at: string
+          deleted_by: string
+          deleted_by_email: string
+          email: string
+          full_name: string | null
+          id: string
+          qr_count: number
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by: string
+          deleted_by_email: string
+          email: string
+          full_name?: string | null
+          id?: string
+          qr_count?: number
+          reason?: string
+          user_id: string
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by?: string
+          deleted_by_email?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          qr_count?: number
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           email_type: string

@@ -6,6 +6,7 @@ import { NavLink } from "@/components/NavLink";
 import { 
   LayoutDashboard, 
   Users, 
+  UserX,
   CreditCard, 
   Settings, 
   Webhook,
@@ -56,6 +57,7 @@ export default function AdminLayout() {
   const navItems = [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
     { to: "/admin/users", icon: Users, label: "Usuarios" },
+    { to: "/admin/deleted-users", icon: UserX, label: "Eliminados" },
     { to: "/admin/qr-codes", icon: QrCode, label: "Códigos QR" },
     { to: "/admin/plans", icon: CreditCard, label: "Planes" },
     { to: "/admin/config", icon: Settings, label: "Configuración" },
