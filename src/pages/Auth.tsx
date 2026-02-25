@@ -155,6 +155,10 @@ export default function Auth() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
+      // Save redirect path so we can navigate after OAuth callback
+      const redirectTo = searchParams.get("redirect") || "/dashboard";
+      sessionStorage.setItem("oauth_redirect", redirectTo);
+
       const { error } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
