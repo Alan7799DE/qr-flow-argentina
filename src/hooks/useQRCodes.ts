@@ -348,6 +348,7 @@ export function useUpdateQR() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["qr-codes"] });
       queryClient.invalidateQueries({ queryKey: ["qr-codes", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["all-qr-stats"] });
       toast({
         title: "QR actualizado",
         description: "Los cambios fueron guardados.",
@@ -380,6 +381,7 @@ export function useDeleteQR() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["qr-codes"] });
       queryClient.invalidateQueries({ queryKey: ["qr-codes-deleted"] });
+      queryClient.invalidateQueries({ queryKey: ["all-qr-stats"] });
       toast({
         title: "QR movido a papelera",
         description: "Podés restaurarlo durante los próximos 7 días.",
@@ -411,6 +413,7 @@ export function useRestoreQR() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["qr-codes"] });
       queryClient.invalidateQueries({ queryKey: ["qr-codes-deleted"] });
+      queryClient.invalidateQueries({ queryKey: ["all-qr-stats"] });
       toast({
         title: "QR restaurado",
         description: "El código QR fue restaurado exitosamente.",
