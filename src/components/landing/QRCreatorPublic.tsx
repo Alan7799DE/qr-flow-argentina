@@ -75,7 +75,7 @@ export function QRCreatorPublic() {
       if (utmSource) sessionStorage.setItem("pending_qr_utm_source", utmSource);
       if (utmMedium) sessionStorage.setItem("pending_qr_utm_medium", utmMedium);
       if (utmCampaign) sessionStorage.setItem("pending_qr_utm_campaign", utmCampaign);
-      navigate("/auth?mode=signup&redirect=/dashboard/create");
+      navigate("/auth?mode=signup&redirect=/dashboard");
       return;
     }
 
