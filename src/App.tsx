@@ -15,6 +15,7 @@ import QRDetail from "./pages/dashboard/QRDetail";
 import Billing from "./pages/dashboard/Billing";
 import Settings from "./pages/dashboard/Settings";
 import Trash from "./pages/dashboard/Trash";
+import Stats from "./pages/dashboard/Stats";
 import ActivatePage from "./pages/ActivatePage";
 import RedirectPage from "./pages/RedirectPage";
 import NotFound from "./pages/NotFound";
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="create" element={<CreateQR />} />
               <Route path="qr/:id" element={<QRDetail />} />
               <Route path="billing" element={<Billing />} />
+              <Route path="stats" element={<Stats />} />
               <Route path="settings" element={<Settings />} />
               <Route path="trash" element={<Trash />} />
             </Route>

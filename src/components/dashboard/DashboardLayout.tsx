@@ -13,7 +13,8 @@ import {
   X,
   Shield,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -21,8 +22,9 @@ import { useIsAdmin } from "@/hooks/useAdmin";
 import { useSubscription } from "@/hooks/useSubscription";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: LayoutDashboard, label: "Mis QRs", path: "/dashboard" },
   { icon: Plus, label: "Crear QR", path: "/dashboard/create" },
+  { icon: BarChart3, label: "Estadísticas", path: "/dashboard/stats" },
   { icon: CreditCard, label: "Facturación", path: "/dashboard/billing" },
   { icon: Settings, label: "Configuración", path: "/dashboard/settings" },
   { icon: Trash2, label: "Papelera", path: "/dashboard/trash" },
