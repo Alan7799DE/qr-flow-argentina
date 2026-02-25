@@ -98,8 +98,8 @@ export default function Dashboard() {
 
   const statCards = [
     { label: "QRs activos", value: stats?.activeQRs ?? 0, icon: QrCode, color: "primary" },
-    { label: "Escaneos hoy", value: stats?.scansToday ?? 0, icon: Eye, color: "accent" },
-    { label: "Escaneos 7 días", value: stats?.scans7d ?? 0, icon: TrendingUp, color: "success" },
+    { label: "Escaneos totales hoy", value: stats?.scansToday ?? 0, icon: Eye, color: "accent" },
+    { label: "Escaneos totales 7 días", value: stats?.scans7d ?? 0, icon: TrendingUp, color: "success" },
     { label: "Próximo vencimiento", value: stats?.nextExpiry ?? "-", icon: Clock, color: "warning" },
   ];
 
