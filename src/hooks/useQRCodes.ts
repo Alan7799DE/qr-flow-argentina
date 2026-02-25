@@ -271,6 +271,7 @@ export function useCreateQR() {
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["qr-codes"] });
+      queryClient.invalidateQueries({ queryKey: ["all-qr-stats"] });
       toast({
         title: "¡QR creado!",
         description: "Tu código QR fue creado exitosamente.",
