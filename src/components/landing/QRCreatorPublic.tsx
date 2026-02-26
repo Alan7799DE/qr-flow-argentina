@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Link2, Download, QrCode, Wand2, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import QRCodeLib from "qrcode";
+import { AuthDialog } from "./AuthDialog";
 
 const PRESET_COLORS = [
   { value: "#000000", label: "Negro" },
@@ -33,6 +34,7 @@ export function QRCreatorPublic() {
   const [utmMedium, setUtmMedium] = useState("");
   const [utmCampaign, setUtmCampaign] = useState("");
   const [qrPreview, setQrPreview] = useState("");
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   const buildFinalUrl = useCallback(() => {
     if (!url) return "";
@@ -66,16 +68,21 @@ export function QRCreatorPublic() {
     return () => clearTimeout(t);
   }, [buildFinalUrl, color]);
 
+  const savePendingQRData = () => {
+    sessionStorage.setItem("pending_qr_url", url);
+    sessionStorage.setItem("pending_qr_color", color);
+    sessionStorage.setItem("pending_qr_auto_download", "true");
+    if (utmSource) sessionStorage.setItem("pending_qr_utm_source", utmSource);
+    if (utmMedium) sessionStorage.setItem("pending_qr_utm_medium", utmMedium);
+    if (utmCampaign) sessionStorage.setItem("pending_qr_utm_campaign", utmCampaign);
+  };
+
   const handleDownload = async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      sessionStorage.setItem("pending_qr_url", url);
-      sessionStorage.setItem("pending_qr_color", color);
-      if (utmSource) sessionStorage.setItem("pending_qr_utm_source", utmSource);
-      if (utmMedium) sessionStorage.setItem("pending_qr_utm_medium", utmMedium);
-      if (utmCampaign) sessionStorage.setItem("pending_qr_utm_campaign", utmCampaign);
-      navigate("/auth?mode=signup&redirect=/dashboard");
+      savePendingQRData();
+      setShowAuthDialog(true);
       return;
     }
 
@@ -94,6 +101,12 @@ export function QRCreatorPublic() {
     } catch {
       // silent
     }
+  };
+
+  const handleAuthenticated = () => {
+    savePendingQRData();
+    setShowAuthDialog(false);
+    navigate("/dashboard");
   };
 
   return (
@@ -240,6 +253,12 @@ export function QRCreatorPublic() {
           </Button>
         </div>
       </div>
+
+      <AuthDialog
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        onAuthenticated={handleAuthenticated}
+      />
     </div>
   );
 }
