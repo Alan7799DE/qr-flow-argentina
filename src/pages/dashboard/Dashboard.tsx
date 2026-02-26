@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { QrCode, Plus, Search, Download, ExternalLink, MoreVertical, Eye, Pencil, Trash2, Link2 } from "lucide-react";
+import { QrCode, Plus, Search, Download, MoreVertical, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
@@ -291,121 +291,87 @@ export default function Dashboard() {
           <p className="text-muted-foreground">No se encontraron QRs con "{search}"</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filteredAndSorted.map((qr) => (
             <div
               key={qr.id}
-              className="bg-card rounded-xl border hover:shadow-md transition-shadow overflow-hidden"
+              className="bg-card rounded-xl border hover:shadow-md transition-shadow flex flex-col"
             >
-              <div className="flex flex-col sm:flex-row">
-                {/* QR Preview */}
-                <div className="sm:w-44 sm:min-h-[200px] p-4 flex flex-col items-center justify-center gap-3 bg-muted/30 border-b sm:border-b-0 sm:border-r">
-                  <div className="w-32 h-32 sm:w-36 sm:h-36">
-                    <QRPreviewImage url={qr.slug} color={qr.color || "#000000"} />
-                  </div>
-                  <div className="flex flex-col gap-2 w-full px-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-xs"
-                      onClick={() => navigate(`/dashboard/qr/${qr.id}`)}
-                    >
-                      <Eye className="w-3.5 h-3.5 mr-1" />
-                      {qr.total_scans_cached} Escaneos
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="w-full text-xs"
-                      onClick={() =>
-                        setDownloadDialog({
-                          open: true,
-                          url: qr.destination_url,
-                          color: qr.color || "#000000",
-                          name: qr.name,
-                        })
-                      }
-                    >
-                      <Download className="w-3.5 h-3.5 mr-1" />
-                      Descargar
-                    </Button>
-                  </div>
+              {/* Top: QR Preview */}
+              <div className="p-5 pb-3 flex items-start gap-4">
+                <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-white border">
+                  <QRPreviewImage url={qr.slug} color={qr.color || "#000000"} size={96} />
                 </div>
-
-                {/* Info */}
-                <div className="flex-1 p-4 sm:p-5 relative">
-                  {/* Menu */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="absolute top-3 right-3 h-8 w-8">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => navigate(`/dashboard/qr/${qr.id}`)}>
-                        <Pencil className="w-4 h-4 mr-2" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => setDeleteId(qr.id)}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  <div className="space-y-3 pr-8">
-                    {/* Status + Type */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className={statusColors[qr.status]}>
-                        {statusLabels[qr.status]}
-                      </Badge>
-                      <span className="text-xs text-primary font-medium flex items-center gap-1">
-                        <Link2 className="w-3 h-3" />
-                        URL del sitio web
-                      </span>
-                    </div>
-
-                    {/* Name */}
-                    <h3 className="font-bold text-lg text-foreground leading-tight">
-                      {qr.name}
-                    </h3>
-
-                    {/* Updated date */}
-                    <p className="text-xs text-muted-foreground">
-                      Actualizado {new Date(qr.updated_at).toLocaleDateString("es-AR", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-
-                    {/* Short link */}
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Link2 className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate font-mono text-xs">
-                        {window.location.host}/r/{qr.slug}
-                      </span>
-                    </div>
-
-                    {/* Destination */}
-                    <div className="flex items-center gap-2 text-sm">
-                      <ExternalLink className="w-3.5 h-3.5 text-primary shrink-0" />
-                      <a
-                        href={qr.destination_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline truncate text-xs"
-                      >
-                        {qr.destination_url}
-                      </a>
-                    </div>
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0.5 ${statusColors[qr.status]}`}>
+                      {statusLabels[qr.status]}
+                    </Badge>
                   </div>
+                  <h3 className="font-semibold text-foreground leading-snug truncate" title={qr.name}>
+                    {qr.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(qr.created_at).toLocaleDateString("es-AR", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <p className="text-xs font-medium text-foreground">
+                    {qr.total_scans_cached} escaneos
+                  </p>
                 </div>
+                {/* Menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => navigate(`/dashboard/qr/${qr.id}`)}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => setDeleteId(qr.id)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Actions */}
+              <div className="px-5 pb-4 pt-1 flex gap-2 mt-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 text-xs"
+                  onClick={() => navigate(`/dashboard/qr/${qr.id}`)}
+                >
+                  <Eye className="w-3.5 h-3.5 mr-1" />
+                  Ver detalle
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="flex-1 text-xs"
+                  onClick={() =>
+                    setDownloadDialog({
+                      open: true,
+                      url: qr.destination_url,
+                      color: qr.color || "#000000",
+                      name: qr.name,
+                    })
+                  }
+                >
+                  <Download className="w-3.5 h-3.5 mr-1" />
+                  Descargar
+                </Button>
               </div>
             </div>
           ))}
