@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,11 +21,14 @@ interface AuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAuthenticated: () => void;
+  defaultSignup?: boolean;
 }
 
-export function AuthDialog({ open, onOpenChange, onAuthenticated }: AuthDialogProps) {
+export function AuthDialog({ open, onOpenChange, onAuthenticated, defaultSignup = true }: AuthDialogProps) {
   const { toast } = useToast();
-  const [isSignup, setIsSignup] = useState(true);
+  const [isSignup, setIsSignup] = useState(defaultSignup);
+
+  useEffect(() => { setIsSignup(defaultSignup); }, [defaultSignup]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

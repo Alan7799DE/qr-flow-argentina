@@ -1,10 +1,17 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { QrCode, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { AuthDialog } from "./AuthDialog";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authSignup, setAuthSignup] = useState(false);
+  const navigate = useNavigate();
+
+  const openLogin = () => { setAuthSignup(false); setAuthOpen(true); };
+  const openSignup = () => { setAuthSignup(true); setAuthOpen(true); };
 
   return (
     <header>
@@ -34,11 +41,11 @@ export function Navbar() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" asChild>
-              <Link to="/auth">Iniciar sesión</Link>
+            <Button variant="ghost" onClick={openLogin}>
+              Iniciar sesión
             </Button>
-            <Button variant="gradient" asChild>
-              <Link to="/auth?mode=signup">Crear usuario</Link>
+            <Button variant="gradient" onClick={openSignup}>
+              Crear usuario
             </Button>
           </div>
 
@@ -67,11 +74,11 @@ export function Navbar() {
                 FAQ
               </a>
               <div className="flex flex-col gap-2 pt-4 border-t">
-                <Button variant="ghost" asChild className="justify-start">
-                  <Link to="/auth">Iniciar sesión</Link>
+                <Button variant="ghost" className="justify-start" onClick={openLogin}>
+                  Iniciar sesión
                 </Button>
-                <Button variant="gradient" asChild>
-                  <Link to="/auth?mode=signup">Crear usuario</Link>
+                <Button variant="gradient" onClick={openSignup}>
+                  Crear usuario
                 </Button>
               </div>
             </div>
@@ -79,6 +86,13 @@ export function Navbar() {
         )}
       </div>
     </nav>
+
+    <AuthDialog
+      open={authOpen}
+      onOpenChange={setAuthOpen}
+      onAuthenticated={() => { setAuthOpen(false); navigate("/dashboard"); }}
+      defaultSignup={authSignup}
+    />
     </header>
   );
 }
