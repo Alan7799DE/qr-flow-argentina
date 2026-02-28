@@ -257,6 +257,38 @@ export type Database = {
         }
         Relationships: []
       }
+      qr_daily_stats: {
+        Row: {
+          created_at: string
+          id: string
+          qr_code_id: string
+          scan_count: number
+          scan_date: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          qr_code_id: string
+          scan_count?: number
+          scan_date: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          qr_code_id?: string
+          scan_count?: number
+          scan_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_daily_stats_qr_code_id_fkey"
+            columns: ["qr_code_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qr_scan_events: {
         Row: {
           device_type: string | null

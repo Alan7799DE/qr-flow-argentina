@@ -49,9 +49,9 @@ serve(async (req) => {
     );
 
     // Fetch QR code by slug
-    const { data: qr, error: qrError } = await supabase
+      const { data: qr, error: qrError } = await supabase
       .from("qr_codes")
-      .select("id, destination_url, status, deleted_at, utm_source, utm_medium, utm_campaign, utm_term, utm_content, total_scans_cached")
+      .select("id, destination_url, status, deleted_at, utm_source, utm_medium, utm_campaign, utm_term, utm_content")
       .eq("slug", slug)
       .maybeSingle();
 
@@ -99,23 +99,9 @@ serve(async (req) => {
 
       if (insertError) {
         console.error("[redirect] Error inserting scan event:", insertError);
+      } else {
+        console.log(`[redirect] Scan recorded for QR: ${qr.id}`);
       }
-
-      // Update cached count
-      const newCount = (qr.total_scans_cached || 0) + 1;
-      const { error: updateError } = await supabase
-        .from("qr_codes")
-        .update({
-          total_scans_cached: newCount,
-          last_scan_at: new Date().toISOString(),
-        })
-        .eq("id", qr.id);
-
-      if (updateError) {
-        console.error("[redirect] Error updating scan count:", updateError);
-      }
-
-      console.log(`[redirect] Scan recorded for QR: ${qr.id}, count: ${newCount}`);
     } catch (err) {
       console.error("[redirect] Error recording scan:", err);
     }

@@ -228,11 +228,10 @@ export default function QRDetail() {
   }
 
   const statCards = [
-    { label: "24h", value: stats?.last24h ?? 0 },
     { label: "7 días", value: stats?.last7d ?? 0 },
     { label: "14 días", value: stats?.last14d ?? 0 },
-    { label: "21 días", value: stats?.last21d ?? 0 },
     { label: "30 días", value: stats?.last30d ?? 0 },
+    { label: "Total", value: stats?.total ?? 0 },
   ];
 
   return (
@@ -389,7 +388,7 @@ export default function QRDetail() {
           {/* Stats */}
           <div className="bg-card rounded-xl border p-6">
             <h3 className="font-semibold text-foreground mb-4">Estadísticas</h3>
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               {statCards.map((stat, i) => (
                 <div key={i} className="text-center p-3 rounded-lg bg-muted">
                   {loadingStats ? (
@@ -419,7 +418,7 @@ export default function QRDetail() {
                 );
               })}
             </div>
-            <p className="text-center text-xs text-muted-foreground mt-2">Últimos 30 días</p>
+            <p className="text-center text-xs text-muted-foreground mt-2">Últimos 30 días · Estadísticas actualizadas diariamente</p>
           </div>
 
           {/* Trial info - account level */}
