@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { QrCode, Plus, Search, Download, MoreVertical, Eye, Pencil, Trash2, Link as LinkIcon, ExternalLink, BarChart3, Palette } from "lucide-react";
+import { StyledQRCode, type QRDotStyle } from "@/components/dashboard/StyledQRCode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
@@ -32,8 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import QRCodeLib from "qrcode";
-
+import type { QRCode as QRCodeType } from "@/hooks/useQRCodes";
 const statusColors: Record<string, string> = {
   trial_active: "bg-warning/10 text-warning border-warning/30",
   active: "bg-success/10 text-success border-success/30",
@@ -48,21 +48,14 @@ const statusLabels: Record<string, string> = {
   expired: "Vencido",
 };
 
-function QRPreviewImage({ url, color, size = 140 }: { url: string; color: string; size?: number }) {
-  const [dataUrl, setDataUrl] = useState<string>("");
-
-  useEffect(() => {
-    const baseUrl = window.location.origin;
-    QRCodeLib.toDataURL(`${baseUrl}/r/${url}`, {
-      width: size,
-      margin: 1,
-      color: { dark: color || "#000000", light: "#ffffff" },
-      errorCorrectionLevel: "M",
-    }).then(setDataUrl).catch(() => {});
-  }, [url, color, size]);
-
-  if (!dataUrl) return <Skeleton className="w-full h-full" />;
-  return <img src={dataUrl} alt="QR Code" className="w-full h-full object-contain" />;
+function QRPreviewImage({ slug, color, dotStyle, size = 140 }: { slug: string; color: string; dotStyle?: string; size?: number }) {
+  const baseUrl = window.location.origin;
+  const url = `${baseUrl}/r/${slug}`;
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <StyledQRCode url={url} color={color || "#000000"} dotStyle={(dotStyle || "square") as QRDotStyle} size={size} />
+    </div>
+  );
 }
 
 function TrialBanner() {
@@ -100,8 +93,9 @@ export default function Dashboard() {
     open: boolean;
     url: string;
     color: string;
+    dotStyle: string;
     name: string;
-  }>({ open: false, url: "", color: "#000000", name: "" });
+  }>({ open: false, url: "", color: "#000000", dotStyle: "square", name: "" });
 
   // Auto-create QR from pending sessionStorage data (landing -> auth -> dashboard flow)
   useEffect(() => {
@@ -150,6 +144,7 @@ export default function Dashboard() {
         open: true,
         url: destinationWithUtm,
         color: pendingColor,
+        dotStyle: "square",
         name,
       });
     }).catch(() => {});
@@ -187,6 +182,7 @@ export default function Dashboard() {
         onOpenChange={(open) => setDownloadDialog((prev) => ({ ...prev, open }))}
         destinationUrl={downloadDialog.url}
         color={downloadDialog.color}
+        dotStyle={(downloadDialog.dotStyle || "square") as QRDotStyle}
         fileName={downloadDialog.name}
       />
 
@@ -303,7 +299,7 @@ export default function Dashboard() {
                   {/* Left: QR Preview + Scans + Download */}
                   <div className="sm:border-r p-5 flex flex-col items-center gap-3 sm:w-[200px] shrink-0">
                     <div className="w-36 h-36 rounded-lg overflow-hidden bg-white border">
-                      <QRPreviewImage url={qr.slug} color={qr.color || "#000000"} size={144} />
+                      <QRPreviewImage slug={qr.slug} color={qr.color || "#000000"} dotStyle={qr.dot_style} size={144} />
                     </div>
                     <div className="w-full rounded-lg border border-primary/30 bg-primary/5 px-4 py-2 flex items-center justify-center gap-2">
                       <BarChart3 className="w-4 h-4 text-primary" />
@@ -320,6 +316,7 @@ export default function Dashboard() {
                           open: true,
                           url: qr.destination_url,
                           color: qr.color || "#000000",
+                          dotStyle: qr.dot_style || "square",
                           name: qr.name,
                         })
                       }
@@ -389,7 +386,7 @@ export default function Dashboard() {
                         Editar contenido
                       </button>
                       <button
-                        onClick={() => navigate(`/dashboard/qr/${qr.id}`)}
+                        onClick={() => navigate(`/dashboard/qr/${qr.id}#personalizacion`)}
                         className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
                       >
                         <Palette className="w-4 h-4" />

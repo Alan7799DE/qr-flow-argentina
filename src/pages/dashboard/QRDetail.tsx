@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -19,14 +19,17 @@ import {
   Play,
   Copy,
   Check,
-  ExternalLink
+  ExternalLink,
+  Save
 } from "lucide-react";
 import { useQRCode, useUpdateQR, useDeleteQR, useRegenerateSlug } from "@/hooks/useQRCodes";
 import { useValidateUrl } from "@/hooks/useValidateUrl";
 import { useScanStats } from "@/hooks/useScanStats";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import QRCodeLib from "qrcode";
+import { StyledQRCode, type QRDotStyle } from "@/components/dashboard/StyledQRCode";
+import { DotStyleSelector } from "@/components/dashboard/DotStyleSelector";
+import { downloadStyledQR } from "@/components/dashboard/StyledQRCode";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +55,14 @@ const statusLabels = {
   paused: "Pausado",
   expired: "Vencido",
 };
+
+const PRESET_COLORS = [
+  { value: "#000000", label: "Negro" },
+  { value: "#2563eb", label: "Azul" },
+  { value: "#dc2626", label: "Rojo" },
+  { value: "#16a34a", label: "Verde" },
+  { value: "#7c3aed", label: "Violeta" },
+];
 
 function AccountTrialBanner() {
   const { data: profile } = useQuery({
@@ -90,7 +101,9 @@ function AccountTrialBanner() {
 export default function QRDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const customizationRef = useRef<HTMLDivElement>(null);
 
   const { data: qr, isLoading } = useQRCode(id || "");
   const { data: stats, isLoading: loadingStats } = useScanStats(id || "");
@@ -102,7 +115,11 @@ export default function QRDetail() {
   const [destinationUrl, setDestinationUrl] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [qrDataUrl, setQrDataUrl] = useState("");
+
+  // Customization state
+  const [editColor, setEditColor] = useState("#000000");
+  const [editDotStyle, setEditDotStyle] = useState<QRDotStyle>("square");
+  const [hasCustomizationChanges, setHasCustomizationChanges] = useState(false);
 
   const publicUrl = "https://creatuqr.lovable.app";
   const redirectUrl = qr ? `${publicUrl}/r/${qr.slug}` : "";
@@ -110,27 +127,43 @@ export default function QRDetail() {
   useEffect(() => {
     if (qr) {
       setDestinationUrl(qr.destination_url);
+      setEditColor(qr.color || "#000000");
+      setEditDotStyle((qr.dot_style || "square") as QRDotStyle);
     }
   }, [qr]);
 
+  // Scroll to customization section if hash is present
   useEffect(() => {
-    if (redirectUrl) {
-      QRCodeLib.toDataURL(redirectUrl, {
-        width: 300,
-        margin: 2,
-        color: {
-          dark: qr?.color || "#000000",
-          light: "#ffffff",
-        },
-      }).then(setQrDataUrl);
+    if (location.hash === "#personalizacion" && customizationRef.current) {
+      setTimeout(() => {
+        customizationRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
     }
-  }, [redirectUrl, qr?.color]);
+  }, [location.hash, qr]);
+
+  const handleCustomizationChange = (color: string, dotStyle: QRDotStyle) => {
+    setEditColor(color);
+    setEditDotStyle(dotStyle);
+    setHasCustomizationChanges(
+      color !== (qr?.color || "#000000") || dotStyle !== ((qr?.dot_style || "square") as QRDotStyle)
+    );
+  };
+
+  const handleSaveCustomization = async () => {
+    if (!qr) return;
+    await updateQR.mutateAsync({
+      id: qr.id,
+      color: editColor,
+      dot_style: editDotStyle,
+      expected_updated_at: qr.updated_at,
+    });
+    setHasCustomizationChanges(false);
+  };
 
   const [urlError, setUrlError] = useState("");
 
   const handleSaveUrl = async () => {
     if (!qr) return;
-    
     const finalUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
     const result = z.string().url("Ingresá una URL válida (ej: https://tusitio.com)").safeParse(finalUrl);
     if (!result.success) {
@@ -139,7 +172,6 @@ export default function QRDetail() {
     }
     setUrlError("");
 
-    // Validate URL reachability (non-blocking warning)
     const urlCheck = await checkUrlReachability(finalUrl);
     if (urlCheck && !urlCheck.reachable) {
       toast({
@@ -182,29 +214,13 @@ export default function QRDetail() {
 
   const handleDownload = async (format: "png" | "svg") => {
     if (!qr) return;
-
-    if (format === "png") {
-      const dataUrl = await QRCodeLib.toDataURL(redirectUrl, {
-        width: 1024,
-        margin: 4,
-        color: { dark: qr.color || "#000000", light: "#ffffff" },
-      });
-      const link = document.createElement("a");
-      link.download = `${qr.slug}.png`;
-      link.href = dataUrl;
-      link.click();
-    } else {
-      const svg = await QRCodeLib.toString(redirectUrl, {
-        type: "svg",
-        margin: 4,
-        color: { dark: qr.color || "#000000", light: "#ffffff" },
-      });
-      const blob = new Blob([svg], { type: "image/svg+xml" });
-      const link = document.createElement("a");
-      link.download = `${qr.slug}.svg`;
-      link.href = URL.createObjectURL(blob);
-      link.click();
-    }
+    await downloadStyledQR({
+      url: redirectUrl,
+      color: editColor,
+      dotStyle: editDotStyle,
+      format,
+      fileName: qr.slug,
+    });
   };
 
   if (isLoading) {
@@ -254,12 +270,13 @@ export default function QRDetail() {
         <div className="space-y-6">
           {/* QR Preview */}
           <div className="bg-card rounded-xl border p-6">
-            <div className="aspect-square max-w-[250px] mx-auto bg-white rounded-xl flex items-center justify-center p-4">
-              {qrDataUrl ? (
-                <img src={qrDataUrl} alt={`Código QR para ${qr.name}`} className="w-full h-full object-contain" />
-              ) : (
-                <QrCode className="w-16 h-16 text-muted-foreground/50" />
-              )}
+            <div className="max-w-[250px] mx-auto flex items-center justify-center">
+              <StyledQRCode
+                url={redirectUrl}
+                color={editColor}
+                dotStyle={editDotStyle}
+                size={250}
+              />
             </div>
 
             {/* Download buttons */}
@@ -286,15 +303,9 @@ export default function QRDetail() {
               disabled={updateQR.isPending}
             >
               {qr.status === "paused" ? (
-                <>
-                  <Play className="w-4 h-4" />
-                  Reactivar QR
-                </>
+                <><Play className="w-4 h-4" />Reactivar QR</>
               ) : (
-                <>
-                  <Pause className="w-4 h-4" />
-                  Pausar QR
-                </>
+                <><Pause className="w-4 h-4" />Pausar QR</>
               )}
             </Button>
 
@@ -319,21 +330,19 @@ export default function QRDetail() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Mover este QR a la papelera?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    El QR será pausado y movido a la papelera. Podrás restaurarlo dentro de los próximos 7 días. Después de ese plazo se eliminará permanentemente.
+                    El QR será pausado y movido a la papelera. Podrás restaurarlo dentro de los próximos 7 días.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>
-                    Mover a papelera
-                  </AlertDialogAction>
+                  <AlertDialogAction onClick={handleDelete}>Mover a papelera</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           </div>
         </div>
 
-        {/* Right Column - Stats and URL */}
+        {/* Right Column - Stats, URL, Customization */}
         <div className="lg:col-span-2 space-y-6">
           {/* Redirect URL */}
           <div className="bg-card rounded-xl border p-6">
@@ -373,8 +382,69 @@ export default function QRDetail() {
                 </Button>
               )}
             </div>
-            {urlError && (
-              <p className="text-sm text-destructive mt-2">{urlError}</p>
+            {urlError && <p className="text-sm text-destructive mt-2">{urlError}</p>}
+          </div>
+
+          {/* Customization Section */}
+          <div ref={customizationRef} id="personalizacion" className="bg-card rounded-xl border p-6 space-y-6">
+            <h3 className="font-semibold text-foreground">Personalización</h3>
+
+            {/* Color picker */}
+            <div className="space-y-2">
+              <Label>Color del QR</Label>
+              <div className="flex items-center gap-2">
+                {PRESET_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => handleCustomizationChange(c.value, editDotStyle)}
+                    className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                      editColor === c.value
+                        ? "border-primary scale-110 shadow-md"
+                        : "border-border hover:scale-105"
+                    }`}
+                    style={{ backgroundColor: c.value }}
+                    aria-label={c.label}
+                  />
+                ))}
+                <div className="relative ml-1">
+                  <input
+                    type="color"
+                    value={editColor}
+                    onChange={(e) => handleCustomizationChange(e.target.value, editDotStyle)}
+                    className="w-8 h-8 rounded-full cursor-pointer border border-border appearance-none bg-transparent [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0"
+                    aria-label="Color personalizado"
+                  />
+                </div>
+                <Input
+                  value={editColor}
+                  onChange={(e) => handleCustomizationChange(e.target.value, editDotStyle)}
+                  className="w-24 h-8 text-xs"
+                  placeholder="#000000"
+                  aria-label="Código hex"
+                />
+              </div>
+            </div>
+
+            {/* Dot style selector */}
+            <DotStyleSelector
+              value={editDotStyle}
+              onChange={(style) => handleCustomizationChange(editColor, style)}
+            />
+
+            {/* Save button */}
+            {hasCustomizationChanges && (
+              <Button
+                onClick={handleSaveCustomization}
+                disabled={updateQR.isPending}
+                className="w-full sm:w-auto"
+              >
+                {updateQR.isPending ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" />Guardando...</>
+                ) : (
+                  <><Save className="w-4 h-4" />Guardar cambios</>
+                )}
+              </Button>
             )}
           </div>
 
@@ -404,7 +474,6 @@ export default function QRDetail() {
             <p className="text-center text-xs text-muted-foreground mt-2">Estadísticas actualizadas diariamente</p>
           </div>
 
-          {/* Trial info - account level */}
           <AccountTrialBanner />
         </div>
       </div>

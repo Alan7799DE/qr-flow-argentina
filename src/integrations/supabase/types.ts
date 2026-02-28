@@ -191,6 +191,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           destination_url: string
+          dot_style: string | null
           id: string
           last_scan_at: string | null
           logo_url: string | null
@@ -214,6 +215,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           destination_url: string
+          dot_style?: string | null
           id?: string
           last_scan_at?: string | null
           logo_url?: string | null
@@ -237,6 +239,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           destination_url?: string
+          dot_style?: string | null
           id?: string
           last_scan_at?: string | null
           logo_url?: string | null
