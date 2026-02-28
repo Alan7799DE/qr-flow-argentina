@@ -227,13 +227,6 @@ export default function QRDetail() {
     );
   }
 
-  const statCards = [
-    { label: "7 días", value: stats?.last7d ?? 0 },
-    { label: "14 días", value: stats?.last14d ?? 0 },
-    { label: "30 días", value: stats?.last30d ?? 0 },
-    { label: "Total", value: stats?.total ?? 0 },
-  ];
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -387,38 +380,28 @@ export default function QRDetail() {
 
           {/* Stats */}
           <div className="bg-card rounded-xl border p-6">
-            <h3 className="font-semibold text-foreground mb-4">Estadísticas</h3>
-            <div className="grid grid-cols-4 gap-4">
-              {statCards.map((stat, i) => (
-                <div key={i} className="text-center p-3 rounded-lg bg-muted">
-                  {loadingStats ? (
-                    <Skeleton className="h-8 w-12 mx-auto" />
-                  ) : (
-                    <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
-                </div>
-              ))}
+            <h3 className="font-semibold text-foreground mb-4">Escaneos · Últimos 7 días</h3>
+            <div className="h-32 rounded-lg bg-muted/30 flex items-end justify-between p-4 gap-1" role="group" aria-label="Gráfico de escaneos diarios">
+              {loadingStats ? (
+                <Skeleton className="h-full w-full" />
+              ) : (
+                stats?.dailyScans.map((day, i) => {
+                  const maxCount = Math.max(...(stats.dailyScans.map(d => d.count)), 1);
+                  const height = (day.count / maxCount) * 100;
+                  return (
+                    <div
+                      key={i}
+                      className="flex-1 rounded-t bg-primary/60 transition-all hover:bg-primary"
+                      style={{ height: `${Math.max(height, 4)}%` }}
+                      title={`${day.date}: ${day.count} escaneos`}
+                      role="img"
+                      aria-label={`${day.date}: ${day.count} escaneos`}
+                    />
+                  );
+                })
+              )}
             </div>
-
-            {/* Chart placeholder */}
-            <div className="mt-6 h-32 rounded-lg bg-muted/30 flex items-end justify-between p-4 gap-1" role="group" aria-label="Gráfico de escaneos diarios">
-              {stats?.dailyScans.map((day, i) => {
-                const maxCount = Math.max(...stats.dailyScans.map(d => d.count), 1);
-                const height = (day.count / maxCount) * 100;
-                return (
-                  <div
-                    key={i}
-                    className="flex-1 rounded-t bg-primary/60 transition-all hover:bg-primary"
-                    style={{ height: `${Math.max(height, 4)}%` }}
-                    title={`${day.date}: ${day.count} escaneos`}
-                    role="img"
-                    aria-label={`${day.date}: ${day.count} escaneos`}
-                  />
-                );
-              })}
-            </div>
-            <p className="text-center text-xs text-muted-foreground mt-2">Últimos 30 días · Estadísticas actualizadas diariamente</p>
+            <p className="text-center text-xs text-muted-foreground mt-2">Estadísticas actualizadas diariamente</p>
           </div>
 
           {/* Trial info - account level */}
