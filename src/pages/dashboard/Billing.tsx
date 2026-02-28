@@ -172,7 +172,7 @@ export default function Billing() {
             <div className="flex-1">
               <h2 className="text-lg font-semibold text-foreground">Sin suscripción activa</h2>
               <p className="text-muted-foreground mt-1">
-                Tus QRs están en período de prueba. Elegí un plan para mantenerlos activos.
+                Tus QRs están en período de prueba. Suscribite con <span className="font-bold">Mercado Pago</span> para mantenerlos activos.
               </p>
             </div>
           </div>
