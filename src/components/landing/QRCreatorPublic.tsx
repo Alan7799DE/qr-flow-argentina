@@ -189,6 +189,7 @@ export function QRCreatorPublic() {
             >
               <Wand2 className="w-4 h-4" />
               UTM Builder
+              <span className="text-xs font-normal text-muted-foreground">(opcional)</span>
               {showUtm ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
 
