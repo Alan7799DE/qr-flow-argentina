@@ -93,7 +93,6 @@ serve(async (req) => {
         qr_code_id: qr.id,
         user_agent: userAgent?.substring(0, 500) || null,
         referer: referer?.substring(0, 500) || null,
-        ip_hash: null,
         device_type: deviceType,
         os: os,
       });
