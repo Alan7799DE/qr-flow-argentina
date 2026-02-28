@@ -261,7 +261,6 @@ export type Database = {
         Row: {
           device_type: string | null
           id: string
-          ip_hash: string | null
           os: string | null
           qr_code_id: string
           referer: string | null
@@ -271,7 +270,6 @@ export type Database = {
         Insert: {
           device_type?: string | null
           id?: string
-          ip_hash?: string | null
           os?: string | null
           qr_code_id: string
           referer?: string | null
@@ -281,7 +279,6 @@ export type Database = {
         Update: {
           device_type?: string | null
           id?: string
-          ip_hash?: string | null
           os?: string | null
           qr_code_id?: string
           referer?: string | null
