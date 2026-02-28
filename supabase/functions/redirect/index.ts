@@ -6,9 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const RATE_LIMIT_WINDOW_MINUTES = 5;
-const RATE_LIMIT_MAX_SCANS = 25;
-
 function parseUserAgent(ua: string | null): { deviceType: string; os: string } {
   if (!ua) return { deviceType: "unknown", os: "unknown" };
   const uaLower = ua.toLowerCase();
@@ -28,21 +25,6 @@ function parseUserAgent(ua: string | null): { deviceType: string; os: string } {
   }
 
   return { deviceType, os };
-}
-
-async function hashIP(ip: string): Promise<string> {
-  const IP_HASH_SECRET = Deno.env.get("IP_HASH_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(IP_HASH_SECRET),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(ip));
-  const hashArray = Array.from(new Uint8Array(signature));
-  return hashArray.slice(0, 16).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 serve(async (req) => {
@@ -103,64 +85,40 @@ serve(async (req) => {
     // Parse request info
     const userAgent = req.headers.get("user-agent");
     const referer = req.headers.get("referer");
-    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
     const { deviceType, os } = parseUserAgent(userAgent);
-    const ipHash = await hashIP(clientIP);
 
-    // Rate limiting: check recent scans from this IP for this QR
-    const windowStart = new Date();
-    windowStart.setMinutes(windowStart.getMinutes() - RATE_LIMIT_WINDOW_MINUTES);
+    // Record scan
+    try {
+      const { error: insertError } = await supabase.from("qr_scan_events").insert({
+        qr_code_id: qr.id,
+        user_agent: userAgent?.substring(0, 500) || null,
+        referer: referer?.substring(0, 500) || null,
+        ip_hash: null,
+        device_type: deviceType,
+        os: os,
+      });
 
-    const { count, error: countError } = await supabase
-      .from("qr_scan_events")
-      .select("id", { count: "exact", head: true })
-      .eq("qr_code_id", qr.id)
-      .eq("ip_hash", ipHash)
-      .gte("scanned_at", windowStart.toISOString());
-
-    if (countError) {
-      console.error("[redirect] Rate limit check error:", countError);
-      // On error, allow the scan but skip recording
-    }
-
-    const isRateLimited = !countError && (count ?? 0) >= RATE_LIMIT_MAX_SCANS;
-
-    if (isRateLimited) {
-      console.log(`[redirect] Rate limited: IP ${ipHash.substring(0, 8)}... for QR ${qr.id} (${count} scans in ${RATE_LIMIT_WINDOW_MINUTES}min)`);
-    } else {
-      // Record scan (awaited, not fire-and-forget)
-      try {
-        const { error: insertError } = await supabase.from("qr_scan_events").insert({
-          qr_code_id: qr.id,
-          user_agent: userAgent?.substring(0, 500) || null,
-          referer: referer?.substring(0, 500) || null,
-          ip_hash: ipHash,
-          device_type: deviceType,
-          os: os,
-        });
-
-        if (insertError) {
-          console.error("[redirect] Error inserting scan event:", insertError);
-        }
-
-        // Update cached count
-        const newCount = (qr.total_scans_cached || 0) + 1;
-        const { error: updateError } = await supabase
-          .from("qr_codes")
-          .update({
-            total_scans_cached: newCount,
-            last_scan_at: new Date().toISOString(),
-          })
-          .eq("id", qr.id);
-
-        if (updateError) {
-          console.error("[redirect] Error updating scan count:", updateError);
-        }
-
-        console.log(`[redirect] Scan recorded for QR: ${qr.id}, count: ${newCount}`);
-      } catch (err) {
-        console.error("[redirect] Error recording scan:", err);
+      if (insertError) {
+        console.error("[redirect] Error inserting scan event:", insertError);
       }
+
+      // Update cached count
+      const newCount = (qr.total_scans_cached || 0) + 1;
+      const { error: updateError } = await supabase
+        .from("qr_codes")
+        .update({
+          total_scans_cached: newCount,
+          last_scan_at: new Date().toISOString(),
+        })
+        .eq("id", qr.id);
+
+      if (updateError) {
+        console.error("[redirect] Error updating scan count:", updateError);
+      }
+
+      console.log(`[redirect] Scan recorded for QR: ${qr.id}, count: ${newCount}`);
+    } catch (err) {
+      console.error("[redirect] Error recording scan:", err);
     }
 
     // Build final destination URL with UTMs
