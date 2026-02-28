@@ -373,14 +373,14 @@ export default function Dashboard() {
                     </div>
 
                     <div className="mt-4 space-y-2.5">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <a href={`https://${shortLink}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
                         <LinkIcon className="w-4 h-4 text-primary shrink-0" />
-                        <span className="truncate font-medium text-foreground">{shortLink}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span className="truncate font-medium text-foreground hover:text-primary">{shortLink}</span>
+                      </a>
+                      <a href={qr.destination_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
                         <ExternalLink className="w-4 h-4 text-primary shrink-0" />
                         <span className="truncate">{qr.destination_url}</span>
-                      </div>
+                      </a>
                       <button
                         onClick={() => navigate(`/dashboard/qr/${qr.id}`)}
                         className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-1"
