@@ -210,6 +210,11 @@ export function useCreateQR() {
         const trialNoticeAt = new Date(now.getTime() + (trialExpireDays - trialNoticeDays) * 24 * 60 * 60 * 1000);
         const trialExpiresAt = new Date(now.getTime() + trialExpireDays * 24 * 60 * 60 * 1000);
 
+        // Calculate 48h notice (only if trial is 3+ days)
+        const trialNotice48hAt = trialExpireDays >= 3
+          ? new Date(trialExpiresAt.getTime() - 2 * 24 * 60 * 60 * 1000)
+          : null;
+
         // Set trial on the profile (account level)
         await supabase
           .from("profiles")
@@ -218,6 +223,8 @@ export function useCreateQR() {
             trial_expires_at: trialExpiresAt.toISOString(),
             trial_notice_at: trialNoticeAt.toISOString(),
             trial_notice_sent: false,
+            trial_notice_48h_at: trialNotice48hAt?.toISOString() ?? null,
+            trial_notice_48h_sent: false,
           } as any)
           .eq("user_id", user.id);
       }

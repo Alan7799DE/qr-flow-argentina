@@ -380,6 +380,8 @@ serve(async (req) => {
             trial_expires_at: null,
             trial_notice_at: null,
             trial_notice_sent: true,
+            trial_notice_48h_at: null,
+            trial_notice_48h_sent: true,
           } as any)
           .eq('user_id', user_id);
 
