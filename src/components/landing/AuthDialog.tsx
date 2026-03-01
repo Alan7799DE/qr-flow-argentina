@@ -77,7 +77,8 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated, defaultSignup 
             toast({ variant: "destructive", title: "Email ya registrado", description: "Este email ya tiene una cuenta. Intentá iniciar sesión." });
           } else throw error;
         } else {
-          toast({ title: "¡Cuenta creada!", description: "Revisá tu email para confirmar tu cuenta." });
+          toast({ title: "¡Cuenta creada!", description: "¡Bienvenido a QRapido!" });
+          onAuthenticated();
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
