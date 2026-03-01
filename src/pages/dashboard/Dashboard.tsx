@@ -100,21 +100,21 @@ export default function Dashboard() {
   // Auto-create QR from pending sessionStorage data (landing -> auth -> dashboard flow)
   useEffect(() => {
     if (pendingProcessed.current) return;
-    const pendingUrl = sessionStorage.getItem("pending_qr_url");
+    const pendingUrl = localStorage.getItem("pending_qr_url");
     if (!pendingUrl) return;
 
     pendingProcessed.current = true;
 
-    const pendingColor = sessionStorage.getItem("pending_qr_color") || "#000000";
-    const utmSource = sessionStorage.getItem("pending_qr_utm_source") || undefined;
-    const utmMedium = sessionStorage.getItem("pending_qr_utm_medium") || undefined;
-    const utmCampaign = sessionStorage.getItem("pending_qr_utm_campaign") || undefined;
+    const pendingColor = localStorage.getItem("pending_qr_color") || "#000000";
+    const utmSource = localStorage.getItem("pending_qr_utm_source") || undefined;
+    const utmMedium = localStorage.getItem("pending_qr_utm_medium") || undefined;
+    const utmCampaign = localStorage.getItem("pending_qr_utm_campaign") || undefined;
 
-    sessionStorage.removeItem("pending_qr_url");
-    sessionStorage.removeItem("pending_qr_color");
-    sessionStorage.removeItem("pending_qr_utm_source");
-    sessionStorage.removeItem("pending_qr_utm_medium");
-    sessionStorage.removeItem("pending_qr_utm_campaign");
+    localStorage.removeItem("pending_qr_url");
+    localStorage.removeItem("pending_qr_color");
+    localStorage.removeItem("pending_qr_utm_source");
+    localStorage.removeItem("pending_qr_utm_medium");
+    localStorage.removeItem("pending_qr_utm_campaign");
 
     let name = "QR - Mi sitio";
     const finalUrl = pendingUrl.startsWith("http") ? pendingUrl : `https://${pendingUrl}`;

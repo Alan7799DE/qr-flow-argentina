@@ -38,9 +38,9 @@ function OAuthRedirectHandler({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN") {
-        const redirectPath = sessionStorage.getItem("oauth_redirect");
+        const redirectPath = localStorage.getItem("oauth_redirect");
         if (redirectPath) {
-          sessionStorage.removeItem("oauth_redirect");
+          localStorage.removeItem("oauth_redirect");
           navigate(redirectPath);
         }
       }

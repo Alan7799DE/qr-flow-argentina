@@ -31,7 +31,7 @@ export default function CreateQR() {
 
   // Load pending QR data from sessionStorage
   useEffect(() => {
-    const pendingUrl = sessionStorage.getItem("pending_qr_url");
+    const pendingUrl = localStorage.getItem("pending_qr_url");
     if (pendingUrl) {
       setDestinationUrl(pendingUrl);
       try {
@@ -41,19 +41,19 @@ export default function CreateQR() {
         setName("QR - Mi sitio");
       }
     }
-    const pendingColor = sessionStorage.getItem("pending_qr_color");
+    const pendingColor = localStorage.getItem("pending_qr_color");
     if (pendingColor) setColor(pendingColor);
-    const ps = sessionStorage.getItem("pending_qr_utm_source");
+    const ps = localStorage.getItem("pending_qr_utm_source");
     if (ps) { setUtmSource(ps); setShowUtm(true); }
-    const pm = sessionStorage.getItem("pending_qr_utm_medium");
+    const pm = localStorage.getItem("pending_qr_utm_medium");
     if (pm) { setUtmMedium(pm); setShowUtm(true); }
-    const pc = sessionStorage.getItem("pending_qr_utm_campaign");
+    const pc = localStorage.getItem("pending_qr_utm_campaign");
     if (pc) { setUtmCampaign(pc); setShowUtm(true); }
-    sessionStorage.removeItem("pending_qr_url");
-    sessionStorage.removeItem("pending_qr_color");
-    sessionStorage.removeItem("pending_qr_utm_source");
-    sessionStorage.removeItem("pending_qr_utm_medium");
-    sessionStorage.removeItem("pending_qr_utm_campaign");
+    localStorage.removeItem("pending_qr_url");
+    localStorage.removeItem("pending_qr_color");
+    localStorage.removeItem("pending_qr_utm_source");
+    localStorage.removeItem("pending_qr_utm_medium");
+    localStorage.removeItem("pending_qr_utm_campaign");
   }, []);
 
   const [errors, setErrors] = useState<{ name?: string; url?: string; utm_source?: string; utm_medium?: string; utm_campaign?: string }>({});
