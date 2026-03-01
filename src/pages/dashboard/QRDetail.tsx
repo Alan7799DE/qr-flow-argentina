@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useQRCode, useUpdateQR, useDeleteQR } from "@/hooks/useQRCodes";
 import { useValidateUrl } from "@/hooks/useValidateUrl";
-import { useScanStats } from "@/hooks/useScanStats";
+
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StyledQRCode, type QRDotStyle } from "@/components/dashboard/StyledQRCode";
@@ -105,7 +105,7 @@ export default function QRDetail() {
   const customizationRef = useRef<HTMLDivElement>(null);
 
   const { data: qr, isLoading } = useQRCode(id || "");
-  const { data: stats, isLoading: loadingStats } = useScanStats(id || "");
+  
   const updateQR = useUpdateQR();
   const deleteQR = useDeleteQR();
   
@@ -433,31 +433,6 @@ export default function QRDetail() {
             )}
           </div>
 
-          {/* Stats */}
-          <div className="bg-card rounded-xl border p-6">
-            <h3 className="font-semibold text-foreground mb-4">Escaneos · Últimos 7 días</h3>
-            <div className="h-32 rounded-lg bg-muted/30 flex items-end justify-between p-4 gap-1" role="group" aria-label="Gráfico de escaneos diarios">
-              {loadingStats ? (
-                <Skeleton className="h-full w-full" />
-              ) : (
-                stats?.dailyScans.map((day, i) => {
-                  const maxCount = Math.max(...(stats.dailyScans.map(d => d.count)), 1);
-                  const height = (day.count / maxCount) * 100;
-                  return (
-                    <div
-                      key={i}
-                      className="flex-1 rounded-t bg-primary/60 transition-all hover:bg-primary"
-                      style={{ height: `${Math.max(height, 4)}%` }}
-                      title={`${day.date}: ${day.count} escaneos`}
-                      role="img"
-                      aria-label={`${day.date}: ${day.count} escaneos`}
-                    />
-                  );
-                })
-              )}
-            </div>
-            <p className="text-center text-xs text-muted-foreground mt-2">Estadísticas actualizadas diariamente</p>
-          </div>
 
           <AccountTrialBanner />
         </div>
