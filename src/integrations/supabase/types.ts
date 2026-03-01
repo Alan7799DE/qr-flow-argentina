@@ -153,6 +153,8 @@ export type Database = {
           full_name: string | null
           id: string
           trial_expires_at: string | null
+          trial_notice_48h_at: string | null
+          trial_notice_48h_sent: boolean | null
           trial_notice_at: string | null
           trial_notice_sent: boolean | null
           trial_started_at: string | null
@@ -165,6 +167,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           trial_expires_at?: string | null
+          trial_notice_48h_at?: string | null
+          trial_notice_48h_sent?: boolean | null
           trial_notice_at?: string | null
           trial_notice_sent?: boolean | null
           trial_started_at?: string | null
@@ -177,6 +181,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           trial_expires_at?: string | null
+          trial_notice_48h_at?: string | null
+          trial_notice_48h_sent?: boolean | null
           trial_notice_at?: string | null
           trial_notice_sent?: boolean | null
           trial_started_at?: string | null

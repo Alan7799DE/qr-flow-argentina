@@ -178,7 +178,121 @@ serve(async (req) => {
       }
     }
 
-    // Step 2: Send notices for accounts approaching trial expiration
+    // Step 2: Send 48h notices for accounts approaching trial expiration
+    let notified48hCount = 0;
+    console.log('Checking for accounts needing 48h trial notice...');
+    const { data: profiles48h, error: notice48hError } = await supabase
+      .from('profiles')
+      .select('user_id, email, full_name, trial_expires_at, trial_notice_48h_sent')
+      .not('trial_notice_48h_at', 'is', null)
+      .lte('trial_notice_48h_at', now)
+      .eq('trial_notice_48h_sent', false);
+
+    if (notice48hError) {
+      console.error('Error fetching profiles for 48h notice:', notice48hError);
+    } else if (profiles48h && profiles48h.length > 0) {
+      console.log(`Found ${profiles48h.length} accounts needing 48h notice`);
+
+      for (const profile of profiles48h) {
+        // Check if user has active subscription
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select('status')
+          .eq('user_id', profile.user_id)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (subscription) {
+          console.log(`User ${profile.user_id} has active subscription, skipping 48h notice`);
+          await supabase
+            .from('profiles')
+            .update({ trial_notice_48h_sent: true } as any)
+            .eq('user_id', profile.user_id);
+          continue;
+        }
+
+        // Get user's QR names
+        const { data: userQRs } = await supabase
+          .from('qr_codes')
+          .select('id, name')
+          .eq('user_id', profile.user_id)
+          .eq('status', 'trial_active');
+
+        const qrNames = userQRs?.map(q => q.name).join(', ') || 'tus QRs';
+        const qrCount = userQRs?.length || 0;
+        const expirationDate = new Date(profile.trial_expires_at!).toLocaleDateString('es-AR');
+
+        if (resend && profile.email) {
+          try {
+            await resend.emails.send({
+              from: 'QRapido <onboarding@resend.dev>',
+              to: [profile.email],
+              subject: '⏰ Tu período de prueba vence en 2 días',
+              html: `
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <h1 style="color: #1a1a1a; font-size: 24px;">Hola${profile.full_name ? ` ${profile.full_name}` : ''}!</h1>
+                  
+                  <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                    Te escribimos para avisarte que tu período de prueba vence en <strong>2 días</strong>.
+                  </p>
+                  
+                  <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                    <p style="margin: 0; color: #92400e; font-weight: 600;">
+                      ${qrCount > 1 ? `${qrCount} códigos QR` : '1 código QR'}: ${qrNames}
+                    </p>
+                    <p style="margin: 8px 0 0; color: #92400e;">
+                      Fecha de expiración: ${expirationDate}
+                    </p>
+                  </div>
+                  
+                  <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                    Después de esta fecha, todos tus QRs dejarán de funcionar y las personas que los escaneen no podrán acceder a los enlaces.
+                  </p>
+                  
+                  <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                    <strong>¿Querés mantenerlos activos?</strong> Elegí un plan de suscripción para que sigan funcionando sin interrupciones.
+                  </p>
+                  
+                  <a href="https://creatuqr.lovable.app/dashboard/billing" 
+                     style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
+                    Ver planes
+                  </a>
+                  
+                  <p style="color: #999; font-size: 14px; margin-top: 30px;">
+                    Si tenés alguna pregunta, respondé a este email.
+                  </p>
+                  
+                  <p style="color: #333; font-size: 14px;">
+                    — El equipo de QRapido
+                  </p>
+                </div>
+              `,
+            });
+
+            console.log(`48h notice email sent to ${profile.email}`);
+            notified48hCount++;
+
+            await supabase
+              .from('email_logs')
+              .insert({
+                user_id: profile.user_id,
+                email_type: 'trial_48h_notice',
+                metadata: { qr_ids: userQRs?.map(q => q.id) || [], qr_names: userQRs?.map(q => q.name) || [] }
+              });
+          } catch (emailError) {
+            console.error(`Error sending 48h notice email to ${profile.email}:`, emailError);
+          }
+        }
+
+        // Mark as notified
+        await supabase
+          .from('profiles')
+          .update({ trial_notice_48h_sent: true } as any)
+          .eq('user_id', profile.user_id);
+      }
+    }
+
+    // Step 3: Send notices for accounts approaching trial expiration (24h)
     console.log('Checking for accounts needing trial notice...');
     const { data: profilesNeedingNotice, error: noticeError } = await supabase
       .from('profiles')
@@ -394,12 +508,13 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Job completed. Expired: ${expiredCount}, Notified: ${notifiedCount}, Grace period expired: ${gracePeriodExpiredCount}`);
+    console.log(`Job completed. Expired: ${expiredCount}, Notified 48h: ${notified48hCount}, Notified 24h: ${notifiedCount}, Grace period expired: ${gracePeriodExpiredCount}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         expired_count: expiredCount,
+        notified_48h_count: notified48hCount,
         notified_count: notifiedCount,
         grace_period_expired_count: gracePeriodExpiredCount,
         timestamp: now,
