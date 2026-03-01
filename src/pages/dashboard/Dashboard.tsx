@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DownloadQRDialog } from "@/components/dashboard/DownloadQRDialog";
 import { useSubscription } from "@/hooks/useSubscription";
 import { AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -97,58 +98,86 @@ export default function Dashboard() {
     name: string;
   }>({ open: false, url: "", color: "#000000", dotStyle: "square", name: "" });
 
-  // Auto-create QR from pending sessionStorage data (landing -> auth -> dashboard flow)
+  // Auto-create QR from pending localStorage data (landing -> auth -> dashboard flow)
   useEffect(() => {
-    if (pendingProcessed.current) return;
-    const pendingUrl = localStorage.getItem("pending_qr_url");
-    if (!pendingUrl) return;
+    let cancelled = false;
 
-    pendingProcessed.current = true;
+    const processPendingQR = async () => {
+      if (pendingProcessed.current) return;
 
-    const pendingColor = localStorage.getItem("pending_qr_color") || "#000000";
-    const utmSource = localStorage.getItem("pending_qr_utm_source") || undefined;
-    const utmMedium = localStorage.getItem("pending_qr_utm_medium") || undefined;
-    const utmCampaign = localStorage.getItem("pending_qr_utm_campaign") || undefined;
+      const pendingUrl = localStorage.getItem("pending_qr_url");
+      if (!pendingUrl) return;
 
-    localStorage.removeItem("pending_qr_url");
-    localStorage.removeItem("pending_qr_color");
-    localStorage.removeItem("pending_qr_utm_source");
-    localStorage.removeItem("pending_qr_utm_medium");
-    localStorage.removeItem("pending_qr_utm_campaign");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    let name = "QR - Mi sitio";
-    const finalUrl = pendingUrl.startsWith("http") ? pendingUrl : `https://${pendingUrl}`;
-    try {
-      const parsed = new URL(finalUrl);
-      name = `QR - ${parsed.hostname}`;
-    } catch {}
+      const pendingColor = localStorage.getItem("pending_qr_color") || "#000000";
+      const utmSource = localStorage.getItem("pending_qr_utm_source") || undefined;
+      const utmMedium = localStorage.getItem("pending_qr_utm_medium") || undefined;
+      const utmCampaign = localStorage.getItem("pending_qr_utm_campaign") || undefined;
 
-    let destinationWithUtm = finalUrl;
-    try {
-      const urlObj = new URL(finalUrl);
-      if (utmSource) urlObj.searchParams.set("utm_source", utmSource);
-      if (utmMedium) urlObj.searchParams.set("utm_medium", utmMedium);
-      if (utmCampaign) urlObj.searchParams.set("utm_campaign", utmCampaign);
-      destinationWithUtm = urlObj.toString();
-    } catch {}
+      let name = "QR - Mi sitio";
+      const finalUrl = pendingUrl.startsWith("http") ? pendingUrl : `https://${pendingUrl}`;
+      try {
+        const parsed = new URL(finalUrl);
+        name = `QR - ${parsed.hostname}`;
+      } catch {}
 
-    createQR.mutateAsync({
-      name,
-      destination_url: finalUrl,
-      color: pendingColor,
-      utm_source: utmSource,
-      utm_medium: utmMedium,
-      utm_campaign: utmCampaign,
-    }).then(() => {
-      setDownloadDialog({
-        open: true,
-        url: destinationWithUtm,
-        color: pendingColor,
-        dotStyle: "square",
-        name,
-      });
-    }).catch(() => {});
-  }, []);
+      let destinationWithUtm = finalUrl;
+      try {
+        const urlObj = new URL(finalUrl);
+        if (utmSource) urlObj.searchParams.set("utm_source", utmSource);
+        if (utmMedium) urlObj.searchParams.set("utm_medium", utmMedium);
+        if (utmCampaign) urlObj.searchParams.set("utm_campaign", utmCampaign);
+        destinationWithUtm = urlObj.toString();
+      } catch {}
+
+      pendingProcessed.current = true;
+
+      try {
+        await createQR.mutateAsync({
+          name,
+          destination_url: finalUrl,
+          color: pendingColor,
+          utm_source: utmSource,
+          utm_medium: utmMedium,
+          utm_campaign: utmCampaign,
+        });
+
+        if (cancelled) return;
+
+        localStorage.removeItem("pending_qr_url");
+        localStorage.removeItem("pending_qr_color");
+        localStorage.removeItem("pending_qr_utm_source");
+        localStorage.removeItem("pending_qr_utm_medium");
+        localStorage.removeItem("pending_qr_utm_campaign");
+        localStorage.removeItem("pending_qr_auto_download");
+
+        setDownloadDialog({
+          open: true,
+          url: destinationWithUtm,
+          color: pendingColor,
+          dotStyle: "square",
+          name,
+        });
+      } catch {
+        pendingProcessed.current = false;
+      }
+    };
+
+    processPendingQR();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        processPendingQR();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [createQR]);
 
   const filteredAndSorted = useMemo(() => {
     if (!qrCodes) return [];
