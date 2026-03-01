@@ -107,6 +107,37 @@ Deno.serve(async (req) => {
       reason: isSelf ? "self_delete" : "admin_delete",
     });
 
+    // Cancel MercadoPago subscription if exists
+    const { data: subscription } = await adminClient
+      .from("subscriptions")
+      .select("mercadopago_preapproval_id, status")
+      .eq("user_id", targetUserId)
+      .maybeSingle();
+
+    if (subscription?.mercadopago_preapproval_id && subscription.status === "active") {
+      const mpToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
+      if (mpToken) {
+        try {
+          const mpResponse = await fetch(
+            `https://api.mercadopago.com/preapproval/${subscription.mercadopago_preapproval_id}`,
+            {
+              method: "PUT",
+              headers: {
+                "Authorization": `Bearer ${mpToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ status: "cancelled" }),
+            }
+          );
+          const mpData = await mpResponse.json();
+          console.log("MP cancel on delete-user:", JSON.stringify(mpData));
+        } catch (mpErr) {
+          console.error("Error cancelling MP subscription:", mpErr);
+          // Continue with deletion anyway
+        }
+      }
+    }
+
     // Delete related data in order
     const qrIds = (await adminClient.from("qr_codes").select("id").eq("user_id", targetUserId)).data?.map(q => q.id) || [];
     if (qrIds.length > 0) {
