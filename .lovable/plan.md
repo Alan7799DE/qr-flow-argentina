@@ -1,58 +1,28 @@
 
 
-## Plan: Agregar edición de color y forma de QR codes
-
-### Contexto actual
-- Los QR se generan con la librería `qrcode` (npm), que solo soporta color pero **no** soporta estilos de puntos/esquinas (formas).
-- La tabla `qr_codes` ya tiene columna `color` pero no tiene columna para forma/estilo.
-- En las tarjetas del dashboard hay un botón "Editar color y forma" que solo redirige a QRDetail sin funcionalidad específica.
+## Plan: Mover estadísticas de escaneos a una pestaña independiente
 
 ### Cambios propuestos
 
-**1. Migración de base de datos**
-- Agregar columna `dot_style` (text, default `'square'`) a `qr_codes` para guardar el estilo de los puntos del QR.
-- Valores posibles: `square`, `dots`, `rounded`, `classy`, `classy-rounded`, `extra-rounded`.
+**1. Crear nueva página `src/pages/dashboard/Stats.tsx`**
+- Página con título "Estadísticas"
+- Dropdown (`Select`) que lista todos los QR codes del usuario (usando `useQRCodes`)
+- Al seleccionar un QR, muestra el gráfico de escaneos de los últimos 7 días (reutilizando `useScanStats`)
+- Si no hay QRs, mostrar estado vacío
+- Pre-seleccionar el primer QR por defecto
 
-**2. Reemplazar librería de QR**
-- Instalar `qr-code-styling` (soporta dot styles, corner styles, colores, logos).
-- Reemplazar el uso de `qrcode` por `qr-code-styling` en:
-  - `QRDetail.tsx` (preview y descarga)
-  - `Dashboard.tsx` (preview en tarjetas via `QRPreviewImage`)
-  - `DownloadQRDialog.tsx` (descarga en formatos PNG/SVG/JPG)
-  - `CreateQR.tsx` (preview al crear)
-  - `QRCreatorPublic.tsx` (preview público en landing)
+**2. Agregar ruta en `src/App.tsx`**
+- Nueva ruta: `/dashboard/stats` → `<Stats />`
 
-**3. Componente de edición de color y forma en QRDetail**
-- Agregar una nueva sección "Personalización" en QRDetail con:
-  - **Color picker** (reutilizando el patrón de preset colors del landing + input hex)
-  - **Selector de forma** con previews visuales de cada estilo (square, dots, rounded, classy, classy-rounded, extra-rounded)
-  - Botón "Guardar cambios" que llama a `useUpdateQR` con `color` y `dot_style`
-  - Preview en tiempo real del QR con los cambios aplicados
+**3. Agregar item en sidebar `src/components/dashboard/DashboardLayout.tsx`**
+- Nuevo item de navegación "Estadísticas" con icono `BarChart3`, entre "Crear QR" y "Facturación"
 
-**4. Actualizar hooks y tipos**
-- Agregar `dot_style` a la interfaz `QRCode` y `UpdateQRData` en `useQRCodes.ts`.
-- Pasar `dot_style` en las funciones de creación y actualización.
-
-**5. Actualizar CreateQR y QRCreatorPublic**
-- Agregar selector de forma en el formulario de creación.
-- Incluir `dot_style` en el payload de creación.
-
-**6. Actualizar botón "Editar color y forma" en Dashboard**
-- Hacer que el botón lleve directamente a la sección de personalización en QRDetail (con hash o scroll).
+**4. Eliminar sección de estadísticas de `src/pages/dashboard/QRDetail.tsx`**
+- Remover el bloque del gráfico de escaneos (líneas 436-460)
+- Remover import de `useScanStats` y las variables `stats`/`loadingStats`
 
 ### Detalles técnicos
-
-La librería `qr-code-styling` genera QR codes con la siguiente API:
-```typescript
-const qrCode = new QRCodeStyling({
-  width: 300,
-  height: 300,
-  data: "https://...",
-  dotsOptions: { type: "rounded", color: "#000000" },
-  cornersSquareOptions: { type: "extra-rounded" },
-  cornersDotOptions: { type: "dot" },
-});
-```
-
-Se creará un componente wrapper `StyledQRCode` que encapsule la lógica de renderizado con `qr-code-styling`, recibiendo `url`, `color`, `dotStyle` y `size` como props, y que se reutilice en todas las vistas (dashboard cards, detail, create, download).
+- El dropdown usa el componente `Select` existente, mostrando nombre del QR + cantidad de escaneos
+- El hook `useScanStats` se reutiliza sin cambios
+- El hook `useQRCodes` ya provee la lista de QRs necesaria para el dropdown
 
