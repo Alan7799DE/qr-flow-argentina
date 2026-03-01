@@ -97,6 +97,7 @@ export default function Dashboard() {
     dotStyle: string;
     name: string;
   }>({ open: false, url: "", color: "#000000", dotStyle: "square", name: "" });
+  const pendingDownloadRef = useRef<{ url: string; color: string; dotStyle: string; name: string } | null>(null);
 
   // Auto-create QR from pending localStorage data (landing -> auth -> dashboard flow)
   useEffect(() => {
@@ -153,13 +154,13 @@ export default function Dashboard() {
         localStorage.removeItem("pending_qr_utm_campaign");
         localStorage.removeItem("pending_qr_auto_download");
 
-        setDownloadDialog({
-          open: true,
+        // Store in ref so it survives the re-render caused by query invalidation
+        pendingDownloadRef.current = {
           url: destinationWithUtm,
           color: pendingColor,
           dotStyle: "square",
           name,
-        });
+        };
       } catch {
         pendingProcessed.current = false;
       }
@@ -178,6 +179,21 @@ export default function Dashboard() {
       subscription.unsubscribe();
     };
   }, [createQR]);
+
+  // Show download dialog after query refetch completes
+  useEffect(() => {
+    if (!loadingQRs && pendingDownloadRef.current) {
+      const dlData = pendingDownloadRef.current;
+      pendingDownloadRef.current = null;
+      setDownloadDialog({
+        open: true,
+        url: dlData.url,
+        color: dlData.color,
+        dotStyle: dlData.dotStyle,
+        name: dlData.name,
+      });
+    }
+  }, [loadingQRs, qrCodes]);
 
   const filteredAndSorted = useMemo(() => {
     if (!qrCodes) return [];
