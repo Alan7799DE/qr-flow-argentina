@@ -1,30 +1,31 @@
 
 
-## Plan: Agregar email de aviso 48hs antes de expiración del trial
+## Problema
 
-Actualmente el sistema envía **un solo aviso** previo a la expiración, controlado por `trial_notice_at` y `trial_notice_sent` en `profiles`. Para agregar un segundo aviso a las 48hs sin romper el existente (24hs), se necesitan nuevos campos y lógica.
+El flujo actual usa `sessionStorage` para guardar los datos del QR pendiente. `sessionStorage` es **por pestaña**: cuando el usuario confirma su email y el link de confirmación se abre en otra pestaña (o la misma navega fuera), los datos se pierden. Por eso, al llegar al dashboard, el QR no se crea ni se muestra el diálogo de descarga.
 
-### Cambios propuestos
+## Solución
 
-**1. Migración de base de datos — Agregar campos para el segundo aviso**
-- Agregar a `profiles`: `trial_notice_48h_at` (timestamptz, nullable) y `trial_notice_48h_sent` (boolean, default false)
+Cambiar de `sessionStorage` a `localStorage` para los datos del QR pendiente. `localStorage` persiste entre pestañas y sesiones del navegador.
 
-**2. Actualizar `src/hooks/useQRCodes.ts` — Calcular fecha del aviso de 48hs**
-- Al iniciar el trial, calcular `trial_notice_48h_at` = `trial_expires_at - 2 días` y guardarlo en el profile junto con los campos existentes
+### Archivos a modificar
 
-**3. Actualizar `supabase/functions/process-trial-expirations/index.ts` — Enviar el email de 48hs**
-- Agregar un nuevo Step (entre Step 1 y Step 2 actuales) que:
-  - Busque profiles con `trial_notice_48h_at <= now` y `trial_notice_48h_sent = false`
-  - Verifique que no tengan suscripción activa
-  - Envíe email con asunto "⏰ Tu período de prueba vence en 2 días"
-  - Registre en `email_logs` con tipo `trial_48h_notice`
-  - Marque `trial_notice_48h_sent = true`
+1. **`src/components/landing/QRCreatorPublic.tsx`** -- Cambiar `sessionStorage.setItem(...)` → `localStorage.setItem(...)` en `savePendingQRData()`
 
-**4. Actualizar `supabase/functions/mercadopago-webhook/index.ts` — Limpiar campos al suscribirse**
-- Agregar `trial_notice_48h_at: null, trial_notice_48h_sent: true` al update que se hace cuando el usuario se suscribe
+2. **`src/components/landing/AuthDialog.tsx`** -- En el flujo de signup exitoso (línea 79-81), después del toast, también llamar a `savePendingQRData` (ya se hace antes de abrir el dialog, así que los datos ya están en storage -- no requiere cambio aquí)
 
-### Detalles técnicos
-- El email de 48hs tiene contenido similar al de 24hs pero con "vence en 2 días" en lugar de "está por expirar"
-- Si `trial_expire_days` es menor a 3, el aviso de 48hs se omite (coincidiría con o antes del inicio del trial)
-- El cron job existente (3 AM UTC) procesa ambos avisos en la misma ejecución
+3. **`src/pages/dashboard/Dashboard.tsx`** -- Cambiar `sessionStorage.getItem(...)` → `localStorage.getItem(...)` y `sessionStorage.removeItem(...)` → `localStorage.removeItem(...)` en el useEffect de auto-creación (líneas 103-117)
+
+4. **`src/pages/dashboard/CreateQR.tsx`** -- Cambiar `sessionStorage` → `localStorage` en el useEffect que carga datos pendientes (líneas 31-46)
+
+5. **`src/App.tsx`** -- En `OAuthRedirectHandler`, cambiar `sessionStorage` → `localStorage` para `oauth_redirect` (líneas 41-44) por consistencia
+
+### Cambios concretos
+
+- **QRCreatorPublic.tsx**: Reemplazar las 7 llamadas a `sessionStorage.setItem` por `localStorage.setItem` en `savePendingQRData()`
+- **Dashboard.tsx**: Reemplazar las 5 llamadas a `sessionStorage.getItem` y 5 a `sessionStorage.removeItem` por `localStorage` equivalentes en el useEffect (líneas 103-117)
+- **CreateQR.tsx**: Reemplazar las 10 llamadas a `sessionStorage` por `localStorage` en el useEffect (líneas 31-46)
+- **App.tsx**: Reemplazar `sessionStorage` por `localStorage` para `oauth_redirect` (líneas 41-44)
+
+Esto asegura que los datos del QR pendiente sobreviven al cambio de pestaña que ocurre durante la confirmación de email.
 
