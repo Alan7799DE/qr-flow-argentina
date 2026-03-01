@@ -13,7 +13,6 @@ import {
   ArrowLeft, 
   Loader2, 
   Download, 
-  RefreshCw, 
   Trash2,
   Pause,
   Play,
@@ -22,7 +21,7 @@ import {
   ExternalLink,
   Save
 } from "lucide-react";
-import { useQRCode, useUpdateQR, useDeleteQR, useRegenerateSlug } from "@/hooks/useQRCodes";
+import { useQRCode, useUpdateQR, useDeleteQR } from "@/hooks/useQRCodes";
 import { useValidateUrl } from "@/hooks/useValidateUrl";
 import { useScanStats } from "@/hooks/useScanStats";
 import { useToast } from "@/hooks/use-toast";
@@ -109,7 +108,7 @@ export default function QRDetail() {
   const { data: stats, isLoading: loadingStats } = useScanStats(id || "");
   const updateQR = useUpdateQR();
   const deleteQR = useDeleteQR();
-  const regenerateSlug = useRegenerateSlug();
+  
   const { validate: checkUrlReachability, isValidating: isValidatingUrl } = useValidateUrl();
 
   const [destinationUrl, setDestinationUrl] = useState("");
@@ -194,10 +193,6 @@ export default function QRDetail() {
     await updateQR.mutateAsync({ id: qr.id, status: newStatus, expected_updated_at: qr.updated_at });
   };
 
-  const handleRegenerateSlug = async () => {
-    if (!qr) return;
-    await regenerateSlug.mutateAsync({ id: qr.id, name: qr.name });
-  };
 
   const handleDelete = async () => {
     if (!qr) return;
@@ -307,16 +302,6 @@ export default function QRDetail() {
               ) : (
                 <><Pause className="w-4 h-4" />Pausar QR</>
               )}
-            </Button>
-
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={handleRegenerateSlug}
-              disabled={regenerateSlug.isPending}
-            >
-              <RefreshCw className={`w-4 h-4 ${regenerateSlug.isPending ? "animate-spin" : ""}`} />
-              Regenerar slug
             </Button>
 
             <AlertDialog>
