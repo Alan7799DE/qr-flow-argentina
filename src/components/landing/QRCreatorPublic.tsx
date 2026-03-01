@@ -51,12 +51,12 @@ export function QRCreatorPublic() {
   }, [url, utmSource, utmMedium, utmCampaign]);
 
   const savePendingQRData = () => {
-    sessionStorage.setItem("pending_qr_url", url);
-    sessionStorage.setItem("pending_qr_color", color);
-    sessionStorage.setItem("pending_qr_auto_download", "true");
-    if (utmSource) sessionStorage.setItem("pending_qr_utm_source", utmSource);
-    if (utmMedium) sessionStorage.setItem("pending_qr_utm_medium", utmMedium);
-    if (utmCampaign) sessionStorage.setItem("pending_qr_utm_campaign", utmCampaign);
+    localStorage.setItem("pending_qr_url", url);
+    localStorage.setItem("pending_qr_color", color);
+    localStorage.setItem("pending_qr_auto_download", "true");
+    if (utmSource) localStorage.setItem("pending_qr_utm_source", utmSource);
+    if (utmMedium) localStorage.setItem("pending_qr_utm_medium", utmMedium);
+    if (utmCampaign) localStorage.setItem("pending_qr_utm_campaign", utmCampaign);
   };
 
   const handleDownload = async () => {
