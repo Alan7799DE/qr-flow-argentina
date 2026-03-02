@@ -55,7 +55,7 @@ export default function Stats() {
       <Alert variant="default" className="bg-muted/50 border-muted-foreground/20">
         <Info className="h-4 w-4" />
         <AlertDescription className="text-sm text-muted-foreground">
-          Las estadísticas se actualizan una vez al día (2:00 AM UTC). Los escaneos recientes se reflejarán en el próximo ciclo de actualización.
+          Las estadísticas se actualizan cada 24 horas. Los escaneos recientes se reflejarán en el próximo ciclo de actualización.
         </AlertDescription>
       </Alert>
 
