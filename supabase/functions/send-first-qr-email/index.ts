@@ -91,6 +91,8 @@ serve(async (req) => {
       );
     }
 
+    const resend = new Resend(RESEND_API_KEY);
+
     const { data: emailData, error: sendError } = await resend.emails.send({
       from: 'QRapido <onboarding@resend.dev>',
       to: [profile.email],
