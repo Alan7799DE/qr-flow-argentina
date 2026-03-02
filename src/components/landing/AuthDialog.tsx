@@ -100,7 +100,7 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated, defaultSignup 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      sessionStorage.setItem("oauth_redirect", "/dashboard");
+      localStorage.setItem("oauth_redirect", "/dashboard");
       const { error } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
