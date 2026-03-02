@@ -1,0 +1,1 @@
+ALTER TABLE public.qr_scan_events DROP COLUMN ip_hash;

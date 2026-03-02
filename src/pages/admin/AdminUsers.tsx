@@ -124,8 +124,6 @@ export default function AdminUsers() {
                         <td className="py-4">
                           {sub?.status === "active" ? (
                             <Badge variant="default" className="bg-success text-success-foreground">Activo</Badge>
-                          ) : sub?.status === "pending" ? (
-                            <Badge variant="secondary" className="bg-warning/10 text-warning">Pendiente</Badge>
                           ) : (
                             <Badge variant="outline">Sin plan</Badge>
                           )}

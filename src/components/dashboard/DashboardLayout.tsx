@@ -6,6 +6,7 @@ import {
   QrCode, 
   LayoutDashboard, 
   Plus, 
+  BarChart3,
   CreditCard, 
   Settings, 
   LogOut,
@@ -13,8 +14,7 @@ import {
   X,
   Shield,
   Trash2,
-  AlertTriangle,
-  BarChart3
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";

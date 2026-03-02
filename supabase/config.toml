@@ -9,13 +9,7 @@ verify_jwt = false
 [functions.mercadopago-webhook]
 verify_jwt = false
 
-[functions.cleanup-pending-subscriptions]
-verify_jwt = false
-
 [functions.cancel-subscription]
-verify_jwt = false
-
-[functions.check-subscription-status]
 verify_jwt = false
 
 [functions.process-trial-expirations]
@@ -34,4 +28,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.validate-email-domain]
+verify_jwt = false
+
+[functions.aggregate-scans]
 verify_jwt = false

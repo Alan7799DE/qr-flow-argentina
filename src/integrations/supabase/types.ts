@@ -153,6 +153,8 @@ export type Database = {
           full_name: string | null
           id: string
           trial_expires_at: string | null
+          trial_notice_48h_at: string | null
+          trial_notice_48h_sent: boolean | null
           trial_notice_at: string | null
           trial_notice_sent: boolean | null
           trial_started_at: string | null
@@ -165,6 +167,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           trial_expires_at?: string | null
+          trial_notice_48h_at?: string | null
+          trial_notice_48h_sent?: boolean | null
           trial_notice_at?: string | null
           trial_notice_sent?: boolean | null
           trial_started_at?: string | null
@@ -177,6 +181,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           trial_expires_at?: string | null
+          trial_notice_48h_at?: string | null
+          trial_notice_48h_sent?: boolean | null
           trial_notice_at?: string | null
           trial_notice_sent?: boolean | null
           trial_started_at?: string | null
@@ -191,6 +197,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           destination_url: string
+          dot_style: string | null
           id: string
           last_scan_at: string | null
           logo_url: string | null
@@ -214,6 +221,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           destination_url: string
+          dot_style?: string | null
           id?: string
           last_scan_at?: string | null
           logo_url?: string | null
@@ -237,6 +245,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           destination_url?: string
+          dot_style?: string | null
           id?: string
           last_scan_at?: string | null
           logo_url?: string | null
@@ -257,11 +266,42 @@ export type Database = {
         }
         Relationships: []
       }
+      qr_daily_stats: {
+        Row: {
+          created_at: string
+          id: string
+          qr_code_id: string
+          scan_count: number
+          scan_date: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          qr_code_id: string
+          scan_count?: number
+          scan_date: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          qr_code_id?: string
+          scan_count?: number
+          scan_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_daily_stats_qr_code_id_fkey"
+            columns: ["qr_code_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qr_scan_events: {
         Row: {
           device_type: string | null
           id: string
-          ip_hash: string | null
           os: string | null
           qr_code_id: string
           referer: string | null
@@ -271,7 +311,6 @@ export type Database = {
         Insert: {
           device_type?: string | null
           id?: string
-          ip_hash?: string | null
           os?: string | null
           qr_code_id: string
           referer?: string | null
@@ -281,7 +320,6 @@ export type Database = {
         Update: {
           device_type?: string | null
           id?: string
-          ip_hash?: string | null
           os?: string | null
           qr_code_id?: string
           referer?: string | null

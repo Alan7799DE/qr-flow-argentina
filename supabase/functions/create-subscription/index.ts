@@ -6,31 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Cancel a preapproval in Mercado Pago
-async function cancelMPPreapproval(preapprovalId: string, accessToken: string): Promise<boolean> {
-  try {
-    console.log(`Cancelling MP preapproval: ${preapprovalId}`);
-    const response = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ status: 'cancelled' }),
-    });
-    
-    const data = await response.json();
-    console.log(`MP cancel response for ${preapprovalId}:`, JSON.stringify(data));
-    
-    return response.ok;
-  } catch (error) {
-    console.error(`Error cancelling MP preapproval ${preapprovalId}:`, error);
-    return false;
-  }
-}
-
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -47,7 +23,6 @@ serve(async (req) => {
       throw new Error('Supabase configuration missing');
     }
 
-    // Get user from auth header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -58,7 +33,6 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    // Verify user token
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
@@ -92,19 +66,6 @@ serve(async (req) => {
         JSON.stringify({ error: 'Plan not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
-
-    // Check for existing subscription and cancel pending preapproval if exists
-    const { data: existingSub } = await supabase
-      .from('subscriptions')
-      .select('id, status, mercadopago_preapproval_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    // If there's a pending subscription with a preapproval, cancel it in MP first
-    if (existingSub?.status === 'pending' && existingSub?.mercadopago_preapproval_id) {
-      console.log(`User ${user.id} has pending subscription, cancelling old preapproval...`);
-      await cancelMPPreapproval(existingSub.mercadopago_preapproval_id, MERCADOPAGO_ACCESS_TOKEN);
     }
 
     // Get user profile for email
@@ -155,40 +116,19 @@ serve(async (req) => {
       );
     }
 
-    // Create or update subscription record with pending status
-    if (existingSub) {
-      await supabase
-        .from('subscriptions')
-        .update({
-          plan_id: plan.id,
-          status: 'pending',
-          mercadopago_preapproval_id: mpData.id,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existingSub.id);
-    } else {
-      await supabase
-        .from('subscriptions')
-        .insert({
-          user_id: user.id,
-          plan_id: plan.id,
-          status: 'pending',
-          mercadopago_preapproval_id: mpData.id,
-        });
-    }
+    // No subscription record is created here.
+    // The webhook will create the subscription when MP confirms the payment.
 
     return new Response(
       JSON.stringify({
         success: true,
         init_point: mpData.init_point,
-        preapproval_id: mpData.id,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: unknown) {
     console.error('Error in create-subscription:', error);
-    // Return generic error message to client, keep details server-side only
     return new Response(
       JSON.stringify({ error: 'Ocurrió un error al procesar tu solicitud. Por favor intentá nuevamente.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

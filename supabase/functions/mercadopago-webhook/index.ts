@@ -261,9 +261,9 @@ serve(async (req) => {
         });
       }
 
-      // Map MP status to our status
+      // Map MP status to our status - ignore pending status entirely
       const mpStatus = preapproval.status;
-      let subscriptionStatus = 'pending';
+      let subscriptionStatus: string | null = null;
       
       if (mpStatus === 'authorized') {
         subscriptionStatus = 'active';
@@ -271,6 +271,15 @@ serve(async (req) => {
         subscriptionStatus = 'cancelled';
       } else if (mpStatus === 'paused') {
         subscriptionStatus = 'paused';
+      }
+
+      // If status is pending or unknown, skip - don't create/update any record
+      if (!subscriptionStatus) {
+        console.log(`Ignoring MP status "${mpStatus}" for user ${user_id} - no record will be created`);
+        return new Response(JSON.stringify({ received: true }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       console.log(`Updating subscription for user ${user_id} to status ${subscriptionStatus}`);
@@ -371,6 +380,8 @@ serve(async (req) => {
             trial_expires_at: null,
             trial_notice_at: null,
             trial_notice_sent: true,
+            trial_notice_48h_at: null,
+            trial_notice_48h_sent: true,
           } as any)
           .eq('user_id', user_id);
 
