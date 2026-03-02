@@ -11,8 +11,10 @@ export function useIsAdmin() {
     staleTime: 1000 * 60 * 2,
   });
 
+  const userId = session?.user?.id;
+
   return useQuery({
-    queryKey: ["is-admin"],
+    queryKey: ["is-admin", userId],
     queryFn: async () => {
       try {
         const { data, error } = await supabase.functions.invoke('verify-admin');
@@ -26,7 +28,7 @@ export function useIsAdmin() {
         return false;
       }
     },
-    enabled: !!session && !sessionLoading,
+    enabled: !!userId && !sessionLoading,
     staleTime: 1000 * 60 * 5,
   });
 }
