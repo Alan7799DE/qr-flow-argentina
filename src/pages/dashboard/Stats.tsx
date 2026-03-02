@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQRCodes } from "@/hooks/useQRCodes";
 import { useScanStats } from "@/hooks/useScanStats";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,6 +51,13 @@ export default function Stats() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Estadísticas</h1>
+
+      <Alert variant="default" className="bg-muted/50 border-muted-foreground/20">
+        <Info className="h-4 w-4" />
+        <AlertDescription className="text-sm text-muted-foreground">
+          Las estadísticas se actualizan una vez al día (2:00 AM UTC). Los escaneos recientes se reflejarán en el próximo ciclo de actualización.
+        </AlertDescription>
+      </Alert>
 
       {/* QR Selector */}
       <div className="max-w-sm">
