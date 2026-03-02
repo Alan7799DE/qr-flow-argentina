@@ -39,6 +39,7 @@ export default function AdminUsers() {
     setIsDeleting(true);
     try {
       const { data, error } = await supabase.functions.invoke("delete-user", {
+        method: "DELETE",
         body: { user_id: deleteTarget.id },
       });
 
@@ -123,6 +124,8 @@ export default function AdminUsers() {
                         <td className="py-4">
                           {sub?.status === "active" ? (
                             <Badge variant="default" className="bg-success text-success-foreground">Activo</Badge>
+                          ) : sub?.status === "pending" ? (
+                            <Badge variant="secondary" className="bg-warning/10 text-warning">Pendiente</Badge>
                           ) : (
                             <Badge variant="outline">Sin plan</Badge>
                           )}

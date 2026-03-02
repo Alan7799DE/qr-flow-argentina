@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Link2, Download, QrCode, Wand2, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { StyledQRCode, downloadStyledQR, type QRDotStyle } from "@/components/dashboard/StyledQRCode";
-import { DotStyleSelector } from "@/components/dashboard/DotStyleSelector";
-import { AuthDialog } from "./AuthDialog";
+import QRCodeLib from "qrcode";
 
 const PRESET_COLORS = [
   { value: "#000000", label: "Negro" },
@@ -30,12 +28,11 @@ export function QRCreatorPublic() {
   const navigate = useNavigate();
   const [url, setUrl] = useState("");
   const [color, setColor] = useState("#000000");
-  const [dotStyle, setDotStyle] = useState<QRDotStyle>("square");
   const [showUtm, setShowUtm] = useState(false);
   const [utmSource, setUtmSource] = useState("");
   const [utmMedium, setUtmMedium] = useState("");
   const [utmCampaign, setUtmCampaign] = useState("");
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [qrPreview, setQrPreview] = useState("");
 
   const buildFinalUrl = useCallback(() => {
     if (!url) return "";
@@ -50,43 +47,54 @@ export function QRCreatorPublic() {
     }
   }, [url, utmSource, utmMedium, utmCampaign]);
 
-  const savePendingQRData = () => {
-    localStorage.setItem("pending_qr_url", url);
-    localStorage.setItem("pending_qr_color", color);
-    localStorage.setItem("pending_qr_auto_download", "true");
-    if (utmSource) localStorage.setItem("pending_qr_utm_source", utmSource);
-    if (utmMedium) localStorage.setItem("pending_qr_utm_medium", utmMedium);
-    if (utmCampaign) localStorage.setItem("pending_qr_utm_campaign", utmCampaign);
-  };
+  useEffect(() => {
+    const generate = async () => {
+      const finalUrl = buildFinalUrl();
+      if (!finalUrl) { setQrPreview(""); return; }
+      try {
+        const dataUrl = await QRCodeLib.toDataURL(finalUrl, {
+          width: 280,
+          margin: 2,
+          color: { dark: color, light: "#ffffff" },
+        });
+        setQrPreview(dataUrl);
+      } catch {
+        setQrPreview("");
+      }
+    };
+    const t = setTimeout(generate, 300);
+    return () => clearTimeout(t);
+  }, [buildFinalUrl, color]);
 
   const handleDownload = async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      savePendingQRData();
-      setShowAuthDialog(true);
+      sessionStorage.setItem("pending_qr_url", url);
+      sessionStorage.setItem("pending_qr_color", color);
+      if (utmSource) sessionStorage.setItem("pending_qr_utm_source", utmSource);
+      if (utmMedium) sessionStorage.setItem("pending_qr_utm_medium", utmMedium);
+      if (utmCampaign) sessionStorage.setItem("pending_qr_utm_campaign", utmCampaign);
+      navigate("/auth?mode=signup&redirect=/dashboard");
       return;
     }
 
     const finalUrl = buildFinalUrl();
     if (!finalUrl) return;
-    
-    await downloadStyledQR({
-      url: finalUrl,
-      color,
-      dotStyle,
-      format: "png",
-      fileName: "qr-code",
-    });
+    try {
+      const dataUrl = await QRCodeLib.toDataURL(finalUrl, {
+        width: 1024,
+        margin: 2,
+        color: { dark: color, light: "#ffffff" },
+      });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = "qr-code.png";
+      a.click();
+    } catch {
+      // silent
+    }
   };
-
-  const handleAuthenticated = () => {
-    savePendingQRData();
-    setShowAuthDialog(false);
-    navigate("/dashboard");
-  };
-
-  const finalUrl = buildFinalUrl();
 
   return (
     <div className="bg-background border border-border rounded-2xl shadow-lg p-6 sm:p-8">
@@ -120,44 +128,40 @@ export function QRCreatorPublic() {
               <StepBadge step={2} />
               <h2 className="text-lg font-semibold text-foreground">Diseñá tu código QR</h2>
             </div>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Color del QR</Label>
-                <div className="flex items-center gap-2">
-                  {PRESET_COLORS.map((c) => (
-                    <button
-                      key={c.value}
-                      type="button"
-                      onClick={() => setColor(c.value)}
-                      className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
-                        color === c.value
-                          ? "border-primary scale-110 shadow-md"
-                          : "border-border hover:scale-105"
-                      }`}
-                      style={{ backgroundColor: c.value }}
-                      aria-label={c.label}
-                    />
-                  ))}
-                  <div className="relative ml-1">
-                    <input
-                      type="color"
-                      value={color}
-                      onChange={(e) => setColor(e.target.value)}
-                      className="w-8 h-8 rounded-full cursor-pointer border border-border appearance-none bg-transparent [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0"
-                      aria-label="Color personalizado"
-                    />
-                  </div>
-                  <Input
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Color del QR</Label>
+              <div className="flex items-center gap-2">
+                {PRESET_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setColor(c.value)}
+                    className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                      color === c.value
+                        ? "border-primary scale-110 shadow-md"
+                        : "border-border hover:scale-105"
+                    }`}
+                    style={{ backgroundColor: c.value }}
+                    aria-label={c.label}
+                  />
+                ))}
+                <div className="relative ml-1">
+                  <input
+                    type="color"
                     value={color}
                     onChange={(e) => setColor(e.target.value)}
-                    className="w-24 h-8 text-xs"
-                    placeholder="#000000"
-                    aria-label="Código hex"
+                    className="w-8 h-8 rounded-full cursor-pointer border border-border appearance-none bg-transparent [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0"
+                    aria-label="Color personalizado"
                   />
                 </div>
+                <Input
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="w-24 h-8 text-xs"
+                  placeholder="#000000"
+                  aria-label="Código hex"
+                />
               </div>
-
-              <DotStyleSelector value={dotStyle} onChange={setDotStyle} />
             </div>
           </div>
 
@@ -172,7 +176,6 @@ export function QRCreatorPublic() {
             >
               <Wand2 className="w-4 h-4" />
               UTM Builder
-              <span className="text-xs font-normal text-muted-foreground">(opcional)</span>
               {showUtm ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
 
@@ -204,13 +207,17 @@ export function QRCreatorPublic() {
 
           <div
             className={`w-full max-w-[280px] aspect-square rounded-2xl flex items-center justify-center transition-all duration-500 ${
-              finalUrl
-                ? "bg-white p-2 border border-border/30 shadow-sm"
+              qrPreview
+                ? "bg-white p-4 border border-border/30 shadow-sm"
                 : "bg-muted/50 border border-dashed border-border"
             }`}
           >
-            {finalUrl ? (
-              <StyledQRCode url={finalUrl} color={color} dotStyle={dotStyle} size={260} />
+            {qrPreview ? (
+              <img
+                src={qrPreview}
+                alt="Vista previa del código QR"
+                className="w-full h-full object-contain animate-fade-in"
+              />
             ) : (
               <div className="text-center p-6">
                 <QrCode className="w-16 h-16 text-muted-foreground/30 mx-auto mb-3" />
@@ -233,12 +240,6 @@ export function QRCreatorPublic() {
           </Button>
         </div>
       </div>
-
-      <AuthDialog
-        open={showAuthDialog}
-        onOpenChange={setShowAuthDialog}
-        onAuthenticated={handleAuthenticated}
-      />
     </div>
   );
 }

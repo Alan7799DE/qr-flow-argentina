@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX IF NOT EXISTS qr_codes_slug_uidx ON public.qr_codes (slug);

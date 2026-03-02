@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { QrCode, Plus, Search, Download, MoreVertical, Eye, Pencil, Trash2, Link as LinkIcon, ExternalLink, BarChart3, Palette } from "lucide-react";
-import { StyledQRCode, type QRDotStyle } from "@/components/dashboard/StyledQRCode";
+import { QrCode, Plus, Search, Download, ExternalLink, MoreVertical, Eye, Pencil, Trash2, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
@@ -10,7 +9,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DownloadQRDialog } from "@/components/dashboard/DownloadQRDialog";
 import { useSubscription } from "@/hooks/useSubscription";
 import { AlertTriangle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -34,7 +32,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { QRCode as QRCodeType } from "@/hooks/useQRCodes";
+import QRCodeLib from "qrcode";
+
 const statusColors: Record<string, string> = {
   trial_active: "bg-warning/10 text-warning border-warning/30",
   active: "bg-success/10 text-success border-success/30",
@@ -49,14 +48,21 @@ const statusLabels: Record<string, string> = {
   expired: "Vencido",
 };
 
-function QRPreviewImage({ slug, color, dotStyle, size = 140 }: { slug: string; color: string; dotStyle?: string; size?: number }) {
-  const baseUrl = window.location.origin;
-  const url = `${baseUrl}/r/${slug}`;
-  return (
-    <div className="w-full h-full flex items-center justify-center">
-      <StyledQRCode url={url} color={color || "#000000"} dotStyle={(dotStyle || "square") as QRDotStyle} size={size} />
-    </div>
-  );
+function QRPreviewImage({ url, color, size = 140 }: { url: string; color: string; size?: number }) {
+  const [dataUrl, setDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    const baseUrl = window.location.origin;
+    QRCodeLib.toDataURL(`${baseUrl}/r/${url}`, {
+      width: size,
+      margin: 1,
+      color: { dark: color || "#000000", light: "#ffffff" },
+      errorCorrectionLevel: "M",
+    }).then(setDataUrl).catch(() => {});
+  }, [url, color, size]);
+
+  if (!dataUrl) return <Skeleton className="w-full h-full" />;
+  return <img src={dataUrl} alt="QR Code" className="w-full h-full object-contain" />;
 }
 
 function TrialBanner() {
@@ -70,7 +76,7 @@ function TrialBanner() {
       <div className="flex items-center gap-3">
         <AlertTriangle className="w-5 h-5 text-warning shrink-0" />
         <p className="text-sm font-medium text-foreground">
-          Suscribite a un plan con <span className="font-bold">Mercado Pago</span> para mantener tus QRs activos.
+          Suscribite a un plan para mantener tus QRs activos.
         </p>
       </div>
       <Button variant="outline" size="sm" className="border-warning/50 text-warning hover:bg-warning/10 shrink-0" asChild>
@@ -94,106 +100,60 @@ export default function Dashboard() {
     open: boolean;
     url: string;
     color: string;
-    dotStyle: string;
     name: string;
-  }>({ open: false, url: "", color: "#000000", dotStyle: "square", name: "" });
-  const pendingDownloadRef = useRef<{ url: string; color: string; dotStyle: string; name: string } | null>(null);
+  }>({ open: false, url: "", color: "#000000", name: "" });
 
-  // Auto-create QR from pending localStorage data (landing -> auth -> dashboard flow)
+  // Auto-create QR from pending sessionStorage data (landing -> auth -> dashboard flow)
   useEffect(() => {
-    let cancelled = false;
+    if (pendingProcessed.current) return;
+    const pendingUrl = sessionStorage.getItem("pending_qr_url");
+    if (!pendingUrl) return;
 
-    const processPendingQR = async () => {
-      if (pendingProcessed.current) return;
+    pendingProcessed.current = true;
 
-      const pendingUrl = localStorage.getItem("pending_qr_url");
-      if (!pendingUrl) return;
+    const pendingColor = sessionStorage.getItem("pending_qr_color") || "#000000";
+    const utmSource = sessionStorage.getItem("pending_qr_utm_source") || undefined;
+    const utmMedium = sessionStorage.getItem("pending_qr_utm_medium") || undefined;
+    const utmCampaign = sessionStorage.getItem("pending_qr_utm_campaign") || undefined;
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    sessionStorage.removeItem("pending_qr_url");
+    sessionStorage.removeItem("pending_qr_color");
+    sessionStorage.removeItem("pending_qr_utm_source");
+    sessionStorage.removeItem("pending_qr_utm_medium");
+    sessionStorage.removeItem("pending_qr_utm_campaign");
 
-      const pendingColor = localStorage.getItem("pending_qr_color") || "#000000";
-      const utmSource = localStorage.getItem("pending_qr_utm_source") || undefined;
-      const utmMedium = localStorage.getItem("pending_qr_utm_medium") || undefined;
-      const utmCampaign = localStorage.getItem("pending_qr_utm_campaign") || undefined;
+    let name = "QR - Mi sitio";
+    const finalUrl = pendingUrl.startsWith("http") ? pendingUrl : `https://${pendingUrl}`;
+    try {
+      const parsed = new URL(finalUrl);
+      name = `QR - ${parsed.hostname}`;
+    } catch {}
 
-      let name = "QR - Mi sitio";
-      const finalUrl = pendingUrl.startsWith("http") ? pendingUrl : `https://${pendingUrl}`;
-      try {
-        const parsed = new URL(finalUrl);
-        name = `QR - ${parsed.hostname}`;
-      } catch {}
+    let destinationWithUtm = finalUrl;
+    try {
+      const urlObj = new URL(finalUrl);
+      if (utmSource) urlObj.searchParams.set("utm_source", utmSource);
+      if (utmMedium) urlObj.searchParams.set("utm_medium", utmMedium);
+      if (utmCampaign) urlObj.searchParams.set("utm_campaign", utmCampaign);
+      destinationWithUtm = urlObj.toString();
+    } catch {}
 
-      let destinationWithUtm = finalUrl;
-      try {
-        const urlObj = new URL(finalUrl);
-        if (utmSource) urlObj.searchParams.set("utm_source", utmSource);
-        if (utmMedium) urlObj.searchParams.set("utm_medium", utmMedium);
-        if (utmCampaign) urlObj.searchParams.set("utm_campaign", utmCampaign);
-        destinationWithUtm = urlObj.toString();
-      } catch {}
-
-      pendingProcessed.current = true;
-
-      try {
-        await createQR.mutateAsync({
-          name,
-          destination_url: finalUrl,
-          color: pendingColor,
-          utm_source: utmSource,
-          utm_medium: utmMedium,
-          utm_campaign: utmCampaign,
-        });
-
-        if (cancelled) return;
-
-        localStorage.removeItem("pending_qr_url");
-        localStorage.removeItem("pending_qr_color");
-        localStorage.removeItem("pending_qr_utm_source");
-        localStorage.removeItem("pending_qr_utm_medium");
-        localStorage.removeItem("pending_qr_utm_campaign");
-        localStorage.removeItem("pending_qr_auto_download");
-
-        // Store in ref so it survives the re-render caused by query invalidation
-        pendingDownloadRef.current = {
-          url: destinationWithUtm,
-          color: pendingColor,
-          dotStyle: "square",
-          name,
-        };
-      } catch {
-        pendingProcessed.current = false;
-      }
-    };
-
-    processPendingQR();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        processPendingQR();
-      }
-    });
-
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
-  }, [createQR]);
-
-  // Show download dialog after query refetch completes
-  useEffect(() => {
-    if (!loadingQRs && pendingDownloadRef.current) {
-      const dlData = pendingDownloadRef.current;
-      pendingDownloadRef.current = null;
+    createQR.mutateAsync({
+      name,
+      destination_url: finalUrl,
+      color: pendingColor,
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      utm_campaign: utmCampaign,
+    }).then(() => {
       setDownloadDialog({
         open: true,
-        url: dlData.url,
-        color: dlData.color,
-        dotStyle: dlData.dotStyle,
-        name: dlData.name,
+        url: destinationWithUtm,
+        color: pendingColor,
+        name,
       });
-    }
-  }, [loadingQRs, qrCodes]);
+    }).catch(() => {});
+  }, []);
 
   const filteredAndSorted = useMemo(() => {
     if (!qrCodes) return [];
@@ -227,7 +187,6 @@ export default function Dashboard() {
         onOpenChange={(open) => setDownloadDialog((prev) => ({ ...prev, open }))}
         destinationUrl={downloadDialog.url}
         color={downloadDialog.color}
-        dotStyle={(downloadDialog.dotStyle || "square") as QRDotStyle}
         fileName={downloadDialog.name}
       />
 
@@ -333,116 +292,123 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredAndSorted.map((qr) => {
-            const shortLink = `creatuqr.lovable.app/r/${qr.slug}`;
-            return (
-              <div
-                key={qr.id}
-                className="bg-card rounded-xl border hover:shadow-md transition-shadow"
-              >
-                <div className="flex flex-col sm:flex-row">
-                  {/* Left: QR Preview + Scans + Download */}
-                  <div className="sm:border-r p-5 flex flex-col items-center gap-3 sm:w-[200px] shrink-0">
-                    <div className="w-36 h-36 rounded-lg overflow-hidden bg-white border">
-                      <QRPreviewImage slug={qr.slug} color={qr.color || "#000000"} dotStyle={qr.dot_style} size={144} />
-                    </div>
-                    <div className="w-full rounded-lg border border-primary/30 bg-primary/5 px-4 py-2 flex items-center justify-center gap-2">
-                      <BarChart3 className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-semibold text-primary">
-                        {qr.total_scans_cached} Escaneos
-                      </span>
-                    </div>
+          {filteredAndSorted.map((qr) => (
+            <div
+              key={qr.id}
+              className="bg-card rounded-xl border hover:shadow-md transition-shadow overflow-hidden"
+            >
+              <div className="flex flex-col sm:flex-row">
+                {/* QR Preview */}
+                <div className="sm:w-44 sm:min-h-[200px] p-4 flex flex-col items-center justify-center gap-3 bg-muted/30 border-b sm:border-b-0 sm:border-r">
+                  <div className="w-32 h-32 sm:w-36 sm:h-36">
+                    <QRPreviewImage url={qr.slug} color={qr.color || "#000000"} />
+                  </div>
+                  <div className="flex flex-col gap-2 w-full px-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs"
+                      onClick={() => navigate(`/dashboard/qr/${qr.id}`)}
+                    >
+                      <Eye className="w-3.5 h-3.5 mr-1" />
+                      {qr.total_scans_cached} Escaneos
+                    </Button>
                     <Button
                       variant="default"
                       size="sm"
-                      className="w-full"
+                      className="w-full text-xs"
                       onClick={() =>
                         setDownloadDialog({
                           open: true,
                           url: qr.destination_url,
                           color: qr.color || "#000000",
-                          dotStyle: qr.dot_style || "square",
                           name: qr.name,
                         })
                       }
                     >
-                      <Download className="w-4 h-4 mr-2" />
+                      <Download className="w-3.5 h-3.5 mr-1" />
                       Descargar
                     </Button>
                   </div>
+                </div>
 
-                  {/* Right: Info */}
-                  <div className="flex-1 p-5 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0.5 ${statusColors[qr.status]}`}>
-                            {statusLabels[qr.status]}
-                          </Badge>
-                        </div>
-                        <h3 className="font-bold text-lg text-foreground leading-snug truncate" title={qr.name}>
-                          {qr.name}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          Actualizado{" "}
-                          {new Date(qr.updated_at).toLocaleDateString("es-AR", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })}
-                        </p>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="icon" className="h-8 w-8 shrink-0">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => navigate(`/dashboard/qr/${qr.id}`)}>
-                            <Pencil className="w-4 h-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => setDeleteId(qr.id)}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Eliminar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {/* Info */}
+                <div className="flex-1 p-4 sm:p-5 relative">
+                  {/* Menu */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="absolute top-3 right-3 h-8 w-8">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => navigate(`/dashboard/qr/${qr.id}`)}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => setDeleteId(qr.id)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <div className="space-y-3 pr-8">
+                    {/* Status + Type */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className={statusColors[qr.status]}>
+                        {statusLabels[qr.status]}
+                      </Badge>
+                      <span className="text-xs text-primary font-medium flex items-center gap-1">
+                        <Link2 className="w-3 h-3" />
+                        URL del sitio web
+                      </span>
                     </div>
 
-                    <div className="mt-4 space-y-2.5">
-                      <a href={`https://${shortLink}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
-                        <LinkIcon className="w-4 h-4 text-primary shrink-0" />
-                        <span className="truncate font-medium text-foreground hover:text-primary">{shortLink}</span>
-                      </a>
-                      <a href={qr.destination_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
-                        <ExternalLink className="w-4 h-4 text-primary shrink-0" />
-                        <span className="truncate">{qr.destination_url}</span>
-                      </a>
-                      <button
-                        onClick={() => navigate(`/dashboard/qr/${qr.id}`)}
-                        className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-1"
+                    {/* Name */}
+                    <h3 className="font-bold text-lg text-foreground leading-tight">
+                      {qr.name}
+                    </h3>
+
+                    {/* Updated date */}
+                    <p className="text-xs text-muted-foreground">
+                      Actualizado {new Date(qr.updated_at).toLocaleDateString("es-AR", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+
+                    {/* Short link */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Link2 className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate font-mono text-xs">
+                        {window.location.host}/r/{qr.slug}
+                      </span>
+                    </div>
+
+                    {/* Destination */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <ExternalLink className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <a
+                        href={qr.destination_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline truncate text-xs"
                       >
-                        <Pencil className="w-4 h-4" />
-                        Editar contenido
-                      </button>
-                      <button
-                        onClick={() => navigate(`/dashboard/qr/${qr.id}#personalizacion`)}
-                        className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
-                      >
-                        <Palette className="w-4 h-4" />
-                        Editar color y forma
-                      </button>
+                        {qr.destination_url}
+                      </a>
                     </div>
                   </div>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
     </div>

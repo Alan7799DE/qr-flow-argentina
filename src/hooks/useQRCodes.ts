@@ -54,7 +54,6 @@ export interface QRCode {
   destination_url: string;
   status: "trial_active" | "active" | "paused" | "expired";
   color: string;
-  dot_style: string;
   logo_url: string | null;
   utm_source: string | null;
   utm_medium: string | null;
@@ -75,7 +74,6 @@ export interface CreateQRData {
   name: string;
   destination_url: string;
   color?: string;
-  dot_style?: string;
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
@@ -89,7 +87,6 @@ export interface UpdateQRData {
   name?: string;
   destination_url?: string;
   color?: string;
-  dot_style?: string;
   status?: QRCode["status"];
   utm_source?: string | null;
   utm_medium?: string | null;
@@ -210,11 +207,6 @@ export function useCreateQR() {
         const trialNoticeAt = new Date(now.getTime() + (trialExpireDays - trialNoticeDays) * 24 * 60 * 60 * 1000);
         const trialExpiresAt = new Date(now.getTime() + trialExpireDays * 24 * 60 * 60 * 1000);
 
-        // Calculate 48h notice (only if trial is 3+ days)
-        const trialNotice48hAt = trialExpireDays >= 3
-          ? new Date(trialExpiresAt.getTime() - 2 * 24 * 60 * 60 * 1000)
-          : null;
-
         // Set trial on the profile (account level)
         await supabase
           .from("profiles")
@@ -223,8 +215,6 @@ export function useCreateQR() {
             trial_expires_at: trialExpiresAt.toISOString(),
             trial_notice_at: trialNoticeAt.toISOString(),
             trial_notice_sent: false,
-            trial_notice_48h_at: trialNotice48hAt?.toISOString() ?? null,
-            trial_notice_48h_sent: false,
           } as any)
           .eq("user_id", user.id);
       }
@@ -267,7 +257,6 @@ export function useCreateQR() {
           slug,
           destination_url: data.destination_url,
           color: data.color || "#000000",
-          dot_style: data.dot_style || "square",
           utm_source: sanitizeUtmParam(data.utm_source),
           utm_medium: sanitizeUtmParam(data.utm_medium),
           utm_campaign: sanitizeUtmParam(data.utm_campaign),
@@ -440,3 +429,52 @@ export function useRestoreQR() {
   });
 }
 
+export function useRegenerateSlug() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      let slug = generateSlug(name);
+      let attempts = 0;
+      
+      while (attempts < 5) {
+        const { data: existing } = await supabase
+          .from("qr_codes")
+          .select("id")
+          .eq("slug", slug)
+          .neq("id", id)
+          .maybeSingle();
+        
+        if (!existing) break;
+        slug = generateSlug(name);
+        attempts++;
+      }
+
+      const { data: qr, error } = await supabase
+        .from("qr_codes")
+        .update({ slug })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return qr as QRCode;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["qr-codes"] });
+      queryClient.invalidateQueries({ queryKey: ["qr-codes", data.id] });
+      toast({
+        title: "Slug regenerado",
+        description: `Nuevo slug: ${data.slug}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    },
+  });
+}

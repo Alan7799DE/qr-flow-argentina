@@ -16,7 +16,6 @@ import Billing from "./pages/dashboard/Billing";
 import Settings from "./pages/dashboard/Settings";
 import Trash from "./pages/dashboard/Trash";
 import Stats from "./pages/dashboard/Stats";
-
 import ActivatePage from "./pages/ActivatePage";
 import RedirectPage from "./pages/RedirectPage";
 import NotFound from "./pages/NotFound";
@@ -38,9 +37,9 @@ function OAuthRedirectHandler({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN") {
-        const redirectPath = localStorage.getItem("oauth_redirect");
+        const redirectPath = sessionStorage.getItem("oauth_redirect");
         if (redirectPath) {
-          localStorage.removeItem("oauth_redirect");
+          sessionStorage.removeItem("oauth_redirect");
           navigate(redirectPath);
         }
       }

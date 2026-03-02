@@ -1,1 +1,0 @@
-ALTER TABLE public.qr_codes ADD COLUMN dot_style text DEFAULT 'square';

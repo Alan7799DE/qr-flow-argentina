@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
@@ -7,7 +5,6 @@ import { BenefitsSection } from "@/components/landing/BenefitsSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { Footer } from "@/components/landing/Footer";
 import { SEOHead } from "@/components/SEOHead";
-import { supabase } from "@/integrations/supabase/client";
 
 const faqs = [
   {
@@ -71,21 +68,6 @@ const jsonLd = {
 };
 
 const Index = () => {
-  const navigate = useNavigate();
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        navigate("/dashboard", { replace: true });
-      } else {
-        setChecking(false);
-      }
-    });
-  }, [navigate]);
-
-  if (checking) return null;
-
   return (
     <div className="min-h-screen">
       <SEOHead
