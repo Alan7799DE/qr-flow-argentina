@@ -91,9 +91,7 @@ serve(async (req) => {
       );
     }
 
-    const resend = new Resend(RESEND_API_KEY);
-
-    await resend.emails.send({
+    const { data: emailData, error: sendError } = await resend.emails.send({
       from: 'QRapido <onboarding@resend.dev>',
       to: [profile.email],
       subject: '🎉 ¡Creaste tu primer QR en QRapido!',
@@ -135,16 +133,32 @@ serve(async (req) => {
       `,
     });
 
+    if (sendError || !emailData?.id) {
+      const providerError = sendError
+        ? ((sendError as { message?: string }).message || JSON.stringify(sendError))
+        : 'Email provider did not return an id';
+
+      console.error('Resend rejected welcome email:', providerError);
+      return new Response(
+        JSON.stringify({ error: 'Email delivery failed', details: providerError }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Log the email
-    await serviceClient
+    const { error: logError } = await serviceClient
       .from('email_logs')
       .insert({
         user_id: user.id,
         email_type: 'first_qr_welcome',
-        metadata: { qr_name },
+        metadata: { qr_name, resend_email_id: emailData.id },
       });
 
-    console.log(`First QR welcome email sent to ${profile.email}`);
+    if (logError) {
+      console.error('Error logging email send:', logError);
+    }
+
+    console.log(`First QR welcome email sent to ${profile.email} (id: ${emailData.id})`);
 
     return new Response(
       JSON.stringify({ success: true }),
