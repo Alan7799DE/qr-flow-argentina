@@ -288,12 +288,17 @@ export function useCreateQR() {
         description: "Tu código QR fue creado exitosamente.",
       });
 
-      // Send first QR welcome email only on first QR (fire and forget)
+      // Send first QR welcome email only on first QR
       if (result.isFirstQR) {
         supabase.functions.invoke('send-first-qr-email', {
           body: { qr_name: result.qr.name },
-        }).catch(() => {
-          // Silently ignore email errors
+        }).then(({ error, data }) => {
+          const dataError = (data as { error?: string; details?: string } | null)?.error;
+          if (error || dataError) {
+            console.error('Welcome email failed:', error?.message || dataError || data);
+          }
+        }).catch((err) => {
+          console.error('Welcome email invocation failed:', err);
         });
       }
     },
