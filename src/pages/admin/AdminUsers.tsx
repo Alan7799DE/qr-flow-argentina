@@ -39,7 +39,7 @@ export default function AdminUsers() {
     setIsDeleting(true);
     try {
       const { data, error } = await supabase.functions.invoke("delete-user", {
-        method: "DELETE",
+        method: "POST",
         body: { user_id: deleteTarget.id },
       });
 
