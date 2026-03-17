@@ -407,7 +407,7 @@ serve(async (req) => {
               const resend = new Resend(RESEND_API_KEY);
               
               await resend.emails.send({
-                from: 'QRapido <onboarding@resend.dev>',
+                from: 'QRapido <noreply@qrapido.io>',
                 to: [profile.email],
                 subject: '✅ ¡Tu suscripción está activa!',
                 html: `
@@ -504,7 +504,7 @@ serve(async (req) => {
               const graceDate = gracePeriodEnd.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
               await resend.emails.send({
-                from: 'QRapido <onboarding@resend.dev>',
+                from: 'QRapido <noreply@qrapido.io>',
                 to: [profile.email],
                 subject: '⚠️ Problema con tu pago — Tenés 24hs para resolverlo',
                 html: `

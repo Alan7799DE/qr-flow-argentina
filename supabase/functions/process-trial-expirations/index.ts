@@ -119,7 +119,7 @@ serve(async (req) => {
 
                 try {
                   await resend.emails.send({
-                    from: 'QRapido <onboarding@resend.dev>',
+                    from: 'QRapido <noreply@qrapido.io>',
                     to: [profileData.email],
                     subject: '❌ Tu período de prueba expiró',
                     html: `
@@ -225,7 +225,7 @@ serve(async (req) => {
         if (resend && profile.email) {
           try {
             await resend.emails.send({
-              from: 'QRapido <onboarding@resend.dev>',
+              from: 'QRapido <noreply@qrapido.io>',
               to: [profile.email],
               subject: '⏰ Tu período de prueba vence en 2 días',
               html: `
@@ -339,7 +339,7 @@ serve(async (req) => {
         if (resend && profile.email) {
           try {
             await resend.emails.send({
-              from: 'QRapido <onboarding@resend.dev>',
+              from: 'QRapido <noreply@qrapido.io>',
               to: [profile.email],
               subject: '⚠️ Tu período de prueba está por expirar',
               html: `
@@ -462,7 +462,7 @@ serve(async (req) => {
               const qrNames = expiredQRs.map(q => q.name).join(', ') || 'tus QRs';
               try {
                 await resend.emails.send({
-                  from: 'QRapido <onboarding@resend.dev>',
+                  from: 'QRapido <noreply@qrapido.io>',
                   to: [profileData.email],
                   subject: '❌ Tus QRs fueron desactivados por falta de pago',
                   html: `
