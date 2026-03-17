@@ -119,7 +119,7 @@ serve(async (req) => {
 
                 try {
                   await resend.emails.send({
-                    from: 'QRapido <onboarding@resend.dev>',
+                    from: 'QRapido <noreply@qrapido.io>',
                     to: [profileData.email],
                     subject: '❌ Tu período de prueba expiró',
                     html: `
