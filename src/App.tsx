@@ -86,6 +86,9 @@ const App = () => (
               <Route path="webhooks" element={<AdminWebhooks />} />
             </Route>
 
+            {/* Static pages */}
+            <Route path="/privacy" element={<Privacy />} />
+
             {/* QR Redirect and Activation */}
             <Route path="/r/:slug" element={<RedirectPage />} />
             <Route path="/activate/:slug" element={<ActivatePage />} />
