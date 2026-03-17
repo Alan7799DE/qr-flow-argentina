@@ -21,6 +21,7 @@ import ActivatePage from "./pages/ActivatePage";
 import RedirectPage from "./pages/RedirectPage";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -88,6 +89,7 @@ const App = () => (
 
             {/* Static pages */}
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
 
             {/* QR Redirect and Activation */}
             <Route path="/r/:slug" element={<RedirectPage />} />
