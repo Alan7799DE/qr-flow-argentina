@@ -89,6 +89,7 @@ const App = () => (
 
             {/* Static pages */}
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
 
             {/* QR Redirect and Activation */}
             <Route path="/r/:slug" element={<RedirectPage />} />
