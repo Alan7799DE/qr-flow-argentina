@@ -225,7 +225,7 @@ serve(async (req) => {
         if (resend && profile.email) {
           try {
             await resend.emails.send({
-              from: 'QRapido <onboarding@resend.dev>',
+              from: 'QRapido <noreply@qrapido.io>',
               to: [profile.email],
               subject: '⏰ Tu período de prueba vence en 2 días',
               html: `
