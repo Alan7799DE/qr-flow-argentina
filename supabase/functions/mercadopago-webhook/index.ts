@@ -407,7 +407,7 @@ serve(async (req) => {
               const resend = new Resend(RESEND_API_KEY);
               
               await resend.emails.send({
-                from: 'QRapido <onboarding@resend.dev>',
+                from: 'QRapido <noreply@qrapido.io>',
                 to: [profile.email],
                 subject: '✅ ¡Tu suscripción está activa!',
                 html: `
