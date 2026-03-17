@@ -94,7 +94,7 @@ serve(async (req) => {
     const resend = new Resend(RESEND_API_KEY);
 
     const { data: emailData, error: sendError } = await resend.emails.send({
-      from: 'QRapido <onboarding@resend.dev>',
+      from: 'QRapido <noreply@qrapido.io>',
       to: [profile.email],
       subject: '🎉 ¡Creaste tu primer QR en QRapido!',
       html: `
