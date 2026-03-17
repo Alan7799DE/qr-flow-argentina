@@ -83,16 +83,24 @@ serve(async (req) => {
     }
 
     // Parse request info
-    const userAgent = req.headers.get("user-agent");
+    const rawUserAgent = req.headers.get("user-agent");
     const referer = req.headers.get("referer");
-    const { deviceType, os } = parseUserAgent(userAgent);
+
+    // Sanitize user-agent: remove control characters, normalize whitespace, truncate
+    const sanitizeHeader = (val: string | null, maxLen: number): string | null => {
+      if (!val) return null;
+      return val.replace(/[\x00-\x1F\x7F]/g, '').replace(/\s+/g, ' ').trim().substring(0, maxLen) || null;
+    };
+
+    const userAgent = sanitizeHeader(rawUserAgent, 300);
+    const { deviceType, os } = parseUserAgent(rawUserAgent);
 
     // Record scan
     try {
       const { error: insertError } = await supabase.from("qr_scan_events").insert({
         qr_code_id: qr.id,
-        user_agent: userAgent?.substring(0, 500) || null,
-        referer: referer?.substring(0, 500) || null,
+        user_agent: userAgent,
+        referer: sanitizeHeader(referer, 300),
         device_type: deviceType,
         os: os,
       });
