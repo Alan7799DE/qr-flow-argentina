@@ -20,6 +20,7 @@ import Stats from "./pages/dashboard/Stats";
 import ActivatePage from "./pages/ActivatePage";
 import RedirectPage from "./pages/RedirectPage";
 import NotFound from "./pages/NotFound";
+import Privacy from "./pages/Privacy";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -84,6 +85,9 @@ const App = () => (
               <Route path="config" element={<AdminConfig />} />
               <Route path="webhooks" element={<AdminWebhooks />} />
             </Route>
+
+            {/* Static pages */}
+            <Route path="/privacy" element={<Privacy />} />
 
             {/* QR Redirect and Activation */}
             <Route path="/r/:slug" element={<RedirectPage />} />
