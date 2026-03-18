@@ -143,7 +143,7 @@ serve(async (req) => {
                           <strong>Podés reactivarlos en cualquier momento</strong> eligiendo un plan de suscripción. Tus QRs y estadísticas se mantienen guardados.
                         </p>
                         
-                        <a href="https://creatuqr.lovable.app/dashboard/billing" 
+                        <a href="https://qrapido.io/dashboard/billing"
                            style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
                           Elegir un plan
                         </a>
@@ -253,7 +253,7 @@ serve(async (req) => {
                     <strong>¿Querés mantenerlos activos?</strong> Elegí un plan de suscripción para que sigan funcionando sin interrupciones.
                   </p>
                   
-                  <a href="https://creatuqr.lovable.app/dashboard/billing" 
+                  <a href="https://qrapido.io/dashboard/billing"
                      style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
                     Ver planes
                   </a>
@@ -367,7 +367,7 @@ serve(async (req) => {
                     <strong>¿Querés mantenerlos activos?</strong> Elegí un plan de suscripción para que sigan funcionando sin interrupciones.
                   </p>
                   
-                  <a href="https://creatuqr.lovable.app/dashboard/billing" 
+                  <a href="https://qrapido.io/dashboard/billing"
                      style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
                     Ver planes
                   </a>
@@ -482,7 +482,7 @@ serve(async (req) => {
                       <p style="color: #666; font-size: 16px; line-height: 1.6;">
                         <strong>Podés reactivarlos</strong> suscribiéndote nuevamente a un plan.
                       </p>
-                      <a href="https://creatuqr.lovable.app/dashboard/billing" 
+                      <a href="https://qrapido.io/dashboard/billing" 
                          style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
                         Elegir un plan
                       </a>
