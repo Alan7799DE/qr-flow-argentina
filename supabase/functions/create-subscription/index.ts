@@ -75,7 +75,7 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
-    const backUrl = req.headers.get('origin') || 'https://creatuqr.lovable.app';
+    const backUrl = req.headers.get('origin') || 'https://qrapido.io';
 
     // Create Mercado Pago preapproval (subscription)
     const preapprovalPayload = {

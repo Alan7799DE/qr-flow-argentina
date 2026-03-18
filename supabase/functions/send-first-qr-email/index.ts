@@ -119,7 +119,7 @@ serve(async (req) => {
             Tu cuenta está en período de prueba. Para mantener tus QRs funcionando sin interrupciones, podés elegir un plan en cualquier momento.
           </p>
           
-          <a href="https://creatuqr.lovable.app/dashboard" 
+          <a href="https://qrapido.io/dashboard" 
              style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
             Ir a mi Dashboard
           </a>

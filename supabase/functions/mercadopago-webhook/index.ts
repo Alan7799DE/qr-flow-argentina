@@ -540,7 +540,7 @@ serve(async (req) => {
                       <li>El cobro se reintentará automáticamente</li>
                     </ul>
                     
-                    <a href="https://creatuqr.lovable.app/dashboard/billing" 
+                    <a href="https://qrapido.io/dashboard/billing" 
                        style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
                       Ver mi suscripción
                     </a>

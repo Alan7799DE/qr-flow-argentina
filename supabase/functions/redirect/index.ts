@@ -72,7 +72,7 @@ serve(async (req) => {
 
     console.log(`[redirect] QR found: ${qr.id}, status: ${qr.status}`);
 
-    const activateUrl = `https://creatuqr.lovable.app/activate/${slug}`;
+    const activateUrl = `https://qrapido.io/activate/${slug}`;
 
     if (qr.status === "paused" || qr.status === "expired") {
       console.log(`[redirect] QR inactive, redirecting to activate page`);
