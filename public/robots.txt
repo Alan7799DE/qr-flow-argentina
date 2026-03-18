@@ -6,4 +6,4 @@ Disallow: /r/
 Disallow: /activate/
 Disallow: /reset-password
 
-Sitemap: https://creatuqr.lovable.app/sitemap.xml
+Sitemap: https://qrapido.io/sitemap.xml

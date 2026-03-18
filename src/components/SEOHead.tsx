@@ -8,7 +8,7 @@ interface SEOHeadProps {
   noindex?: boolean;
 }
 
-const BASE_URL = "https://creatuqr.lovable.app";
+const BASE_URL = "https://qrapido.io";
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.png`;
 const SITE_NAME = "QRapido";
 

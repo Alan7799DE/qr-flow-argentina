@@ -42,7 +42,7 @@ const jsonLd = {
   name: "QRapido",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
-  url: "https://creatuqr.lovable.app",
+  url: "https://qrapido.io",
   description: "Plataforma para crear códigos QR dinámicos con analytics detallados. Editá el destino, medí escaneos y optimizá tus campañas.",
   offers: {
     "@type": "AggregateOffer",

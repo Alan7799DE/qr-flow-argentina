@@ -120,7 +120,7 @@ export default function QRDetail() {
   const [editDotStyle, setEditDotStyle] = useState<QRDotStyle>("square");
   const [hasCustomizationChanges, setHasCustomizationChanges] = useState(false);
 
-  const publicUrl = "https://creatuqr.lovable.app";
+  const publicUrl = "https://qrapido.io";
   const redirectUrl = qr ? `${publicUrl}/r/${qr.slug}` : "";
 
   useEffect(() => {
