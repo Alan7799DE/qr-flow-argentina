@@ -367,7 +367,7 @@ serve(async (req) => {
                     <strong>¿Querés mantenerlos activos?</strong> Elegí un plan de suscripción para que sigan funcionando sin interrupciones.
                   </p>
                   
-                  <a href="https://creatuqr.lovable.app/dashboard/billing" 
+                  <a href="https://qrapido.io/dashboard/billing"
                      style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
                     Ver planes
                   </a>
