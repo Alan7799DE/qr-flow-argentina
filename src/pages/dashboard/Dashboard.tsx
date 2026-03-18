@@ -289,7 +289,7 @@ export default function Dashboard() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filteredAndSorted.map((qr) => {
-            const shortLink = `creatuqr.lovable.app/r/${qr.slug}`;
+            const shortLink = `qrapido.io/r/${qr.slug}`;
             return (
               <div
                 key={qr.id}
