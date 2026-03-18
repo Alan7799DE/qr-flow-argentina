@@ -432,7 +432,7 @@ serve(async (req) => {
                       Todos tus códigos QR existentes ahora están <strong>activos permanentemente</strong> mientras mantengas tu suscripción.
                     </p>
                     
-                    <a href="https://creatuqr.lovable.app/dashboard" 
+                    <a href="https://qrapido.io/dashboard" 
                        style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
                       Ir a mi dashboard
                     </a>
