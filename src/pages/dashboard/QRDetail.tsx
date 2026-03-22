@@ -88,10 +88,10 @@ function AccountTrialBanner() {
         ⏳ Tu período de prueba vence el {expiryDate.toLocaleDateString("es-AR")}
       </p>
       <p className="text-sm text-warning/80 mt-1">
-        Suscribite a un plan con <span className="font-bold">Mercado Pago</span> para mantener tus QRs activos.
+        Suscribite al <span className="font-bold">Plan Pro</span> para mantener tus QRs activos.
       </p>
       <Button variant="default" size="sm" className="mt-3" asChild>
-        <Link to="/dashboard/billing">Ver planes</Link>
+        <Link to="/dashboard/billing">Suscribirme</Link>
       </Button>
     </div>
   );
