@@ -4,7 +4,7 @@ import { StyledQRCode, type QRDotStyle } from "@/components/dashboard/StyledQRCo
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
-import { useQRCodes, useCreateQR, useDeleteQR } from "@/hooks/useQRCodes";
+import { useQRCodes, useCreateQR, useDeleteQR, QR_LIMIT } from "@/hooks/useQRCodes";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DownloadQRDialog } from "@/components/dashboard/DownloadQRDialog";
