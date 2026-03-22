@@ -214,16 +214,37 @@ export default function Dashboard() {
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-3">
-          <QrCode className="w-7 h-7" />
-          Códigos QR Activos ({activeCount})
-        </h1>
-        <Button variant="hero" asChild>
-          <Link to="/dashboard/create">
-            <Plus className="w-4 h-4" />
-            Crear código QR
-          </Link>
-        </Button>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-3">
+            <QrCode className="w-7 h-7" />
+            Códigos QR
+          </h1>
+          <Badge variant="outline" className="text-xs font-medium">
+            {activeCount} de {QR_LIMIT} usados
+          </Badge>
+        </div>
+        {isAtLimit ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button variant="hero" disabled>
+                  <Plus className="w-4 h-4" />
+                  Crear código QR
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Eliminá un QR existente para crear uno nuevo.</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <Button variant="hero" asChild>
+            <Link to="/dashboard/create">
+              <Plus className="w-4 h-4" />
+              Crear código QR
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Search & Sort */}
