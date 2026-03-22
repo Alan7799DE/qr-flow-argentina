@@ -115,8 +115,8 @@ export default function AdminUsers() {
                           </div>
                         </td>
                         <td className="py-4">
-                          {sub?.plan_name ? (
-                            <span className="font-medium">{sub.plan_name}</span>
+                          {sub?.status === "active" ? (
+                            <span className="font-medium">Plan Pro</span>
                           ) : (
                             <span className="text-muted-foreground">Trial</span>
                           )}
