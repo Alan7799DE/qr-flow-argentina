@@ -69,11 +69,11 @@ function TrialBanner() {
       <div className="flex items-center gap-3">
         <AlertTriangle className="w-5 h-5 text-warning shrink-0" />
         <p className="text-sm font-medium text-foreground">
-          Suscribite a un plan con <span className="font-bold">Mercado Pago</span> para mantener tus QRs activos.
+          Suscribite al <span className="font-bold">Plan Pro</span> con Mercado Pago para mantener tus QRs activos.
         </p>
       </div>
       <Button variant="outline" size="sm" className="border-warning/50 text-warning hover:bg-warning/10 shrink-0" asChild>
-        <Link to="/dashboard/billing">Ver planes</Link>
+        <Link to="/dashboard/billing">Suscribirme</Link>
       </Button>
     </div>
   );
