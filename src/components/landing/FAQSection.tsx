@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     question: "¿Cómo funcionan los analytics?",
-    answer: "Registramos cada escaneo de tus QRs, incluyendo fecha, dispositivo y sistema operativo. Podés ver métricas de las últimas 24h, 7 días, 14 días, 21 días y 30 días.",
+    answer: "Registramos cada escaneo de tus QRs, incluyendo fecha, dispositivo y sistema operativo. Podés ver hasta 15 días de estadísticas históricas desde tu panel.",
   },
   {
     question: "¿Puedo cambiar de plan?",
