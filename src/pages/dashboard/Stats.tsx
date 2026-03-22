@@ -78,7 +78,7 @@ export default function Stats() {
       {/* Chart */}
       <div className="bg-card rounded-xl border p-6">
         <h3 className="font-semibold text-foreground mb-4">
-          Escaneos · Últimos 7 días
+          Escaneos · Últimos 15 días
           {selectedQR && <span className="text-muted-foreground font-normal"> — {selectedQR.name}</span>}
         </h3>
         <div

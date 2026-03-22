@@ -21,11 +21,11 @@ const faqs = [
   },
   {
     question: "¿Cómo funcionan los analytics?",
-    answer: "Registramos cada escaneo de tus QRs, incluyendo fecha, dispositivo y sistema operativo. Podés ver métricas de las últimas 24h, 7 días, 14 días, 21 días y 30 días.",
+    answer: "Registramos cada escaneo de tus QRs, incluyendo fecha, dispositivo y sistema operativo. Podés ver hasta 15 días de estadísticas históricas desde tu panel.",
   },
   {
-    question: "¿Puedo cambiar de plan?",
-    answer: "Sí, podés actualizar o bajar de plan en cualquier momento desde tu panel. Los cambios se aplican en el siguiente período de facturación.",
+    question: "¿Hay un solo plan?",
+    answer: "Sí, QRapido ofrece un único Plan Pro que incluye todas las funcionalidades. Probá gratis por 7 días sin tarjeta de crédito.",
   },
   {
     question: "¿Qué métodos de pago aceptan?",
