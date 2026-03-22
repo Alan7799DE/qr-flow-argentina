@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { QrCode, Plus, Search, Download, MoreVertical, Eye, Pencil, Trash2, Link as LinkIcon, ExternalLink, BarChart3, Palette } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { StyledQRCode, type QRDotStyle } from "@/components/dashboard/StyledQRCode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
-import { useQRCodes, useCreateQR, useDeleteQR } from "@/hooks/useQRCodes";
+import { useQRCodes, useCreateQR, useDeleteQR, QR_LIMIT } from "@/hooks/useQRCodes";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DownloadQRDialog } from "@/components/dashboard/DownloadQRDialog";
@@ -173,7 +174,8 @@ export default function Dashboard() {
     return result;
   }, [qrCodes, search, sortBy]);
 
-  const activeCount = qrCodes?.filter(q => q.status === "active" || q.status === "trial_active").length || 0;
+  const activeCount = qrCodes?.length || 0;
+  const isAtLimit = activeCount >= QR_LIMIT;
 
   return (
     <div className="space-y-6">
@@ -213,16 +215,37 @@ export default function Dashboard() {
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-3">
-          <QrCode className="w-7 h-7" />
-          Códigos QR Activos ({activeCount})
-        </h1>
-        <Button variant="hero" asChild>
-          <Link to="/dashboard/create">
-            <Plus className="w-4 h-4" />
-            Crear código QR
-          </Link>
-        </Button>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-3">
+            <QrCode className="w-7 h-7" />
+            Códigos QR
+          </h1>
+          <Badge variant="outline" className="text-xs font-medium">
+            {activeCount} de {QR_LIMIT} usados
+          </Badge>
+        </div>
+        {isAtLimit ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button variant="hero" disabled>
+                  <Plus className="w-4 h-4" />
+                  Crear código QR
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Eliminá un QR existente para crear uno nuevo.</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <Button variant="hero" asChild>
+            <Link to="/dashboard/create">
+              <Plus className="w-4 h-4" />
+              Crear código QR
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Search & Sort */}

@@ -173,6 +173,8 @@ export function useQRCode(id: string) {
   });
 }
 
+export const QR_LIMIT = 10;
+
 export function useCreateQR() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -183,12 +185,40 @@ export function useCreateQR() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user logged in");
 
-      // Check if user already has a trial (account-level trial)
+      // Check subscription or trial status
       const { data: profile } = await supabase
         .from("profiles")
         .select("trial_started_at, trial_expires_at")
         .eq("user_id", user.id)
         .single();
+
+      const hasActiveTrial = profile?.trial_expires_at && new Date(profile.trial_expires_at) > new Date();
+
+      const { data: subscription } = await supabase
+        .from("subscriptions")
+        .select("status")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      // Allow creation if: first QR (will start trial), active trial, or active subscription
+      const isFirstQR = !profile?.trial_started_at;
+      if (!isFirstQR && !hasActiveTrial && !subscription) {
+        throw new Error("Necesitás una suscripción activa para crear códigos QR.");
+      }
+
+      // Check QR limit (count active QRs, excluding soft-deleted)
+      const { count, error: countError } = await supabase
+        .from("qr_codes")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .is("deleted_at", null);
+
+      if (countError) throw countError;
+
+      if ((count ?? 0) >= QR_LIMIT) {
+        throw new Error("Alcanzaste el límite de 10 QRs activos. Eliminá uno existente para poder crear uno nuevo.");
+      }
 
       let shouldStartTrial = false;
 
