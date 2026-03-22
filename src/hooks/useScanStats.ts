@@ -10,7 +10,7 @@ export function useScanStats(qrCodeId: string) {
     queryKey: ["scan-stats", qrCodeId],
     queryFn: async (): Promise<ScanStats> => {
       const now = new Date();
-      const day7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const day15 = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
 
       const { data: dailyStats, error } = await supabase
         .from("qr_daily_stats")
