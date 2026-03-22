@@ -45,11 +45,10 @@ const jsonLd = {
   url: "https://qrapido.io",
   description: "Plataforma para crear códigos QR dinámicos con analytics detallados. Editá el destino, medí escaneos y optimizá tus campañas.",
   offers: {
-    "@type": "AggregateOffer",
+    "@type": "Offer",
     priceCurrency: "ARS",
-    lowPrice: "2499",
-    highPrice: "14999",
-    offerCount: "3",
+    price: "7500",
+    name: "Plan Pro",
   },
   aggregateRating: {
     "@type": "AggregateRating",

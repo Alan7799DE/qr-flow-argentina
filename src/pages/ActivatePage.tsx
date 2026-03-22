@@ -218,12 +218,12 @@ export default function ActivatePage() {
             <p className="text-muted-foreground mb-6">
               {isPaused
                 ? "Necesitás una suscripción activa para reactivar este QR."
-                : "Tu período de prueba terminó o tu suscripción venció. Suscribite a un plan para reactivar este QR."
+                : "Tu período de prueba terminó o tu suscripción venció. Suscribite al Plan Pro para reactivar este QR."
               }
             </p>
             <div className="flex flex-col gap-3">
               <Button variant="hero" asChild>
-                <Link to="/dashboard/billing">Ver planes</Link>
+                <Link to="/dashboard/billing">Suscribirme al Plan Pro</Link>
               </Button>
               <Button variant="outline" asChild>
                 <Link to="/dashboard">Ir al dashboard</Link>
