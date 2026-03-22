@@ -173,7 +173,8 @@ export default function Dashboard() {
     return result;
   }, [qrCodes, search, sortBy]);
 
-  const activeCount = qrCodes?.filter(q => q.status === "active" || q.status === "trial_active").length || 0;
+  const activeCount = qrCodes?.length || 0;
+  const isAtLimit = activeCount >= QR_LIMIT;
 
   return (
     <div className="space-y-6">
