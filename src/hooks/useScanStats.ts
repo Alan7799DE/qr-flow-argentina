@@ -16,7 +16,7 @@ export function useScanStats(qrCodeId: string) {
         .from("qr_daily_stats")
         .select("scan_date, scan_count")
         .eq("qr_code_id", qrCodeId)
-        .gte("scan_date", day7.toISOString().split("T")[0])
+        .gte("scan_date", day15.toISOString().split("T")[0])
         .order("scan_date", { ascending: true });
 
       if (error) throw error;
