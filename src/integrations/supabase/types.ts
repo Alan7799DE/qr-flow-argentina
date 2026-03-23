@@ -524,8 +524,10 @@ export type Database = {
           error_message: string | null
           event_type: string
           id: string
+          mp_data_id: string | null
           payload: Json
           processed: boolean
+          processed_at: string | null
           provider: string
         }
         Insert: {
@@ -533,8 +535,10 @@ export type Database = {
           error_message?: string | null
           event_type: string
           id?: string
+          mp_data_id?: string | null
           payload: Json
           processed?: boolean
+          processed_at?: string | null
           provider: string
         }
         Update: {
@@ -542,8 +546,10 @@ export type Database = {
           error_message?: string | null
           event_type?: string
           id?: string
+          mp_data_id?: string | null
           payload?: Json
           processed?: boolean
+          processed_at?: string | null
           provider?: string
         }
         Relationships: []
