@@ -362,6 +362,10 @@ serve(async (req) => {
 
         if (qrError) {
           console.error('Error activating QR codes:', qrError);
+          return new Response(
+            JSON.stringify({ error: 'Database error activating QR codes' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         } else {
           console.log('QR codes activated successfully');
         }
