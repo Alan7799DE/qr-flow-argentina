@@ -313,10 +313,11 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filteredAndSorted.map((qr) => {
             const shortLink = `qrapido.io/r/${qr.slug}`;
+            const isPaused = qr.status === "paused" || qr.status === "expired";
             return (
               <div
                 key={qr.id}
-                className="bg-card rounded-xl border hover:shadow-md transition-shadow"
+                className={`bg-card rounded-xl border hover:shadow-md transition-shadow ${isPaused ? "opacity-60" : ""}`}
               >
                 <div className="flex flex-col sm:flex-row">
                   {/* Left: QR Preview + Scans + Download */}
@@ -378,8 +379,8 @@ export default function Dashboard() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => navigate(`/dashboard/qr/${qr.id}`)}>
-                            <Pencil className="w-4 h-4 mr-2" />
-                            Editar
+                            <Eye className="w-4 h-4 mr-2" />
+                            {isPaused ? "Ver detalles" : "Editar"}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
@@ -401,20 +402,28 @@ export default function Dashboard() {
                         <ExternalLink className="w-4 h-4 text-primary shrink-0" />
                         <span className="truncate">{qr.destination_url}</span>
                       </a>
-                      <button
-                        onClick={() => navigate(`/dashboard/qr/${qr.id}`)}
-                        className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-1"
-                      >
-                        <Pencil className="w-4 h-4" />
-                        Editar contenido
-                      </button>
-                      <button
-                        onClick={() => navigate(`/dashboard/qr/${qr.id}#personalizacion`)}
-                        className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
-                      >
-                        <Palette className="w-4 h-4" />
-                        Editar color y forma
-                      </button>
+                      {isPaused ? (
+                        <Button variant="outline" size="sm" className="mt-2 border-orange-300 text-orange-700 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/20" asChild>
+                          <Link to="/dashboard/billing">Suscribite para reactivar</Link>
+                        </Button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => navigate(`/dashboard/qr/${qr.id}`)}
+                            className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-1"
+                          >
+                            <Pencil className="w-4 h-4" />
+                            Editar contenido
+                          </button>
+                          <button
+                            onClick={() => navigate(`/dashboard/qr/${qr.id}#personalizacion`)}
+                            className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+                          >
+                            <Palette className="w-4 h-4" />
+                            Editar color y forma
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
