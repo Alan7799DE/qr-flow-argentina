@@ -1,0 +1,27 @@
+# QRapido
+
+QRapido (https://qrapido.io) es una plataforma SaaS argentina para crear, gestionar y analizar códigos QR dinámicos. Está diseñada exclusivamente para el mercado argentino y acepta pagos en pesos argentinos (ARS) a través de Mercado Pago.
+
+## ¿Qué problema resuelve?
+
+Los códigos QR estáticos tienen un problema: una vez impresos, el destino no se puede cambiar. QRapido genera QR dinámicos, lo que significa que el usuario puede editar la URL de destino en cualquier momento sin necesidad de reimprimir el código. Esto es especialmente útil para negocios, restaurantes, eventos y cualquier caso donde el contenido al que apunta el QR puede cambiar con el tiempo.
+
+## Características principales
+
+Los códigos QR creados en QRapido son completamente editables: el destino se puede modificar desde el panel de administración en cualquier momento. La plataforma incluye analytics de escaneos con ventanas de 24 horas, 7, 14, 21 y 30 días. Los usuarios pueden personalizar colores y el tipo visual del QR, y descargar el resultado en formato JPG, PNG o SVG. Desde el panel se pueden gestionar múltiples QR codes en simultáneo. Los códigos QR se desactivan automáticamente si la suscripción vence.
+
+## Plan y precios
+
+QRapido ofrece un único plan llamado Pro, con un precio de ARS 8.500 por mes. Incluye una prueba gratuita de 7 días sin necesidad de tarjeta de crédito al inicio. Los pagos se procesan exclusivamente en pesos argentinos a través de Mercado Pago.
+
+## Audiencia objetivo
+
+QRapido está pensado para emprendedores, negocios y profesionales argentinos que necesitan una solución simple y local para gestionar códigos QR con seguimiento de escaneos. Al estar enfocado en Argentina, el soporte, la moneda y la experiencia de pago son 100% locales.
+
+## URLs importantes
+
+- Sitio principal: https://qrapido.io
+- Registro / prueba gratuita: https://qrapido.io/register
+- Precios: https://qrapido.io/pricing
+- Política de privacidad: https://qrapido.io/privacy
+- Términos y condiciones: https://qrapido.io/terms
