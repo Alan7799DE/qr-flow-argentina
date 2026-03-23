@@ -594,11 +594,13 @@ serve(async (req) => {
         }
       }
 
-      // Mark webhook as processed
-      await supabase
-        .from('webhook_logs')
-        .update({ processed: true })
-        .eq('payload->>id', body.id);
+      // Mark webhook as successfully processed (idempotency marker)
+      if (webhookLogId) {
+        await supabase
+          .from('webhook_logs')
+          .update({ processed: true, processed_at: new Date().toISOString() })
+          .eq('id', webhookLogId);
+      }
     }
 
     return new Response(JSON.stringify({ received: true }), {
