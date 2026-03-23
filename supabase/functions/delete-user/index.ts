@@ -143,6 +143,12 @@ Deno.serve(async (req) => {
     const qrIds = (await adminClient.from("qr_codes").select("id").eq("user_id", targetUserId)).data?.map(q => q.id) || [];
     if (qrIds.length > 0) {
       await adminClient.from("qr_scan_events").delete().in("qr_code_id", qrIds);
+
+      const { count: dailyStatsCount } = await adminClient
+        .from("qr_daily_stats")
+        .delete({ count: "exact" })
+        .in("qr_code_id", qrIds);
+      console.log(`Deleted ${dailyStatsCount ?? 0} qr_daily_stats records for user ${targetUserId}`);
     }
     await adminClient.from("qr_codes").delete().eq("user_id", targetUserId);
     await adminClient.from("subscriptions").delete().eq("user_id", targetUserId);
