@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { verifyCronAuth } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,18 +13,10 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authorization - accept CRON_SECRET or service role key
     const authHeader = req.headers.get("Authorization");
     const bearerToken = authHeader?.replace("Bearer ", "");
-    const cronSecret = Deno.env.get("CRON_SECRET");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    const isAuthorized = bearerToken && (
-      bearerToken === cronSecret ||
-      bearerToken === serviceRoleKey
-    );
-
-    if (!isAuthorized) {
+    if (!verifyCronAuth(bearerToken)) {
       console.error("[aggregate-scans] Unauthorized request");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
