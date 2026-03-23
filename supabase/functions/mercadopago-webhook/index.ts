@@ -223,14 +223,42 @@ serve(async (req) => {
       }
 
       // Fetch preapproval details from Mercado Pago
-      const mpResponse = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
-        headers: {
-          'Authorization': `Bearer ${MERCADOPAGO_ACCESS_TOKEN}`,
-        },
-      });
+      let mpResponse: Response;
+      try {
+        mpResponse = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
+          headers: {
+            'Authorization': `Bearer ${MERCADOPAGO_ACCESS_TOKEN}`,
+          },
+        });
+      } catch (networkError) {
+        console.error(`Network error fetching preapproval ${preapprovalId}:`, networkError);
+        // Return 500 so MP retries the webhook
+        return new Response(
+          JSON.stringify({ error: 'Failed to reach Mercado Pago API' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
       if (!mpResponse.ok) {
-        console.error('Failed to fetch preapproval:', await mpResponse.text());
+        const errorBody = await mpResponse.text();
+        console.error(`MP API error for preapproval ${preapprovalId}: status=${mpResponse.status}, body=${errorBody}`);
+
+        if (mpResponse.status >= 500) {
+          // MP server error — return 500 so the webhook is retried
+          return new Response(
+            JSON.stringify({ error: `Mercado Pago server error: ${mpResponse.status}` }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // 4xx client error — retrying won't help, accept and log
+        await supabase.from('webhook_logs').insert({
+          provider: 'mercadopago',
+          event_type: 'mp_api_client_error',
+          payload: { preapproval_id: preapprovalId, status: mpResponse.status, error: errorBody },
+          processed: false,
+          error_message: `MP API returned ${mpResponse.status} for preapproval ${preapprovalId}`,
+        });
         return new Response(JSON.stringify({ received: true }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -314,6 +342,10 @@ serve(async (req) => {
 
       if (upsertError) {
         console.error('Error upserting subscription:', upsertError);
+        return new Response(
+          JSON.stringify({ error: 'Database error upserting subscription' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       // If subscription is now active, activate all user's QR codes and send confirmation email
@@ -330,6 +362,10 @@ serve(async (req) => {
 
         if (qrError) {
           console.error('Error activating QR codes:', qrError);
+          return new Response(
+            JSON.stringify({ error: 'Database error activating QR codes' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         } else {
           console.log('QR codes activated successfully');
         }
