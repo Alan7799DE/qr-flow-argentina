@@ -38,14 +38,14 @@ import type { QRCode as QRCodeType } from "@/hooks/useQRCodes";
 const statusColors: Record<string, string> = {
   trial_active: "bg-warning/10 text-warning border-warning/30",
   active: "bg-success/10 text-success border-success/30",
-  paused: "bg-muted text-muted-foreground border-border",
+  paused: "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700",
   expired: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
 const statusLabels: Record<string, string> = {
   trial_active: "Trial",
   active: "Activo",
-  paused: "Pausado",
+  paused: "Pausado - Suscribite para reactivar",
   expired: "Vencido",
 };
 

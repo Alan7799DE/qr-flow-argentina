@@ -78,16 +78,16 @@ serve(async (req) => {
         // Expire all trial_active QRs for this user
         const { data: expired, error: expireErr } = await supabase
           .from('qr_codes')
-          .update({ status: 'expired', updated_at: now })
+          .update({ status: 'paused', updated_at: now })
           .eq('user_id', profile.user_id)
           .eq('status', 'trial_active')
           .select('id');
 
         if (expireErr) {
-          console.error(`Error expiring QRs for user ${profile.user_id}:`, expireErr);
+          console.error(`Error pausing QRs for user ${profile.user_id}:`, expireErr);
         } else {
           expiredCount += expired?.length || 0;
-          console.log(`Expired ${expired?.length || 0} QRs for user ${profile.user_id}`);
+          console.log(`Paused ${expired?.length || 0} QRs for user ${profile.user_id} (trial expired)`);
 
           // Send trial expired email
           if (resend && expired && expired.length > 0) {

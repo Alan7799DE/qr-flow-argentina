@@ -183,7 +183,7 @@ export default function ActivatePage() {
         </div>
 
         <h1 className="text-2xl font-bold text-foreground mb-2">
-          QR Desactivado
+          QR Pausado
         </h1>
 
         <p className="text-lg text-muted-foreground mb-6">
@@ -193,7 +193,7 @@ export default function ActivatePage() {
         {isPaused && canReactivate ? (
           <>
             <p className="text-muted-foreground mb-6">
-              Pausaste este QR manualmente. ¿Querés reactivarlo?
+              Este código QR está pausado. ¿Querés reactivarlo?
             </p>
             <Button
               variant="hero"
@@ -213,13 +213,24 @@ export default function ActivatePage() {
               )}
             </Button>
           </>
+        ) : isPaused && !hasSubscription ? (
+          <>
+            <p className="text-muted-foreground mb-6">
+              Este código QR está pausado porque tu período de prueba finalizó. Suscribite para reactivarlo.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button variant="hero" asChild>
+                <Link to="/dashboard/billing">Suscribirme al Plan Pro</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/dashboard">Ir al dashboard</Link>
+              </Button>
+            </div>
+          </>
         ) : (
           <>
             <p className="text-muted-foreground mb-6">
-              {isPaused
-                ? "Necesitás una suscripción activa para reactivar este QR."
-                : "Tu período de prueba terminó o tu suscripción venció. Suscribite al Plan Pro para reactivar este QR."
-              }
+              Tu suscripción venció. Suscribite al Plan Pro para reactivar este QR.
             </p>
             <div className="flex flex-col gap-3">
               <Button variant="hero" asChild>
