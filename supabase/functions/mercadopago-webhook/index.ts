@@ -383,7 +383,9 @@ serve(async (req) => {
             status: 'active',
             updated_at: now,
           })
-          .eq('user_id', user_id);
+          .eq('user_id', user_id)
+          .is('deleted_at', null)
+          .in('status', ['paused', 'trial_active', 'expired']);
 
         if (qrError) {
           console.error('Error activating QR codes:', qrError);
