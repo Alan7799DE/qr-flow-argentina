@@ -177,13 +177,41 @@ serve(async (req) => {
 
     console.log('Webhook signature verified successfully');
 
-    // Log the webhook for debugging
-    await supabase.from('webhook_logs').insert({
+    // Handle different webhook types
+    const { type, data } = body;
+    const mpDataId = data?.id?.toString() || '';
+    const eventType = type || body.action || 'unknown';
+
+    // === IDEMPOTENCY CHECK ===
+    // Check if this exact webhook was already processed successfully
+    if (mpDataId) {
+      const { data: existingProcessed } = await supabase
+        .from('webhook_logs')
+        .select('id, processed_at')
+        .eq('mp_data_id', mpDataId)
+        .eq('event_type', eventType)
+        .eq('processed', true)
+        .maybeSingle();
+
+      if (existingProcessed) {
+        console.log(`Webhook already processed: mp_data_id=${mpDataId}, event_type=${eventType}, processed_at=${existingProcessed.processed_at}`);
+        return new Response(
+          JSON.stringify({ received: true, message: 'Webhook already processed' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Log the webhook for debugging (unprocessed)
+    const { data: webhookLog } = await supabase.from('webhook_logs').insert({
       provider: 'mercadopago',
-      event_type: body.type || body.action || 'unknown',
+      event_type: eventType,
+      mp_data_id: mpDataId || null,
       payload: body,
       processed: false,
-    });
+    }).select('id').single();
+
+    const webhookLogId = webhookLog?.id;
 
     // Purge old webhook logs - keep only the latest 300
     const { count: webhookCount } = await supabase
@@ -206,9 +234,6 @@ serve(async (req) => {
         console.log(`Purged ${idsToDelete.length} old webhook logs`);
       }
     }
-
-    // Handle different webhook types
-    const { type, data } = body;
 
     if (type === 'subscription_preapproval' || type === 'subscription_authorized_payment') {
       // Get the preapproval details from MP
