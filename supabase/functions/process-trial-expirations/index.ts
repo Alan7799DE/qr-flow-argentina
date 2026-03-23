@@ -1,29 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { verifyCronAuth } from "../_shared/auth.ts";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  // Validate authorization - accept service role key or CRON_SECRET
-  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  const CRON_SECRET = Deno.env.get('CRON_SECRET');
   const authHeader = req.headers.get('Authorization');
   const bearerToken = authHeader?.replace('Bearer ', '');
 
-  const isAuthorized = bearerToken && (
-    bearerToken === SUPABASE_SERVICE_ROLE_KEY || 
-    bearerToken === CRON_SECRET
-  );
-
-  if (!isAuthorized) {
+  if (!verifyCronAuth(bearerToken)) {
     console.error('Unauthorized access attempt - invalid or missing authorization');
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
