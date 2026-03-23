@@ -342,6 +342,10 @@ serve(async (req) => {
 
       if (upsertError) {
         console.error('Error upserting subscription:', upsertError);
+        return new Response(
+          JSON.stringify({ error: 'Database error upserting subscription' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       // If subscription is now active, activate all user's QR codes and send confirmation email
