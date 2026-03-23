@@ -284,17 +284,6 @@ serve(async (req) => {
 
       console.log(`Updating subscription for user ${user_id} to status ${subscriptionStatus}`);
 
-      // Update subscription
-      const { data: existingSub, error: fetchError } = await supabase
-        .from('subscriptions')
-        .select('id')
-        .eq('user_id', user_id)
-        .maybeSingle();
-
-      if (fetchError) {
-        console.error('Error fetching subscription:', fetchError);
-      }
-
       const now = new Date().toISOString();
       const periodEnd = new Date();
       periodEnd.setMonth(periodEnd.getMonth() + 1);
@@ -311,48 +300,20 @@ serve(async (req) => {
       const gracePeriodEnd = new Date();
       gracePeriodEnd.setHours(gracePeriodEnd.getHours() + gracePeriodHours);
 
-      if (existingSub) {
-        const updateData: Record<string, unknown> = {
-          plan_id,
-          status: subscriptionStatus,
-          mercadopago_preapproval_id: preapprovalId,
-          mercadopago_subscription_id: preapproval.id,
-          current_period_start: subscriptionStatus === 'active' ? now : null,
-          current_period_end: subscriptionStatus === 'active' ? periodEnd.toISOString() : null,
-          updated_at: now,
-        };
+      // Atomic upsert — eliminates race condition between concurrent webhooks
+      const { error: upsertError } = await supabase.rpc('upsert_subscription', {
+        _user_id: user_id,
+        _plan_id: plan_id,
+        _status: subscriptionStatus,
+        _mercadopago_preapproval_id: preapprovalId,
+        _mercadopago_subscription_id: preapproval.id,
+        _current_period_start: subscriptionStatus === 'active' ? now : null,
+        _current_period_end: subscriptionStatus === 'active' ? periodEnd.toISOString() : null,
+        _grace_period_ends_at: subscriptionStatus === 'paused' ? gracePeriodEnd.toISOString() : null,
+      });
 
-        if (subscriptionStatus === 'paused') {
-          updateData.grace_period_ends_at = gracePeriodEnd.toISOString();
-        } else {
-          updateData.grace_period_ends_at = null;
-        }
-
-        const { error: updateError } = await supabase
-          .from('subscriptions')
-          .update(updateData)
-          .eq('id', existingSub.id);
-
-        if (updateError) {
-          console.error('Error updating subscription:', updateError);
-        }
-      } else {
-        const { error: insertError } = await supabase
-          .from('subscriptions')
-          .insert({
-            user_id,
-            plan_id,
-            status: subscriptionStatus,
-            mercadopago_preapproval_id: preapprovalId,
-            mercadopago_subscription_id: preapproval.id,
-            current_period_start: subscriptionStatus === 'active' ? now : null,
-            current_period_end: subscriptionStatus === 'active' ? periodEnd.toISOString() : null,
-            grace_period_ends_at: subscriptionStatus === 'paused' ? gracePeriodEnd.toISOString() : null,
-          });
-
-        if (insertError) {
-          console.error('Error inserting subscription:', insertError);
-        }
+      if (upsertError) {
+        console.error('Error upserting subscription:', upsertError);
       }
 
       // If subscription is now active, activate all user's QR codes and send confirmation email
