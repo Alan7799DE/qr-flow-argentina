@@ -590,6 +590,19 @@ export type Database = {
           read_ct: number
         }[]
       }
+      upsert_subscription: {
+        Args: {
+          _current_period_end: string
+          _current_period_start: string
+          _grace_period_ends_at: string
+          _mercadopago_preapproval_id: string
+          _mercadopago_subscription_id: string
+          _plan_id: string
+          _status: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"
