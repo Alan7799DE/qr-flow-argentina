@@ -26,6 +26,7 @@ export default function ActivatePage() {
   const [user, setUser] = useState<User | null>(null);
   const [qr, setQr] = useState<QRInfo | null>(null);
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [hasCancelledSub, setHasCancelledSub] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
 
