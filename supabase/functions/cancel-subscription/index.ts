@@ -103,14 +103,15 @@ serve(async (req) => {
       );
     }
 
-    // Pause all user's QR codes (set to expired)
+    // Pause all user's QR codes (paused = temporarily inactive, can be reactivated)
     const { error: qrError } = await supabase
       .from('qr_codes')
       .update({
-        status: 'expired',
+        status: 'paused',
         updated_at: new Date().toISOString(),
       })
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .is('deleted_at', null);
 
     if (qrError) {
       console.error('Error updating QR codes:', qrError);

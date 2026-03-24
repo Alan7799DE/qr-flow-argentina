@@ -26,6 +26,7 @@ export default function ActivatePage() {
   const [user, setUser] = useState<User | null>(null);
   const [qr, setQr] = useState<QRInfo | null>(null);
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [hasCancelledSub, setHasCancelledSub] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
 
@@ -50,10 +51,10 @@ export default function ActivatePage() {
           .from("subscriptions")
           .select("status")
           .eq("user_id", user.id)
-          .eq("status", "active")
           .maybeSingle();
 
-        setHasSubscription(!!subscription);
+        setHasSubscription(subscription?.status === "active");
+        setHasCancelledSub(subscription?.status === "cancelled");
       }
 
       setIsLoading(false);
@@ -79,12 +80,13 @@ export default function ActivatePage() {
           .from("subscriptions")
           .select("status")
           .eq("user_id", session.user.id)
-          .eq("status", "active")
           .maybeSingle();
 
-        setHasSubscription(!!sub);
+        setHasSubscription(sub?.status === "active");
+        setHasCancelledSub(sub?.status === "cancelled");
       } else {
         setHasSubscription(false);
+        setHasCancelledSub(false);
         setQr(null);
       }
     });
@@ -212,6 +214,20 @@ export default function ActivatePage() {
                 </>
               )}
             </Button>
+          </>
+        ) : isPaused && hasCancelledSub ? (
+          <>
+            <p className="text-muted-foreground mb-6">
+              Este código QR está pausado porque tu suscripción fue cancelada. Renová tu suscripción para reactivarlo.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button variant="hero" asChild>
+                <Link to="/dashboard/billing">Renovar suscripción</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/dashboard">Ir al dashboard</Link>
+              </Button>
+            </div>
           </>
         ) : isPaused && !hasSubscription ? (
           <>
