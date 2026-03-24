@@ -51,10 +51,10 @@ export default function ActivatePage() {
           .from("subscriptions")
           .select("status")
           .eq("user_id", user.id)
-          .eq("status", "active")
           .maybeSingle();
 
-        setHasSubscription(!!subscription);
+        setHasSubscription(subscription?.status === "active");
+        setHasCancelledSub(subscription?.status === "cancelled");
       }
 
       setIsLoading(false);
