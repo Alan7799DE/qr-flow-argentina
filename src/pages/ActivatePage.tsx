@@ -215,6 +215,20 @@ export default function ActivatePage() {
               )}
             </Button>
           </>
+        ) : isPaused && hasCancelledSub ? (
+          <>
+            <p className="text-muted-foreground mb-6">
+              Este código QR está pausado porque tu suscripción fue cancelada. Renová tu suscripción para reactivarlo.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button variant="hero" asChild>
+                <Link to="/dashboard/billing">Renovar suscripción</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/dashboard">Ir al dashboard</Link>
+              </Button>
+            </div>
+          </>
         ) : isPaused && !hasSubscription ? (
           <>
             <p className="text-muted-foreground mb-6">
