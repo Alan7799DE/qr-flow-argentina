@@ -86,6 +86,7 @@ export default function ActivatePage() {
         setHasCancelledSub(sub?.status === "cancelled");
       } else {
         setHasSubscription(false);
+        setHasCancelledSub(false);
         setQr(null);
       }
     });
