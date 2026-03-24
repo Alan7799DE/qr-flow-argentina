@@ -80,10 +80,10 @@ export default function ActivatePage() {
           .from("subscriptions")
           .select("status")
           .eq("user_id", session.user.id)
-          .eq("status", "active")
           .maybeSingle();
 
-        setHasSubscription(!!sub);
+        setHasSubscription(sub?.status === "active");
+        setHasCancelledSub(sub?.status === "cancelled");
       } else {
         setHasSubscription(false);
         setQr(null);
