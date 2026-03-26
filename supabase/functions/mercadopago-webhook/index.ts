@@ -166,7 +166,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('Webhook signature verified successfully');
+    console.log('Signature verification: passed');
 
     // Handle different webhook types
     const { type, data } = body;
