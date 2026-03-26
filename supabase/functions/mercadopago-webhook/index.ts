@@ -123,13 +123,10 @@ serve(async (req) => {
 
     const body = await req.json();
     
-    // Log everything for debugging
-    console.log('=== WEBHOOK DEBUG START ===');
-    console.log('Headers x-signature:', xSignature);
-    console.log('Headers x-request-id:', xRequestId);
-    console.log('Query params:', Object.fromEntries(url.searchParams.entries()));
-    console.log('Body:', JSON.stringify(body));
-    console.log('=== WEBHOOK DEBUG END ===');
+    const startTime = Date.now();
+    
+    // Log webhook receipt (no sensitive headers)
+    console.log('Webhook received:', { type: body.type, action: body.action, dataId: body.data?.id, hasSignature: !!xSignature, hasRequestId: !!xRequestId });
 
     // Get the data.id - priority: query param > body.data.id
     const dataId = queryDataId || body.data?.id?.toString() || '';
@@ -145,13 +142,7 @@ serve(async (req) => {
     );
 
     if (!isValidSignature) {
-      console.error('Invalid webhook signature - rejecting request', {
-        xSignature: xSignature?.substring(0, 30) + '...',
-        xRequestId,
-        dataId,
-        queryDataId,
-        bodyDataId: body.data?.id
-      });
+      console.error('Signature verification: failed', { dataId, queryDataId, bodyDataId: body.data?.id });
       
       // Log failed verification attempt
       await supabase.from('webhook_logs').insert({
@@ -175,7 +166,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('Webhook signature verified successfully');
+    console.log('Signature verification: passed');
 
     // Handle different webhook types
     const { type, data } = body;
@@ -605,13 +596,25 @@ serve(async (req) => {
       }
     }
 
+    const processingTimeMs = Date.now() - startTime;
+    console.log('Webhook processed successfully', {
+      preapproval_id: body.data?.id,
+      event_type: body.type || body.action,
+      processing_time_ms: processingTimeMs,
+    });
+
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error: unknown) {
-    console.error('Webhook error:', error);
+    const processingTimeMs = Date.now() - startTime;
+    console.error('Webhook error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      processing_time_ms: processingTimeMs,
+    });
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),

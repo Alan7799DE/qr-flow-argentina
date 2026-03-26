@@ -516,7 +516,10 @@ serve(async (req) => {
     );
 
   } catch (error: unknown) {
-    console.error('Error in process-trial-expirations:', error);
+    console.error('Error in process-trial-expirations:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),
