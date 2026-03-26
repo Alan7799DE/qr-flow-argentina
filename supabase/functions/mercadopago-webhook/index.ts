@@ -123,13 +123,10 @@ serve(async (req) => {
 
     const body = await req.json();
     
-    // Log everything for debugging
-    console.log('=== WEBHOOK DEBUG START ===');
-    console.log('Headers x-signature:', xSignature);
-    console.log('Headers x-request-id:', xRequestId);
-    console.log('Query params:', Object.fromEntries(url.searchParams.entries()));
-    console.log('Body:', JSON.stringify(body));
-    console.log('=== WEBHOOK DEBUG END ===');
+    const startTime = Date.now();
+    
+    // Log webhook receipt (no sensitive headers)
+    console.log('Webhook received:', { type: body.type, action: body.action, dataId: body.data?.id, hasSignature: !!xSignature, hasRequestId: !!xRequestId });
 
     // Get the data.id - priority: query param > body.data.id
     const dataId = queryDataId || body.data?.id?.toString() || '';
