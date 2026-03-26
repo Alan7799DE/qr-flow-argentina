@@ -596,13 +596,25 @@ serve(async (req) => {
       }
     }
 
+    const processingTimeMs = Date.now() - startTime;
+    console.log('Webhook processed successfully', {
+      preapproval_id: body.data?.id,
+      event_type: body.type || body.action,
+      processing_time_ms: processingTimeMs,
+    });
+
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error: unknown) {
-    console.error('Webhook error:', error);
+    const processingTimeMs = Date.now() - startTime;
+    console.error('Webhook error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      processing_time_ms: processingTimeMs,
+    });
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),
