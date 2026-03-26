@@ -142,13 +142,7 @@ serve(async (req) => {
     );
 
     if (!isValidSignature) {
-      console.error('Invalid webhook signature - rejecting request', {
-        xSignature: xSignature?.substring(0, 30) + '...',
-        xRequestId,
-        dataId,
-        queryDataId,
-        bodyDataId: body.data?.id
-      });
+      console.error('Signature verification: failed', { dataId, queryDataId, bodyDataId: body.data?.id });
       
       // Log failed verification attempt
       await supabase.from('webhook_logs').insert({
