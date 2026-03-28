@@ -1,6 +1,4 @@
-import { useEffect } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
-import { useIsAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
 import { 
@@ -11,7 +9,6 @@ import {
   Settings, 
   Webhook,
   LogOut,
-  Loader2,
   QrCode
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,40 +16,11 @@ import { Button } from "@/components/ui/button";
 export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: isAdmin, isLoading } = useIsAdmin();
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-      }
-    };
-    checkAuth();
-  }, [navigate]);
-
-  useEffect(() => {
-    if (!isLoading && isAdmin === false) {
-      navigate("/dashboard");
-    }
-  }, [isAdmin, isLoading, navigate]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return null;
-  }
 
   const navItems = [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
