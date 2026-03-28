@@ -4,11 +4,14 @@ import { Users, CreditCard, QrCode, Webhook, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminDashboard() {
-  const { data: users, isLoading: loadingUsers } = useAdminUsers();
+  const { data, isLoading: loadingUsers } = useAdminUsers({ limit: 5 });
   const { data: plans, isLoading: loadingPlans } = useAdminPlans();
   const { data: webhooks, isLoading: loadingWebhooks } = useWebhookLogs();
 
-  const activeSubscriptions = users?.filter(
+  const users = data?.users || [];
+  const totalUsers = data?.meta?.total || 0;
+
+  const activeSubscriptions = users.filter(
     (u) => u.subscription?.status === "active"
   ).length || 0;
 
