@@ -305,7 +305,7 @@ serve(async (req) => {
         });
       }
 
-      // Map MP status to our status - ignore pending status entirely
+      // Map MP status to our status
       const mpStatus = preapproval.status;
       let subscriptionStatus: string | null = null;
       
@@ -317,9 +317,9 @@ serve(async (req) => {
         subscriptionStatus = 'paused';
       }
 
-      // If status is pending or unknown, skip - don't create/update any record
+      // If status is pending or unknown, skip - the pending record was already created by create-subscription
       if (!subscriptionStatus) {
-        console.log(`Ignoring MP status "${mpStatus}" for user ${user_id} - no record will be created`);
+        console.log(`Ignoring MP status "${mpStatus}" for user ${user_id} - pending record already exists from create-subscription`);
         return new Response(JSON.stringify({ received: true }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
