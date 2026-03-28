@@ -22,7 +22,7 @@ export default function AdminDashboard() {
   const stats = [
     {
       title: "Total Usuarios",
-      value: users?.length || 0,
+      value: totalUsers,
       icon: Users,
       color: "text-primary",
       bgColor: "bg-primary/10",
