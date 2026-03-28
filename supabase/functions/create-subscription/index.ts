@@ -68,6 +68,38 @@ serve(async (req) => {
       );
     }
 
+    // Check if there's already a pending subscription created in the last hour — reuse it
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { data: existingPending } = await supabase
+      .from('subscriptions')
+      .select('id, mercadopago_preapproval_id')
+      .eq('user_id', user.id)
+      .eq('status', 'pending')
+      .gte('created_at', oneHourAgo)
+      .maybeSingle();
+
+    if (existingPending?.mercadopago_preapproval_id) {
+      // Fetch the existing preapproval from MP to get the init_point
+      try {
+        const mpCheck = await fetch(
+          `https://api.mercadopago.com/preapproval/${existingPending.mercadopago_preapproval_id}`,
+          { headers: { 'Authorization': `Bearer ${MERCADOPAGO_ACCESS_TOKEN}` } }
+        );
+        if (mpCheck.ok) {
+          const mpData = await mpCheck.json();
+          if (mpData.init_point && mpData.status === 'pending') {
+            console.log(`Reusing existing pending subscription ${existingPending.id} with preapproval ${existingPending.mercadopago_preapproval_id}`);
+            return new Response(
+              JSON.stringify({ success: true, init_point: mpData.init_point }),
+              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        }
+      } catch (e) {
+        console.error('Error checking existing preapproval, will create new one:', e);
+      }
+    }
+
     // Get user profile for email
     const { data: profile } = await supabase
       .from('profiles')
@@ -116,8 +148,24 @@ serve(async (req) => {
       );
     }
 
-    // No subscription record is created here.
-    // The webhook will create the subscription when MP confirms the payment.
+    // Create or update a pending subscription record so we can reconcile later
+    const { error: upsertError } = await supabase.rpc('upsert_subscription', {
+      _user_id: user.id,
+      _plan_id: plan.id,
+      _status: 'pending',
+      _mercadopago_preapproval_id: mpData.id,
+      _mercadopago_subscription_id: mpData.id,
+      _current_period_start: new Date().toISOString(),
+      _current_period_end: null as any,
+      _grace_period_ends_at: null as any,
+    });
+
+    if (upsertError) {
+      console.error('Error creating pending subscription:', upsertError);
+      // Non-fatal: the user can still proceed to pay, webhook will create the record
+    } else {
+      console.log(`Created pending subscription for user ${user.id} with preapproval ${mpData.id}`);
+    }
 
     return new Response(
       JSON.stringify({
@@ -128,7 +176,10 @@ serve(async (req) => {
     );
 
   } catch (error: unknown) {
-    console.error('Error in create-subscription:', error);
+    console.error('Error in create-subscription:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return new Response(
       JSON.stringify({ error: 'Ocurrió un error al procesar tu solicitud. Por favor intentá nuevamente.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
