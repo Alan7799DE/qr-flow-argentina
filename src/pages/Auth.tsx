@@ -164,8 +164,6 @@ export default function Auth() {
         } else {
           rateLimit.resetLoginFailures();
         }
-          }
-        }
       }
     } catch (error: any) {
       toast({
