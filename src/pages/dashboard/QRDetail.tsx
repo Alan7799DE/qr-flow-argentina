@@ -98,12 +98,33 @@ function AccountTrialBanner() {
   );
 }
 
+function useCanActivateQR() {
+  return useQuery({
+    queryKey: ["can-activate-qr"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const [{ data: profile }, { data: subscription }] = await Promise.all([
+        supabase.from("profiles").select("trial_expires_at").eq("user_id", user.id).single(),
+        supabase.from("subscriptions").select("status").eq("user_id", user.id).eq("status", "active").maybeSingle(),
+      ]);
+
+      const hasActiveTrial = profile?.trial_expires_at && new Date(profile.trial_expires_at) > new Date();
+      return !!(hasActiveTrial || subscription);
+    },
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
 export default function QRDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const customizationRef = useRef<HTMLDivElement>(null);
+
+  const { data: canActivate, isLoading: isCanActivateLoading } = useCanActivateQR();
 
   const { data: qr, isLoading } = useQRCode(id || "");
   
@@ -195,8 +216,19 @@ export default function QRDetail() {
 
   const handleTogglePause = async () => {
     if (!qr) return;
-    const newStatus = qr.status === "paused" ? "active" : "paused";
-    await updateQR.mutateAsync({ id: qr.id, status: newStatus, expected_updated_at: qr.updated_at });
+    if (qr.status === "paused") {
+      if (!canActivate) {
+        toast({
+          variant: "destructive",
+          title: "Suscripción requerida",
+          description: "Necesitás una suscripción activa para reactivar este QR. Andá a Facturación para suscribirte.",
+        });
+        return;
+      }
+      await updateQR.mutateAsync({ id: qr.id, status: "active", expected_updated_at: qr.updated_at });
+    } else {
+      await updateQR.mutateAsync({ id: qr.id, status: "paused", expected_updated_at: qr.updated_at });
+    }
   };
 
 
@@ -297,18 +329,36 @@ export default function QRDetail() {
           <div className="bg-card rounded-xl border p-6 space-y-3">
             <h3 className="font-semibold text-foreground mb-4">Acciones</h3>
             
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={handleTogglePause}
-              disabled={updateQR.isPending}
-            >
-              {qr.status === "paused" ? (
-                <><Play className="w-4 h-4" />Reactivar QR</>
-              ) : (
-                <><Pause className="w-4 h-4" />Pausar QR</>
-              )}
-            </Button>
+            {qr.status === "paused" && !canActivate && !isCanActivateLoading ? (
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start opacity-50 cursor-not-allowed"
+                  disabled
+                >
+                  <Play className="w-4 h-4" />Reactivar QR
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Necesitás una suscripción activa para reactivar este QR.{" "}
+                  <Link to="/dashboard/billing" className="text-primary hover:underline font-medium">
+                    Ir a Facturación
+                  </Link>
+                </p>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={handleTogglePause}
+                disabled={updateQR.isPending || (qr.status === "paused" && isCanActivateLoading)}
+              >
+                {qr.status === "paused" ? (
+                  <><Play className="w-4 h-4" />Reactivar QR</>
+                ) : (
+                  <><Pause className="w-4 h-4" />Pausar QR</>
+                )}
+              </Button>
+            )}
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
