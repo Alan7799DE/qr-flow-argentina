@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuthRateLimit } from "@/hooks/useAuthRateLimit";
 import { SEOHead } from "@/components/SEOHead";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
