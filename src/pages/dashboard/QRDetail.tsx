@@ -124,6 +124,8 @@ export default function QRDetail() {
   const { toast } = useToast();
   const customizationRef = useRef<HTMLDivElement>(null);
 
+  const { data: canActivate, isLoading: isCanActivateLoading } = useCanActivateQR();
+
   const { data: qr, isLoading } = useQRCode(id || "");
   
   const updateQR = useUpdateQR();
