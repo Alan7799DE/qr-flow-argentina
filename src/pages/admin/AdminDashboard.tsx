@@ -104,7 +104,7 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                {users?.slice(0, 5).map((user) => (
+                {users.slice(0, 5).map((user) => (
                   <div
                     key={user.id}
                     className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
