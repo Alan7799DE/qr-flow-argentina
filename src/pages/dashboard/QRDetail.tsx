@@ -98,6 +98,25 @@ function AccountTrialBanner() {
   );
 }
 
+function useCanActivateQR() {
+  return useQuery({
+    queryKey: ["can-activate-qr"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const [{ data: profile }, { data: subscription }] = await Promise.all([
+        supabase.from("profiles").select("trial_expires_at").eq("user_id", user.id).single(),
+        supabase.from("subscriptions").select("status").eq("user_id", user.id).eq("status", "active").maybeSingle(),
+      ]);
+
+      const hasActiveTrial = profile?.trial_expires_at && new Date(profile.trial_expires_at) > new Date();
+      return !!(hasActiveTrial || subscription);
+    },
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
 export default function QRDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
