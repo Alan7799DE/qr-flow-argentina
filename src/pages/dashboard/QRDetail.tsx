@@ -329,18 +329,36 @@ export default function QRDetail() {
           <div className="bg-card rounded-xl border p-6 space-y-3">
             <h3 className="font-semibold text-foreground mb-4">Acciones</h3>
             
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={handleTogglePause}
-              disabled={updateQR.isPending}
-            >
-              {qr.status === "paused" ? (
-                <><Play className="w-4 h-4" />Reactivar QR</>
-              ) : (
-                <><Pause className="w-4 h-4" />Pausar QR</>
-              )}
-            </Button>
+            {qr.status === "paused" && !canActivate && !isCanActivateLoading ? (
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start opacity-50 cursor-not-allowed"
+                  disabled
+                >
+                  <Play className="w-4 h-4" />Reactivar QR
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Necesitás una suscripción activa para reactivar este QR.{" "}
+                  <Link to="/dashboard/billing" className="text-primary hover:underline font-medium">
+                    Ir a Facturación
+                  </Link>
+                </p>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={handleTogglePause}
+                disabled={updateQR.isPending || (qr.status === "paused" && isCanActivateLoading)}
+              >
+                {qr.status === "paused" ? (
+                  <><Play className="w-4 h-4" />Reactivar QR</>
+                ) : (
+                  <><Pause className="w-4 h-4" />Pausar QR</>
+                )}
+              </Button>
+            )}
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
