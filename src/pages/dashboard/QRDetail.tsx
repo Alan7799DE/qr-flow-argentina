@@ -216,8 +216,19 @@ export default function QRDetail() {
 
   const handleTogglePause = async () => {
     if (!qr) return;
-    const newStatus = qr.status === "paused" ? "active" : "paused";
-    await updateQR.mutateAsync({ id: qr.id, status: newStatus, expected_updated_at: qr.updated_at });
+    if (qr.status === "paused") {
+      if (!canActivate) {
+        toast({
+          variant: "destructive",
+          title: "Suscripción requerida",
+          description: "Necesitás una suscripción activa para reactivar este QR. Andá a Facturación para suscribirte.",
+        });
+        return;
+      }
+      await updateQR.mutateAsync({ id: qr.id, status: "active", expected_updated_at: qr.updated_at });
+    } else {
+      await updateQR.mutateAsync({ id: qr.id, status: "paused", expected_updated_at: qr.updated_at });
+    }
   };
 
 
