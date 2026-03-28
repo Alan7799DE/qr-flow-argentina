@@ -24,6 +24,7 @@ import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import AdminLayout from "./components/admin/AdminLayout";
+import AdminRoute from "./components/admin/AdminRoute";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPlans from "./pages/admin/AdminPlans";
