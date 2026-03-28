@@ -42,9 +42,9 @@ function OAuthRedirectHandler({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN") {
         const redirectPath = sessionStorage.getItem("oauth_redirect");
+        sessionStorage.removeItem("oauth_redirect");
         if (redirectPath) {
-          sessionStorage.removeItem("oauth_redirect");
-          navigate(redirectPath);
+          navigate(isValidInternalPath(redirectPath) ? redirectPath : "/dashboard");
         }
       }
     });
