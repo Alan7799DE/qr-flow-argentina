@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { QrCode, Link2, Wand2, ArrowRight, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useCreateQR, validateUtmParams } from "@/hooks/useQRCodes";
+import { sanitizeUrl } from "@/lib/sanitizeUrl";
 import { useValidateUrl } from "@/hooks/useValidateUrl";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
@@ -95,7 +96,16 @@ export default function CreateQR() {
     e.preventDefault();
     if (!validate()) return;
 
-    const finalUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
+    const rawUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
+    const finalUrl = sanitizeUrl(rawUrl);
+    if (!finalUrl) {
+      toast({
+        variant: "destructive",
+        title: "URL no permitida",
+        description: "Solo se permiten URLs con protocolo http:// o https://.",
+      });
+      return;
+    }
 
     const urlCheck = await checkUrlReachability(finalUrl);
     if (urlCheck && !urlCheck.reachable) {

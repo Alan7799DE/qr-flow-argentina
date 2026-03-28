@@ -22,6 +22,7 @@ import {
   Save
 } from "lucide-react";
 import { useQRCode, useUpdateQR, useDeleteQR } from "@/hooks/useQRCodes";
+import { sanitizeUrl } from "@/lib/sanitizeUrl";
 import { useValidateUrl } from "@/hooks/useValidateUrl";
 
 import { useToast } from "@/hooks/use-toast";
@@ -163,7 +164,12 @@ export default function QRDetail() {
 
   const handleSaveUrl = async () => {
     if (!qr) return;
-    const finalUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
+    const rawUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
+    const finalUrl = sanitizeUrl(rawUrl);
+    if (!finalUrl) {
+      setUrlError("Solo se permiten URLs con protocolo http:// o https://");
+      return;
+    }
     const result = z.string().url("Ingresá una URL válida (ej: https://tusitio.com)").safeParse(finalUrl);
     if (!result.success) {
       setUrlError(result.error.errors[0].message);

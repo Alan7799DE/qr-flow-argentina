@@ -9,9 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { isPasswordValid } from "@/lib/passwordStrength";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 
 const emailSchema = z.string().email("Ingresá un email válido");
-const passwordSchema = z.string().min(6, "La contraseña debe tener al menos 6 caracteres");
+const passwordSchema = z.string().min(8, "La contraseña debe tener al menos 8 caracteres");
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
@@ -56,9 +58,15 @@ export default function Auth() {
       newErrors.email = emailResult.error.errors[0].message;
     }
 
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
+    if (isSignup) {
+      if (!isPasswordValid(password)) {
+        newErrors.password = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número";
+      }
+    } else {
+      const passwordResult = passwordSchema.safeParse(password);
+      if (!passwordResult.success) {
+        newErrors.password = passwordResult.error.errors[0].message;
+      }
     }
 
     if (isSignup && password !== confirmPassword) {
@@ -399,6 +407,7 @@ export default function Auth() {
               {errors.password && (
                 <p className="text-sm text-destructive">{errors.password}</p>
               )}
+              {isSignup && <PasswordStrengthIndicator password={password} />}
             </div>
 
             {isSignup && (
