@@ -13,9 +13,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { isPasswordValid } from "@/lib/passwordStrength";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 
 const emailSchema = z.string().email("Ingresá un email válido");
-const passwordSchema = z.string().min(6, "La contraseña debe tener al menos 6 caracteres");
+const passwordSchema = z.string().min(8, "La contraseña debe tener al menos 8 caracteres");
 
 interface AuthDialogProps {
   open: boolean;
