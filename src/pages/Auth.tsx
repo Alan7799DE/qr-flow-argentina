@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuthRateLimit } from "@/hooks/useAuthRateLimit";
 import { SEOHead } from "@/components/SEOHead";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
+  const rateLimit = useAuthRateLimit();
 
   useEffect(() => {
     const redirectTo = searchParams.get("redirect") || "/dashboard";
@@ -79,12 +81,22 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (rateLimit.state.isBlocked) return;
     if (!validate()) return;
 
     setIsLoading(true);
 
     try {
       if (isSignup) {
+        if (!rateLimit.canSignup()) {
+          toast({
+            variant: "destructive",
+            title: "Demasiados registros",
+            description: "Esperá un momento antes de intentar registrarte de nuevo.",
+          });
+          setIsLoading(false);
+          return;
+        }
         // Validate email domain has MX records
         try {
           const { data, error: fnError } = await supabase.functions.invoke("validate-email-domain", {
@@ -126,6 +138,7 @@ export default function Auth() {
             throw error;
           }
         } else {
+          rateLimit.recordSignup();
           toast({
             title: "¡Cuenta creada!",
             description: "Revisá tu email para confirmar tu cuenta.",
@@ -138,6 +151,7 @@ export default function Auth() {
         });
 
         if (error) {
+          rateLimit.recordLoginFailure();
           if (error.message.includes("Invalid login credentials")) {
             toast({
               variant: "destructive",
@@ -147,6 +161,8 @@ export default function Auth() {
           } else {
             throw error;
           }
+        } else {
+          rateLimit.resetLoginFailures();
         }
       }
     } catch (error: any) {
@@ -427,12 +443,18 @@ export default function Auth() {
               </div>
             )}
 
+            {rateLimit.state.isBlocked && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <p className="text-sm text-destructive font-medium">{rateLimit.state.message}</p>
+              </div>
+            )}
+
             <Button
               type="submit"
               variant="hero"
               size="lg"
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || rateLimit.state.isBlocked}
             >
               {isLoading ? (
                 <>
