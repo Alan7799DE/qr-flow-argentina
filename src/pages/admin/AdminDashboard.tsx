@@ -122,7 +122,7 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                 ))}
-                {(!users || users.length === 0) && (
+                {users.length === 0 && (
                   <p className="text-muted-foreground text-center py-4">
                     No hay usuarios registrados
                   </p>
