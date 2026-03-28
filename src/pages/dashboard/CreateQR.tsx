@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { QrCode, Link2, Wand2, ArrowRight, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useCreateQR, validateUtmParams } from "@/hooks/useQRCodes";
+import { sanitizeUrl } from "@/lib/sanitizeUrl";
 import { useValidateUrl } from "@/hooks/useValidateUrl";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
