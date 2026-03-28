@@ -45,8 +45,14 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated, defaultSignup 
     const newErrors: typeof errors = {};
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) newErrors.email = emailResult.error.errors[0].message;
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) newErrors.password = passwordResult.error.errors[0].message;
+    if (isSignup) {
+      if (!isPasswordValid(password)) {
+        newErrors.password = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número";
+      }
+    } else {
+      const passwordResult = passwordSchema.safeParse(password);
+      if (!passwordResult.success) newErrors.password = passwordResult.error.errors[0].message;
+    }
     if (isSignup && password !== confirmPassword) newErrors.confirmPassword = "Las contraseñas no coinciden";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
