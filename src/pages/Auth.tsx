@@ -138,6 +138,7 @@ export default function Auth() {
             throw error;
           }
         } else {
+          rateLimit.recordSignup();
           toast({
             title: "¡Cuenta creada!",
             description: "Revisá tu email para confirmar tu cuenta.",
