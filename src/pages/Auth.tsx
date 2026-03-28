@@ -88,6 +88,15 @@ export default function Auth() {
 
     try {
       if (isSignup) {
+        if (!rateLimit.canSignup()) {
+          toast({
+            variant: "destructive",
+            title: "Demasiados registros",
+            description: "Esperá un momento antes de intentar registrarte de nuevo.",
+          });
+          setIsLoading(false);
+          return;
+        }
         // Validate email domain has MX records
         try {
           const { data, error: fnError } = await supabase.functions.invoke("validate-email-domain", {
