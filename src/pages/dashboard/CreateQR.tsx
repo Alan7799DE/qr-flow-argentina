@@ -96,7 +96,16 @@ export default function CreateQR() {
     e.preventDefault();
     if (!validate()) return;
 
-    const finalUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
+    const rawUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
+    const finalUrl = sanitizeUrl(rawUrl);
+    if (!finalUrl) {
+      toast({
+        variant: "destructive",
+        title: "URL no permitida",
+        description: "Solo se permiten URLs con protocolo http:// o https://.",
+      });
+      return;
+    }
 
     const urlCheck = await checkUrlReachability(finalUrl);
     if (urlCheck && !urlCheck.reachable) {

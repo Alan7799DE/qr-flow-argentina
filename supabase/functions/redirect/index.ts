@@ -114,10 +114,15 @@ serve(async (req) => {
       console.error("[redirect] Error recording scan:", err);
     }
 
-    // Build final destination URL with UTMs
+    // Build final destination URL with UTMs and sanitize
     let destinationUrl = qr.destination_url;
     try {
       const destUrl = new URL(destinationUrl);
+      const protocol = destUrl.protocol.toLowerCase();
+      if (protocol !== "http:" && protocol !== "https:") {
+        console.error(`[redirect] Blocked unsafe protocol: ${protocol} for QR: ${qr.id}`);
+        return new Response("Invalid destination", { status: 400, headers: corsHeaders });
+      }
       if (qr.utm_source) destUrl.searchParams.set("utm_source", qr.utm_source);
       if (qr.utm_medium) destUrl.searchParams.set("utm_medium", qr.utm_medium);
       if (qr.utm_campaign) destUrl.searchParams.set("utm_campaign", qr.utm_campaign);
@@ -125,7 +130,8 @@ serve(async (req) => {
       if (qr.utm_content) destUrl.searchParams.set("utm_content", qr.utm_content);
       destinationUrl = destUrl.toString();
     } catch {
-      console.log("[redirect] Could not parse destination URL for UTM params");
+      console.error(`[redirect] Could not parse destination URL for QR: ${qr.id}`);
+      return new Response("Invalid destination", { status: 400, headers: corsHeaders });
     }
 
     console.log(`[redirect] Redirecting to: ${destinationUrl}`);
