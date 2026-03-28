@@ -33,6 +33,7 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
+  const rateLimit = useAuthRateLimit();
 
   useEffect(() => {
     const redirectTo = searchParams.get("redirect") || "/dashboard";
