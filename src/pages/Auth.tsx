@@ -443,12 +443,18 @@ export default function Auth() {
               </div>
             )}
 
+            {rateLimit.state.isBlocked && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <p className="text-sm text-destructive font-medium">{rateLimit.state.message}</p>
+              </div>
+            )}
+
             <Button
               type="submit"
               variant="hero"
               size="lg"
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || rateLimit.state.isBlocked}
             >
               {isLoading ? (
                 <>
