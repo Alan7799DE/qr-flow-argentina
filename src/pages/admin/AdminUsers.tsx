@@ -1,9 +1,17 @@
+import { useState, useEffect } from "react";
 import { useAdminUsers } from "@/hooks/useAdmin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,25 +22,38 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Users, Search, QrCode, Trash2, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Users, Search, QrCode, Trash2, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function AdminUsers() {
-  const { data: users, isLoading } = useAdminUsers();
-  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; email: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const filteredUsers = users?.filter(
-    (user) =>
-      user.email.toLowerCase().includes(search.toLowerCase()) ||
-      user.full_name?.toLowerCase().includes(search.toLowerCase())
-  );
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const { data, isLoading, isFetching } = useAdminUsers({
+    page,
+    limit,
+    search: debouncedSearch,
+  });
+
+  const users = data?.users || [];
+  const meta = data?.meta || { total: 0, page: 1, limit: 50, totalPages: 0 };
 
   const handleDeleteUser = async () => {
     if (!deleteTarget) return;
@@ -63,16 +84,37 @@ export default function AdminUsers() {
         <p className="text-muted-foreground mt-1">Gestión de usuarios registrados</p>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Buscar por email o nombre..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+        <div className="relative max-w-md w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por email o nombre..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground whitespace-nowrap">Por página:</span>
+          <Select value={String(limit)} onValueChange={(v) => { setLimit(Number(v)); setPage(1); }}>
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            {isLoading ? "Cargando..." : `${filteredUsers?.length || 0} usuarios`}
+            {isLoading ? "Cargando..." : `${meta.total} usuarios`}
+            {isFetching && !isLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -96,7 +138,7 @@ export default function AdminUsers() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {filteredUsers?.map((user) => {
+                  {users.map((user) => {
                     const sub = user.subscription;
                     const qrCount = user.qr_count || 0;
 
@@ -146,9 +188,41 @@ export default function AdminUsers() {
                   })}
                 </tbody>
               </table>
-              {filteredUsers?.length === 0 && (
+              {users.length === 0 && (
                 <p className="text-center py-8 text-muted-foreground">No se encontraron usuarios</p>
               )}
+            </div>
+          )}
+
+          {/* Pagination controls */}
+          {meta.totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                Mostrando {(meta.page - 1) * meta.limit + 1}–{Math.min(meta.page * meta.limit, meta.total)} de {meta.total}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Anterior
+                </Button>
+                <span className="text-sm text-muted-foreground px-2">
+                  {meta.page} / {meta.totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
+                  disabled={page >= meta.totalPages}
+                >
+                  Siguiente
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

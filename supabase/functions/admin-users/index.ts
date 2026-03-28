@@ -63,41 +63,91 @@ Deno.serve(async (req) => {
       );
     }
 
-    // User is verified admin - fetch all profiles using service role
-    const { data: profiles, error: profilesError } = await adminClient
+    // Parse pagination & search params
+    const url = new URL(req.url);
+    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "50", 10) || 50));
+    const search = (url.searchParams.get("search") || "").trim();
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    // Build profiles query with optional search
+    let countQuery = adminClient
+      .from("profiles")
+      .select("id", { count: "exact", head: true });
+
+    let dataQuery = adminClient
       .from("profiles")
       .select("id, user_id, email, full_name, created_at")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
-    if (profilesError) {
-      console.error("Error fetching profiles:", profilesError);
+    if (search) {
+      const pattern = `%${search}%`;
+      countQuery = countQuery.or(`email.ilike.${pattern},full_name.ilike.${pattern}`);
+      dataQuery = dataQuery.or(`email.ilike.${pattern},full_name.ilike.${pattern}`);
+    }
+
+    // Execute count and data in parallel
+    const [countResult, dataResult] = await Promise.all([countQuery, dataQuery]);
+
+    if (countResult.error) {
+      console.error("Error counting profiles:", countResult.error);
+      return new Response(
+        JSON.stringify({ error: "Error fetching user count" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (dataResult.error) {
+      console.error("Error fetching profiles:", dataResult.error);
       return new Response(
         JSON.stringify({ error: "Error fetching user data" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Get subscriptions with plan names
-    const { data: subscriptions, error: subsError } = await adminClient
-      .from("subscriptions")
-      .select("id, user_id, status, plan_id, current_period_end, plans(name)");
+    const total = countResult.count || 0;
+    const profiles = dataResult.data || [];
+    const userIds = profiles.map((p) => p.user_id);
 
-    if (subsError) {
-      console.error("Error fetching subscriptions:", subsError);
-      return new Response(
-        JSON.stringify({ error: "Error fetching subscription data" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Get subscriptions and QR counts only for the current page's users
+    let subscriptions: any[] = [];
+    let qrCodes: any[] = [];
+
+    if (userIds.length > 0) {
+      const [subsResult, qrResult] = await Promise.all([
+        adminClient
+          .from("subscriptions")
+          .select("id, user_id, status, plan_id, current_period_end, plans(name)")
+          .in("user_id", userIds),
+        adminClient
+          .from("qr_codes")
+          .select("user_id")
+          .in("user_id", userIds),
+      ]);
+
+      if (subsResult.error) {
+        console.error("Error fetching subscriptions:", subsResult.error);
+      } else {
+        subscriptions = subsResult.data || [];
+      }
+
+      if (qrResult.error) {
+        console.error("Error fetching QR codes:", qrResult.error);
+      } else {
+        qrCodes = qrResult.data || [];
+      }
     }
 
     // Map subscriptions to users
     const subsMap = new Map(
-      subscriptions?.map((sub) => {
+      subscriptions.map((sub) => {
         const planData = sub.plans as { name: string } | { name: string }[] | null;
-        const planName = Array.isArray(planData) 
-          ? planData[0]?.name 
+        const planName = Array.isArray(planData)
+          ? planData[0]?.name
           : planData?.name;
-        
+
         return [
           sub.user_id,
           {
@@ -111,17 +161,9 @@ Deno.serve(async (req) => {
       })
     );
 
-    // Get QR counts per user
-    const { data: qrCodes, error: qrError } = await adminClient
-      .from("qr_codes")
-      .select("user_id");
-
-    if (qrError) {
-      console.error("Error fetching QR codes:", qrError);
-    }
-
+    // Count QRs per user
     const qrCounts: Record<string, number> = {};
-    qrCodes?.forEach((qr: { user_id: string }) => {
+    qrCodes.forEach((qr: { user_id: string }) => {
       qrCounts[qr.user_id] = (qrCounts[qr.user_id] || 0) + 1;
     });
 
@@ -133,11 +175,22 @@ Deno.serve(async (req) => {
     }));
 
     return new Response(
-      JSON.stringify({ users }),
+      JSON.stringify({
+        users,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Unexpected error:", error);
+    console.error("Unexpected error:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

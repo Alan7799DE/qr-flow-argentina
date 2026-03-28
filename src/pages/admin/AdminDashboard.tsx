@@ -4,11 +4,14 @@ import { Users, CreditCard, QrCode, Webhook, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminDashboard() {
-  const { data: users, isLoading: loadingUsers } = useAdminUsers();
+  const { data, isLoading: loadingUsers } = useAdminUsers({ limit: 5 });
   const { data: plans, isLoading: loadingPlans } = useAdminPlans();
   const { data: webhooks, isLoading: loadingWebhooks } = useWebhookLogs();
 
-  const activeSubscriptions = users?.filter(
+  const users = data?.users || [];
+  const totalUsers = data?.meta?.total || 0;
+
+  const activeSubscriptions = users.filter(
     (u) => u.subscription?.status === "active"
   ).length || 0;
 
@@ -19,7 +22,7 @@ export default function AdminDashboard() {
   const stats = [
     {
       title: "Total Usuarios",
-      value: users?.length || 0,
+      value: totalUsers,
       icon: Users,
       color: "text-primary",
       bgColor: "bg-primary/10",
@@ -101,7 +104,7 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                {users?.slice(0, 5).map((user) => (
+                {users.slice(0, 5).map((user) => (
                   <div
                     key={user.id}
                     className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
@@ -119,7 +122,7 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                 ))}
-                {(!users || users.length === 0) && (
+                {users.length === 0 && (
                   <p className="text-muted-foreground text-center py-4">
                     No hay usuarios registrados
                   </p>
