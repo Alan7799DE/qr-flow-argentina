@@ -52,12 +52,33 @@ export interface AdminUserWithQRCount extends AdminUser {
   qr_count: number;
 }
 
-export function useAdminUsers() {
+export interface AdminUsersMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AdminUsersResponse {
+  users: AdminUserWithQRCount[];
+  meta: AdminUsersMeta;
+}
+
+export function useAdminUsers(params: { page?: number; limit?: number; search?: string } = {}) {
+  const { page = 1, limit = 50, search = "" } = params;
+
   return useQuery({
-    queryKey: ["admin-users"],
-    queryFn: async (): Promise<AdminUserWithQRCount[]> => {
-      // Server-side admin verification and data retrieval via edge function
-      const { data, error } = await supabase.functions.invoke('admin-users');
+    queryKey: ["admin-users", page, limit, search],
+    queryFn: async (): Promise<AdminUsersResponse> => {
+      const queryParams = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+      });
+      if (search) queryParams.set("search", search);
+
+      const { data, error } = await supabase.functions.invoke(
+        `admin-users?${queryParams.toString()}`
+      );
 
       if (error) {
         console.error("Error fetching admin users:", error);
@@ -68,8 +89,12 @@ export function useAdminUsers() {
         throw new Error(data.error);
       }
 
-      return data.users || [];
+      return {
+        users: data.users || [],
+        meta: data.meta || { total: 0, page: 1, limit: 50, totalPages: 0 },
+      };
     },
+    placeholderData: (prev) => prev,
   });
 }
 
