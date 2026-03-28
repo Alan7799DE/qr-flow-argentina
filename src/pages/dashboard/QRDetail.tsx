@@ -22,6 +22,7 @@ import {
   Save
 } from "lucide-react";
 import { useQRCode, useUpdateQR, useDeleteQR } from "@/hooks/useQRCodes";
+import { sanitizeUrl } from "@/lib/sanitizeUrl";
 import { useValidateUrl } from "@/hooks/useValidateUrl";
 
 import { useToast } from "@/hooks/use-toast";
