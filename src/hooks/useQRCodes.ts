@@ -449,6 +449,40 @@ export function useRestoreQR() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user logged in");
+
+      // Check subscription or trial status
+      const [{ data: profile }, { data: subscription }, { count, error: countError }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("trial_started_at, trial_expires_at")
+          .eq("user_id", user.id)
+          .single(),
+        supabase
+          .from("subscriptions")
+          .select("status")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .maybeSingle(),
+        supabase
+          .from("qr_codes")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .is("deleted_at", null),
+      ]);
+
+      const hasActiveTrial = profile?.trial_expires_at && new Date(profile.trial_expires_at) > new Date();
+
+      if (!hasActiveTrial && !subscription) {
+        throw new Error("Necesitás una suscripción activa para restaurar códigos QR.");
+      }
+
+      if (countError) throw countError;
+      if ((count ?? 0) >= QR_LIMIT) {
+        throw new Error("Alcanzaste el límite de 10 QRs activos. Eliminá uno existente para poder restaurar este.");
+      }
+
       const { error } = await supabase
         .from("qr_codes")
         .update({ deleted_at: null } as any)
