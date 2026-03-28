@@ -253,6 +253,7 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated, defaultSignup 
                   </button>
                 </div>
                 {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                {isSignup && <PasswordStrengthIndicator password={password} />}
               </div>
 
               {isSignup && (

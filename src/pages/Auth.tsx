@@ -407,6 +407,7 @@ export default function Auth() {
               {errors.password && (
                 <p className="text-sm text-destructive">{errors.password}</p>
               )}
+              {isSignup && <PasswordStrengthIndicator password={password} />}
             </div>
 
             {isSignup && (
