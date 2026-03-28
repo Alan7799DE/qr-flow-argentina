@@ -58,9 +58,15 @@ export default function Auth() {
       newErrors.email = emailResult.error.errors[0].message;
     }
 
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
+    if (isSignup) {
+      if (!isPasswordValid(password)) {
+        newErrors.password = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número";
+      }
+    } else {
+      const passwordResult = passwordSchema.safeParse(password);
+      if (!passwordResult.success) {
+        newErrors.password = passwordResult.error.errors[0].message;
+      }
     }
 
     if (isSignup && password !== confirmPassword) {
