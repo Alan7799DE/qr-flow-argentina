@@ -151,6 +151,7 @@ export default function Auth() {
         });
 
         if (error) {
+          rateLimit.recordLoginFailure();
           if (error.message.includes("Invalid login credentials")) {
             toast({
               variant: "destructive",
@@ -159,6 +160,10 @@ export default function Auth() {
             });
           } else {
             throw error;
+          }
+        } else {
+          rateLimit.resetLoginFailures();
+        }
           }
         }
       }
