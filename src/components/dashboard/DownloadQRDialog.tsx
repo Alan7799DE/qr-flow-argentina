@@ -68,6 +68,7 @@ export function DownloadQRDialog({
               onClick={() => handleDownload(format.id)}
               disabled={downloading !== null}
               className="flex items-center gap-4 w-full px-5 py-4 hover:bg-muted/50 transition-colors text-left disabled:opacity-50"
+              data-gtm={`btn-download-${format.id}`}
             >
               {downloading === format.id ? (
                 <Loader2 className="w-5 h-5 text-primary animate-spin" />
