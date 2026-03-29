@@ -209,6 +209,7 @@ export default function Billing() {
               className="w-full"
               disabled={isSubscribing}
               onClick={handleSubscribe}
+              data-gtm="btn-subscribe-pro"
             >
               {isSubscribing ? (
                 <>
