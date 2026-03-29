@@ -227,6 +227,7 @@ export function QRCreatorPublic() {
             className="w-full max-w-[280px]"
             onClick={handleDownload}
             disabled={!url}
+            data-gtm="btn-download-qr"
           >
             <Download className="w-5 h-5" />
             Descargar QR
