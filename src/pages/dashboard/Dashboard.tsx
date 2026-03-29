@@ -74,7 +74,7 @@ function TrialBanner() {
         </p>
       </div>
       <Button variant="outline" size="sm" className="border-warning/50 text-warning hover:bg-warning/10 shrink-0" asChild>
-        <Link to="/dashboard/billing">Suscribirme</Link>
+        <Link to="/dashboard/billing" data-gtm="btn-subscribe-banner">Suscribirme</Link>
       </Button>
     </div>
   );
