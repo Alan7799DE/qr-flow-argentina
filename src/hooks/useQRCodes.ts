@@ -483,8 +483,15 @@ export function useRestoreQR() {
       }
 
       if (countError) throw countError;
-      if ((count ?? 0) >= QR_LIMIT) {
-        throw new Error("Alcanzaste el límite de 10 QRs activos. Eliminá uno existente para poder restaurar este.");
+
+      // Get dynamic QR limit from user's plan
+      const { data: qrLimit } = await supabase.rpc("get_user_qr_limit", {
+        _user_id: user.id,
+      });
+      const limit = (qrLimit as number) ?? 5;
+
+      if ((count ?? 0) >= limit) {
+        throw new Error(`Alcanzaste el límite de ${limit} QRs activos. Eliminá uno existente para poder restaurar este.`);
       }
 
       const { error } = await supabase

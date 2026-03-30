@@ -224,7 +224,7 @@ export default function Dashboard() {
             Códigos QR
           </h1>
           <Badge variant="outline" className="text-xs font-medium">
-            {activeCount} de {QR_LIMIT} usados
+            {activeCount} de {dynamicLimit} usados
           </Badge>
         </div>
         {isAtLimit ? (
