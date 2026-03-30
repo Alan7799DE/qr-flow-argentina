@@ -243,7 +243,16 @@ serve(async (req) => {
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
           <tr>
             <td align="center" style="background-color:#1A52F5; border-radius:12px 12px 0 0; padding:28px 40px;">
-              <img src="https://qrapido.io/favicon.ico" alt="QRapido" height="40" style="display:block;" />
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td style="vertical-align:middle; padding-right:10px;">
+                    <img src="https://qrapido.io/favicon.ico" alt="QRapido" height="40" style="display:block;" />
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <span style="font-family:Arial, Helvetica, sans-serif; font-size:22px; font-weight:700; color:#ffffff; letter-spacing:-0.3px;">QRapido</span>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           <tr>
