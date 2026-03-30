@@ -382,49 +382,110 @@ serve(async (req) => {
         // Send email
         if (resend && profile.email) {
           try {
+            const qrListHtml24h = (userQRs || []).map(q => `
+                    <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:8px;">
+                      <tr>
+                        <td style="width:12px; color:#f97316; font-size:14px; padding-right:10px; vertical-align:top;">●</td>
+                        <td style="font-size:14px; color:#374151; line-height:1.6;">${q.name}</td>
+                      </tr>
+                    </table>`).join('');
+
             await resend.emails.send({
               from: 'QRapido <noreply@qrapido.io>',
               to: [profile.email],
-              subject: '⚠️ Tu período de prueba está por expirar',
-              html: `
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                  <h1 style="color: #1a1a1a; font-size: 24px;">Hola${profile.full_name ? ` ${profile.full_name}` : ''}!</h1>
-                  
-                  <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                    Te escribimos para avisarte que tu período de prueba está por expirar.
-                  </p>
-                  
-                  <div style="background: #f5f5f5; border-radius: 8px; padding: 16px; margin: 20px 0;">
-                    <p style="margin: 0; color: #333; font-weight: 600;">
-                      ${qrCount > 1 ? `${qrCount} códigos QR` : '1 código QR'}: ${qrNames}
-                    </p>
-                    <p style="margin: 8px 0 0; color: #666;">
-                      Fecha de expiración de tu cuenta: ${expirationDate}
-                    </p>
-                  </div>
-                  
-                  <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                    Después de esta fecha, todos tus QRs dejarán de funcionar y las personas que los escaneen no podrán acceder a los enlaces.
-                  </p>
-                  
-                  <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                    <strong>¿Querés mantenerlos activos?</strong> Elegí un plan de suscripción para que sigan funcionando sin interrupciones.
-                  </p>
-                  
-                  <a href="https://qrapido.io/dashboard/billing"
-                     style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
-                    Ver planes
-                  </a>
-                  
-                  <p style="color: #999; font-size: 14px; margin-top: 30px;">
-                    Si tenés alguna pregunta, respondé a este email.
-                  </p>
-                  
-                  <p style="color: #333; font-size: 14px;">
-                    — El equipo de QRapido
-                  </p>
-                </div>
-              `,
+              subject: '⚠️ Tu período de prueba expira mañana',
+              html: `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tu período de prueba expira mañana</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5; padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
+          <tr>
+            <td align="center" style="background-color:#1A52F5; border-radius:12px 12px 0 0; padding:28px 40px;">
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td style="vertical-align:middle; padding-right:10px;">
+                    <img src="https://qrapido.io/favicon.ico" alt="QRapido" height="40" style="display:block;" />
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <span style="font-family:Arial, Helvetica, sans-serif; font-size:22px; font-weight:700; color:#ffffff; letter-spacing:-0.3px;">QRapido</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="background-color:#fef3c7; padding:12px 40px; border-left:4px solid #f59e0b;">
+              <p style="margin:0; font-size:13px; font-weight:600; color:#92400e;">
+                ⚠️ Último aviso — tu prueba vence mañana
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#ffffff; padding:40px 40px 32px 40px;">
+              <p style="margin:0 0 8px 0; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.8px; font-weight:500;">Último aviso</p>
+              <h1 style="margin:0 0 20px 0; font-size:22px; font-weight:700; color:#111827; line-height:1.3;">
+                Mañana tus QRs dejan de funcionar
+              </h1>
+              <p style="margin:0 0 16px 0; font-size:15px; color:#374151; line-height:1.7;">
+                Tu período de prueba vence el <strong>${expirationDate}</strong>. A partir de esa fecha, tus códigos QR van a dejar de redirigir a quienes los escaneen — hasta que actives un plan.
+              </p>
+              <p style="margin:0 0 12px 0; font-size:15px; color:#374151; line-height:1.7;">
+                QRs que se van a desactivar:
+              </p>
+              <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px 0; background-color:#fff7ed; border-radius:8px; border:1px solid #fed7aa;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    ${qrListHtml24h}
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 24px 0; font-size:15px; color:#374151; line-height:1.7;">
+                Activar un plan toma menos de 2 minutos y tus QRs siguen funcionando sin interrupciones.
+              </p>
+              <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 32px 0;">
+                <tr>
+                  <td align="center" style="background-color:#1A52F5; border-radius:8px;">
+                    <a href="https://qrapido.io/dashboard/billing"
+                       style="display:inline-block; padding:16px 40px; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none;">
+                      Activar mi plan ahora →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <hr style="border:none; border-top:1px solid #e5e7eb; margin:0 0 24px 0;" />
+              <p style="margin:0; font-size:14px; color:#6b7280; line-height:1.7;">
+                Si ya activaste un plan, ignorá este email. Ante cualquier duda, respondé este mensaje y te ayudamos.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#f4f4f5; border-radius:0 0 12px 12px; padding:24px 40px; text-align:center;">
+              <p style="margin:0 0 8px 0; font-size:12px; color:#9ca3af;">
+                QRapido · Buenos Aires, Argentina
+              </p>
+              <p style="margin:0; font-size:12px; color:#9ca3af;">
+                Recibís este email porque tenés una cuenta en
+                <a href="https://qrapido.io" style="color:#6b7280; text-decoration:underline;">qrapido.io</a>.
+                <br />
+                <a href="https://qrapido.io/unsubscribe?email=${encodeURIComponent(profile.email)}" style="color:#6b7280; text-decoration:underline;">
+                  Desuscribirse de estos emails
+                </a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
             });
 
             console.log(`Email sent to ${profile.email} for account trial expiration`);
