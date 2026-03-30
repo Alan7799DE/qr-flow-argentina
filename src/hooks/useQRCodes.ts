@@ -173,8 +173,6 @@ export function useQRCode(id: string) {
   });
 }
 
-export const QR_LIMIT = 10;
-
 export function useCreateQR() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
