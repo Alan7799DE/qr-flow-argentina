@@ -425,47 +425,98 @@ serve(async (req) => {
                 from: 'QRapido <noreply@qrapido.io>',
                 to: [profile.email],
                 subject: '✅ ¡Tu suscripción está activa!',
-                html: `
-                  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h1 style="color: #1a1a1a; font-size: 24px;">¡Hola${profile.full_name ? ` ${profile.full_name}` : ''}!</h1>
-                    
-                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                      Tu suscripción al plan <strong>${plan.name}</strong> ya está activa. ¡Gracias por confiar en QRapido!
-                    </p>
-                    
-                    <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; padding: 20px; margin: 24px 0; color: white;">
-                      <h2 style="margin: 0 0 16px; font-size: 20px;">Tu plan incluye:</h2>
-                      <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
-                        <li>Hasta <strong>${plan.qr_limit}</strong> códigos QR activos</li>
-                        <li>Estadísticas detalladas de escaneos</li>
-                        <li>QRs dinámicos (podés cambiar el destino cuando quieras)</li>
-                        <li>Soporte prioritario</li>
-                      </ul>
-                    </div>
-                    
-                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                      Todos tus códigos QR existentes ahora están <strong>activos permanentemente</strong> mientras mantengas tu suscripción.
-                    </p>
-                    
-                    <a href="https://qrapido.io/dashboard" 
-                       style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
-                      Ir a mi dashboard
+                html: `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tu suscripción está activa</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5; padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
+          <tr>
+            <td align="center" style="background-color:#1A52F5; border-radius:12px 12px 0 0; padding:28px 40px;">
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td style="vertical-align:middle; padding-right:10px;">
+                    <img src="https://qrapido.io/favicon.ico" alt="QRapido" height="40" style="display:block;" />
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <span style="font-family:Arial, Helvetica, sans-serif; font-size:22px; font-weight:700; color:#ffffff; letter-spacing:-0.3px;">QRapido</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#ffffff; padding:40px 40px 32px 40px;">
+              <p style="margin:0 0 8px 0; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.8px; font-weight:500;">Suscripción confirmada</p>
+              <h1 style="margin:0 0 20px 0; font-size:22px; font-weight:700; color:#111827; line-height:1.3;">
+                Tu plan está activo
+              </h1>
+              <p style="margin:0 0 24px 0; font-size:15px; color:#374151; line-height:1.7;">
+                Tu suscripción a QRapido quedó activada. Tus códigos QR están funcionando y van a seguir haciéndolo mientras tu plan esté activo.
+              </p>
+              <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px 0; background-color:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 16px 0; font-size:13px; color:#166534; text-transform:uppercase; letter-spacing:0.8px; font-weight:600;">Detalle de tu plan</p>
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="font-size:14px; color:#374151; padding:6px 0; width:50%;">Plan</td>
+                        <td style="font-size:14px; color:#111827; font-weight:600; padding:6px 0; text-align:right;">${plan.name}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:14px; color:#374151; padding:6px 0; border-top:1px solid #d1fae5;">QRs disponibles</td>
+                        <td style="font-size:14px; color:#111827; font-weight:600; padding:6px 0; border-top:1px solid #d1fae5; text-align:right;">${plan.qr_limit} códigos QR</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:14px; color:#374151; padding:6px 0; border-top:1px solid #d1fae5;">Monto mensual</td>
+                        <td style="font-size:14px; color:#111827; font-weight:600; padding:6px 0; border-top:1px solid #d1fae5; text-align:right;">$${plan.price_ars.toLocaleString('es-AR')} ARS</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 24px 0; font-size:15px; color:#374151; line-height:1.7;">
+                Desde tu dashboard podés ver las estadísticas de escaneo, editar la URL de tus QRs y crear nuevos códigos.
+              </p>
+              <table cellpadding="0" cellspacing="0" style="margin:0 0 32px 0;">
+                <tr>
+                  <td align="center" style="background-color:#1A52F5; border-radius:8px;">
+                    <a href="https://qrapido.io/dashboard"
+                       style="display:inline-block; padding:14px 32px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none;">
+                      Ir a mi dashboard →
                     </a>
-                    
-                    <div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 20px;">
-                      <p style="color: #999; font-size: 14px; margin: 0;">
-                        Monto mensual: <strong style="color: #333;">$${plan.price_ars.toLocaleString('es-AR')} ARS</strong>
-                      </p>
-                      <p style="color: #999; font-size: 14px; margin: 8px 0 0;">
-                        Si tenés alguna pregunta, respondé a este email.
-                      </p>
-                    </div>
-                    
-                    <p style="color: #333; font-size: 14px; margin-top: 20px;">
-                      — El equipo de QRapido
-                    </p>
-                  </div>
-                `,
+                  </td>
+                </tr>
+              </table>
+              <hr style="border:none; border-top:1px solid #e5e7eb; margin:0 0 24px 0;" />
+              <p style="margin:0; font-size:14px; color:#6b7280; line-height:1.7;">
+                Si tenés alguna duda sobre tu suscripción, respondé este mensaje y te ayudamos.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#f4f4f5; border-radius:0 0 12px 12px; padding:24px 40px; text-align:center;">
+              <p style="margin:0 0 8px 0; font-size:12px; color:#9ca3af;">
+                QRapido · Buenos Aires, Argentina
+              </p>
+              <p style="margin:0; font-size:12px; color:#9ca3af;">
+                Recibís este email porque activaste una suscripción en
+                <a href="https://qrapido.io" style="color:#6b7280; text-decoration:underline;">qrapido.io</a>.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
               });
 
               console.log(`Subscription confirmation email sent to ${profile.email}`);
