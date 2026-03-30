@@ -71,9 +71,9 @@ export function DownloadQRDialog({
               data-gtm={`btn-download-${format.id}`}
             >
               {downloading === format.id ? (
-                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                <Loader2 className="w-5 h-5 text-primary animate-spin pointer-events-none" />
               ) : (
-                <format.icon className="w-5 h-5 text-primary" />
+                <format.icon className="w-5 h-5 text-primary pointer-events-none" />
               )}
               <div>
                 <span className="font-medium text-foreground">{format.label}</span>
