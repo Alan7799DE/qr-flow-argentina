@@ -5,7 +5,8 @@ import { StyledQRCode, type QRDotStyle } from "@/components/dashboard/StyledQRCo
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
-import { useQRCodes, useCreateQR, useDeleteQR, QR_LIMIT } from "@/hooks/useQRCodes";
+import { useQRCodes, useCreateQR, useDeleteQR } from "@/hooks/useQRCodes";
+import { useQRLimit } from "@/hooks/useQRLimit";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DownloadQRDialog } from "@/components/dashboard/DownloadQRDialog";
@@ -174,8 +175,10 @@ export default function Dashboard() {
     return result;
   }, [qrCodes, search, sortBy]);
 
+  const { data: qrLimit } = useQRLimit();
+  const dynamicLimit = qrLimit ?? 5;
   const activeCount = qrCodes?.length || 0;
-  const isAtLimit = activeCount >= QR_LIMIT;
+  const isAtLimit = activeCount >= dynamicLimit;
 
   return (
     <div className="space-y-6">
@@ -221,7 +224,7 @@ export default function Dashboard() {
             Códigos QR
           </h1>
           <Badge variant="outline" className="text-xs font-medium">
-            {activeCount} de {QR_LIMIT} usados
+            {activeCount} de {dynamicLimit} usados
           </Badge>
         </div>
         {isAtLimit ? (
