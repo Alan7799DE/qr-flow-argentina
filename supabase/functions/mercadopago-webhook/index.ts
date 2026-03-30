@@ -518,57 +518,115 @@ serve(async (req) => {
               const qrCount = userQRs?.length || 0;
               const graceDate = gracePeriodEnd.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+              const qrListHtmlGrace = (userQRs || []).map(q => `
+                    <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:8px;">
+                      <tr>
+                        <td style="width:12px; color:#f59e0b; font-size:14px; padding-right:10px; vertical-align:top;">●</td>
+                        <td style="font-size:14px; color:#374151; line-height:1.6;">${q.name}</td>
+                      </tr>
+                    </table>`).join('');
+
               await resend.emails.send({
                 from: 'QRapido <noreply@qrapido.io>',
                 to: [profile.email],
                 subject: '⚠️ Problema con tu pago — Tenés 24hs para resolverlo',
-                html: `
-                  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h1 style="color: #1a1a1a; font-size: 24px;">Hola${profile.full_name ? ` ${profile.full_name}` : ''}!</h1>
-                    
-                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                      Te informamos que hubo un problema al procesar el pago de tu suscripción${plan ? ` al plan <strong>${plan.name}</strong>` : ''}.
-                    </p>
-                    
-                    <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; margin: 20px 0;">
-                      <p style="margin: 0; color: #92400e; font-weight: 600; font-size: 16px;">
-                        ⏳ Tus QRs siguen funcionando por las próximas 24 horas
-                      </p>
-                      <p style="margin: 8px 0 0; color: #92400e;">
-                        ${qrCount > 1 ? `${qrCount} códigos QR afectados` : '1 código QR afectado'}: ${qrNames}
-                      </p>
-                      <p style="margin: 8px 0 0; color: #92400e;">
-                        <strong>Fecha límite:</strong> ${graceDate}
-                      </p>
-                    </div>
-                    
-                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                      Si no se resuelve el pago antes de esa fecha, <strong>todos tus códigos QR dejarán de funcionar</strong> y las personas que los escaneen no podrán acceder a los enlaces.
-                    </p>
-                    
-                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                      <strong>¿Qué podés hacer?</strong>
-                    </p>
-                    <ul style="color: #666; font-size: 16px; line-height: 1.8;">
-                      <li>Verificá que tu medio de pago tenga fondos suficientes</li>
-                      <li>Actualizá tu tarjeta o medio de pago en Mercado Pago</li>
-                      <li>El cobro se reintentará automáticamente</li>
-                    </ul>
-                    
-                    <a href="https://qrapido.io/dashboard/billing" 
-                       style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
-                      Ver mi suscripción
+                html: `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Problema con tu pago</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5; padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
+          <tr>
+            <td align="center" style="background-color:#1A52F5; border-radius:12px 12px 0 0; padding:28px 40px;">
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td style="vertical-align:middle; padding-right:10px;">
+                    <img src="https://qrapido.io/favicon.ico" alt="QRapido" height="40" style="display:block;" />
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <span style="font-family:Arial, Helvetica, sans-serif; font-size:22px; font-weight:700; color:#ffffff; letter-spacing:-0.3px;">QRapido</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#ffffff; padding:40px 40px 32px 40px;">
+              <p style="margin:0 0 8px 0; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.8px; font-weight:500;">Acción requerida</p>
+              <h1 style="margin:0 0 20px 0; font-size:22px; font-weight:700; color:#111827; line-height:1.3;">
+                Hubo un problema con tu pago
+              </h1>
+              <p style="margin:0 0 16px 0; font-size:15px; color:#374151; line-height:1.7;">
+                No pudimos procesar el cobro de tu suscripción. Tus QRs siguen activos por ahora, pero necesitás resolver esto antes del <strong>${graceDate}</strong> para evitar que se desactiven.
+              </p>
+              <p style="margin:0 0 12px 0; font-size:15px; color:#374151; line-height:1.7;">QRs en riesgo de desactivarse:</p>
+              <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px 0; background-color:#fef3c7; border-radius:8px; border:1px solid #fde68a;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    ${qrListHtmlGrace}
+                  </td>
+                </tr>
+              </table>
+              <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px 0; background-color:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 14px 0; font-size:13px; color:#374151; text-transform:uppercase; letter-spacing:0.8px; font-weight:600;">Cómo resolver esto</p>
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="vertical-align:top; padding-right:12px; font-size:14px; color:#1A52F5; font-weight:700; padding-bottom:10px;">1.</td>
+                        <td style="font-size:14px; color:#374151; line-height:1.6; padding-bottom:10px;">Verificá que tu tarjeta tenga fondos suficientes</td>
+                      </tr>
+                      <tr>
+                        <td style="vertical-align:top; padding-right:12px; font-size:14px; color:#1A52F5; font-weight:700; padding-bottom:10px;">2.</td>
+                        <td style="font-size:14px; color:#374151; line-height:1.6; padding-bottom:10px;">Asegurate de que tu banco no haya bloqueado el cobro</td>
+                      </tr>
+                      <tr>
+                        <td style="vertical-align:top; padding-right:12px; font-size:14px; color:#1A52F5; font-weight:700;">3.</td>
+                        <td style="font-size:14px; color:#374151; line-height:1.6;">Mercado Pago va a reintentar el cobro automáticamente</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <table cellpadding="0" cellspacing="0" style="margin:0 0 32px 0;">
+                <tr>
+                  <td align="center" style="background-color:#1A52F5; border-radius:8px;">
+                    <a href="https://qrapido.io/dashboard/billing"
+                       style="display:inline-block; padding:14px 32px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none;">
+                      Ver mi suscripción →
                     </a>
-                    
-                    <p style="color: #999; font-size: 14px; margin-top: 30px;">
-                      Si tenés alguna pregunta, respondé a este email.
-                    </p>
-                    
-                    <p style="color: #333; font-size: 14px;">
-                      — El equipo de QRapido
-                    </p>
-                  </div>
-                `,
+                  </td>
+                </tr>
+              </table>
+              <hr style="border:none; border-top:1px solid #e5e7eb; margin:0 0 24px 0;" />
+              <p style="margin:0; font-size:14px; color:#6b7280; line-height:1.7;">
+                Si el problema persiste o tenés alguna duda, respondé este mensaje y te ayudamos.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#f4f4f5; border-radius:0 0 12px 12px; padding:24px 40px; text-align:center;">
+              <p style="margin:0 0 8px 0; font-size:12px; color:#9ca3af;">
+                QRapido · Buenos Aires, Argentina
+              </p>
+              <p style="margin:0; font-size:12px; color:#9ca3af;">
+                Recibís este email porque tenés una suscripción activa en
+                <a href="https://qrapido.io" style="color:#6b7280; text-decoration:underline;">qrapido.io</a>.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
               });
 
               console.log(`Payment failure email sent to ${profile.email}`);
