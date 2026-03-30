@@ -217,49 +217,91 @@ serve(async (req) => {
 
         if (resend && profile.email) {
           try {
+            const qrListHtml = (userQRs || []).map(q => `
+                    <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:8px;">
+                      <tr>
+                        <td style="width:12px; color:#1A52F5; font-size:14px; padding-right:10px; vertical-align:top;">●</td>
+                        <td style="font-size:14px; color:#374151; line-height:1.6;">${q.name}</td>
+                      </tr>
+                    </table>`).join('');
+
             await resend.emails.send({
               from: 'QRapido <noreply@qrapido.io>',
               to: [profile.email],
               subject: '⏰ Tu período de prueba vence en 2 días',
-              html: `
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                  <h1 style="color: #1a1a1a; font-size: 24px;">Hola${profile.full_name ? ` ${profile.full_name}` : ''}!</h1>
-                  
-                  <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                    Te escribimos para avisarte que tu período de prueba vence en <strong>2 días</strong>.
-                  </p>
-                  
-                  <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 16px; margin: 20px 0;">
-                    <p style="margin: 0; color: #92400e; font-weight: 600;">
-                      ${qrCount > 1 ? `${qrCount} códigos QR` : '1 código QR'}: ${qrNames}
-                    </p>
-                    <p style="margin: 8px 0 0; color: #92400e;">
-                      Fecha de expiración: ${expirationDate}
-                    </p>
-                  </div>
-                  
-                  <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                    Después de esta fecha, todos tus QRs dejarán de funcionar y las personas que los escaneen no podrán acceder a los enlaces.
-                  </p>
-                  
-                  <p style="color: #666; font-size: 16px; line-height: 1.6;">
-                    <strong>¿Querés mantenerlos activos?</strong> Elegí un plan de suscripción para que sigan funcionando sin interrupciones.
-                  </p>
-                  
-                  <a href="https://qrapido.io/dashboard/billing"
-                     style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
-                    Ver planes
-                  </a>
-                  
-                  <p style="color: #999; font-size: 14px; margin-top: 30px;">
-                    Si tenés alguna pregunta, respondé a este email.
-                  </p>
-                  
-                  <p style="color: #333; font-size: 14px;">
-                    — El equipo de QRapido
-                  </p>
-                </div>
-              `,
+              html: `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tu período de prueba vence en 2 días</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5; padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
+          <tr>
+            <td align="center" style="background-color:#1A52F5; border-radius:12px 12px 0 0; padding:28px 40px;">
+              <img src="https://qrapido.io/favicon.ico" alt="QRapido" height="40" style="display:block;" />
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#ffffff; padding:40px 40px 32px 40px;">
+              <p style="margin:0 0 8px 0; font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:0.8px; font-weight:500;">Aviso de vencimiento</p>
+              <h1 style="margin:0 0 20px 0; font-size:22px; font-weight:700; color:#111827; line-height:1.3;">
+                Tu prueba gratuita vence en 2 días
+              </h1>
+              <p style="margin:0 0 16px 0; font-size:15px; color:#374151; line-height:1.7;">
+                El <strong>${expirationDate}</strong> termina tu período de prueba. Si no tenés un plan activo para esa fecha, tus códigos QR van a dejar de redirigir a quienes los escaneen.
+              </p>
+              <p style="margin:0 0 12px 0; font-size:15px; color:#374151; line-height:1.7;">
+                Tus QRs activos en este momento:
+              </p>
+              <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px 0; background-color:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    ${qrListHtml}
+                  </td>
+                </tr>
+              </table>
+              <table cellpadding="0" cellspacing="0" style="margin:0 0 32px 0;">
+                <tr>
+                  <td align="center" style="background-color:#1A52F5; border-radius:8px;">
+                    <a href="https://qrapido.io/dashboard/billing"
+                       style="display:inline-block; padding:14px 32px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none;">
+                      Ver planes →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <hr style="border:none; border-top:1px solid #e5e7eb; margin:0 0 24px 0;" />
+              <p style="margin:0; font-size:14px; color:#6b7280; line-height:1.7;">
+                Si ya tenés un plan activo, ignorá este email. Si tenés alguna duda, respondé este mensaje y te ayudamos.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#f4f4f5; border-radius:0 0 12px 12px; padding:24px 40px; text-align:center;">
+              <p style="margin:0 0 8px 0; font-size:12px; color:#9ca3af;">
+                QRapido · Buenos Aires, Argentina
+              </p>
+              <p style="margin:0; font-size:12px; color:#9ca3af;">
+                Recibís este email porque tenés una cuenta en
+                <a href="https://qrapido.io" style="color:#6b7280; text-decoration:underline;">qrapido.io</a>.
+                <br />
+                <a href="https://qrapido.io/unsubscribe?email=${encodeURIComponent(profile.email)}" style="color:#6b7280; text-decoration:underline;">
+                  Desuscribirse de estos emails
+                </a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
             });
 
             console.log(`48h notice email sent to ${profile.email}`);
