@@ -118,7 +118,7 @@ serve(async (req) => {
           <!-- HEADER -->
           <tr>
             <td align="center" style="background-color:#1A52F5; border-radius:12px 12px 0 0; padding:28px 40px;">
-              <img src="https://qrapido.io/favicon.ico" alt="QRapido" <img src="https://qrapido.io/favicon.ico" alt="QRapido" height="40" style="display:block;" /> style="display:block;" />
+              <img src="https://qrapido.io/favicon.ico" alt="QRapido" height="40" style="display:block;" />
             </td>
           </tr>
           <!-- CUERPO -->
