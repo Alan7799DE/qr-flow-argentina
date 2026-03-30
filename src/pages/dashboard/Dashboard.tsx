@@ -175,8 +175,10 @@ export default function Dashboard() {
     return result;
   }, [qrCodes, search, sortBy]);
 
+  const { data: qrLimit } = useQRLimit();
+  const dynamicLimit = qrLimit ?? 5;
   const activeCount = qrCodes?.length || 0;
-  const isAtLimit = activeCount >= QR_LIMIT;
+  const isAtLimit = activeCount >= dynamicLimit;
 
   return (
     <div className="space-y-6">
