@@ -80,7 +80,7 @@ serve(async (req) => {
     // Get user profile
     const { data: profile } = await serviceClient
       .from('profiles')
-      .select('email, full_name')
+      .select('email, full_name, trial_expires_at')
       .eq('user_id', user.id)
       .single();
 
@@ -91,48 +91,120 @@ serve(async (req) => {
       );
     }
 
+    const nombreQr = qr_name || 'Tu QR';
+    const fechaTrial = profile.trial_expires_at
+      ? new Date(profile.trial_expires_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
+      : 'próximamente';
+    const emailUsuario = encodeURIComponent(profile.email);
+
     const resend = new Resend(RESEND_API_KEY);
 
     const { data: emailData, error: sendError } = await resend.emails.send({
       from: 'QRapido <noreply@qrapido.io>',
       to: [profile.email],
       subject: '🎉 ¡Creaste tu primer QR en QRapido!',
-      html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #1a1a1a; font-size: 24px;">¡Felicitaciones${profile.full_name ? ` ${profile.full_name}` : ''}! 🎉</h1>
-          
-          <p style="color: #666; font-size: 16px; line-height: 1.6;">
-            Acabás de crear tu primer código QR dinámico: <strong>${qr_name || 'Tu QR'}</strong>
-          </p>
-          
-          <div style="background: #f5f5f5; border-radius: 8px; padding: 16px; margin: 20px 0;">
-            <p style="margin: 0; color: #333; font-weight: 600;">¿Qué podés hacer ahora?</p>
-            <ul style="color: #666; font-size: 15px; line-height: 1.8; padding-left: 20px;">
-              <li>📊 Seguir las estadísticas de escaneos en tiempo real</li>
-              <li>✏️ Editar la URL de destino cuando quieras</li>
-              <li>🎨 Personalizar el color de tu QR</li>
-              <li>📈 Agregar parámetros UTM para trackear campañas</li>
-            </ul>
-          </div>
-          
-          <p style="color: #666; font-size: 16px; line-height: 1.6;">
-            Tu cuenta está en período de prueba. Para mantener tus QRs funcionando sin interrupciones, podés elegir un plan en cualquier momento.
-          </p>
-          
-          <a href="https://qrapido.io/dashboard" 
-             style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0;">
-            Ir a mi Dashboard
-          </a>
-          
-          <p style="color: #999; font-size: 14px; margin-top: 30px;">
-            Si tenés alguna pregunta, respondé a este email.
-          </p>
-          
-          <p style="color: #333; font-size: 14px;">
-            — El equipo de QRapido
-          </p>
-        </div>
-      `,
+      html: `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>¡Creaste tu primer QR en QRapido!</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5; padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
+          <!-- HEADER -->
+          <tr>
+            <td align="center" style="background-color:#1A52F5; border-radius:12px 12px 0 0; padding:28px 40px;">
+              <img src="https://qrapido.io/logo-white.png" alt="QRapido" height="36" style="display:block;" />
+            </td>
+          </tr>
+          <!-- CUERPO -->
+          <tr>
+            <td style="background-color:#ffffff; padding:40px 40px 32px 40px;">
+              <p style="margin:0 0 8px 0; font-size:13px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Tu QR está listo</p>
+              <h1 style="margin:0 0 24px 0; font-size:24px; font-weight:700; color:#111827; line-height:1.3;">
+                Ya podés usar tu código QR
+              </h1>
+              <p style="margin:0 0 16px 0; font-size:16px; color:#374151; line-height:1.6;">
+                Creaste <strong>${nombreQr}</strong> y ya está activo. Podés pegarlo donde quieras — menú, cartel, tarjeta, lo que sea.
+              </p>
+              <p style="margin:0 0 24px 0; font-size:16px; color:#374151; line-height:1.6;">
+                Como es dinámico, podés cambiar la URL a la que apunta cuando quieras, sin tener que reimprimir nada.
+              </p>
+              <!-- CTA -->
+              <table cellpadding="0" cellspacing="0" style="margin:0 0 32px 0;">
+                <tr>
+                  <td align="center" style="background-color:#1A52F5; border-radius:8px;">
+                    <a href="https://qrapido.io/dashboard"
+                       style="display:inline-block; padding:14px 32px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none;">
+                      Ir a mi dashboard →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <!-- DIVISOR -->
+              <hr style="border:none; border-top:1px solid #e5e7eb; margin:0 0 24px 0;" />
+              <p style="margin:0 0 12px 0; font-size:14px; font-weight:600; color:#111827;">
+                ¿Qué más podés hacer desde el dashboard?
+              </p>
+              <table cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td style="padding:6px 0; font-size:14px; color:#374151;">
+                    📊 &nbsp;Ver cuántas veces fue escaneado tu QR y desde dónde
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; font-size:14px; color:#374151;">
+                    ✏️ &nbsp;Cambiar la URL de destino en cualquier momento
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; font-size:14px; color:#374151;">
+                    🎨 &nbsp;Personalizar los colores del QR
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; font-size:14px; color:#374151;">
+                    📥 &nbsp;Descargar el QR en PNG, JPG o SVG
+                  </td>
+                </tr>
+              </table>
+              <!-- AVISO TRIAL -->
+              <table cellpadding="0" cellspacing="0" width="100%" style="margin-top:28px; background-color:#eff6ff; border-radius:8px; border:1px solid #bfdbfe;">
+                <tr>
+                  <td style="padding:16px 20px; font-size:14px; color:#1e40af; line-height:1.5;">
+                    Estás en tu período de prueba gratuito — vence el <strong>${fechaTrial}</strong>.
+                    Después de esa fecha necesitás un plan activo para que tus QRs sigan funcionando.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- FOOTER -->
+          <tr>
+            <td style="background-color:#f4f4f5; border-radius:0 0 12px 12px; padding:24px 40px; text-align:center;">
+              <p style="margin:0 0 8px 0; font-size:12px; color:#9ca3af;">
+                QRapido · Buenos Aires, Argentina
+              </p>
+              <p style="margin:0; font-size:12px; color:#9ca3af;">
+                Recibís este email porque creaste una cuenta en
+                <a href="https://qrapido.io" style="color:#6b7280; text-decoration:underline;">qrapido.io</a>.
+                <br />
+                <a href="https://qrapido.io/unsubscribe?email=${emailUsuario}" style="color:#6b7280; text-decoration:underline;">
+                  Desuscribirse de estos emails
+                </a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
     });
 
     if (sendError || !emailData?.id) {
