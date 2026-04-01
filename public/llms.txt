@@ -21,7 +21,6 @@ QRapido está pensado para emprendedores, negocios y profesionales argentinos qu
 ## URLs importantes
 
 - Sitio principal: https://qrapido.io
-- Registro / prueba gratuita: https://qrapido.io/register
-- Precios: https://qrapido.io/pricing
+- Registro / prueba gratuita: https://qrapido.io/auth
 - Política de privacidad: https://qrapido.io/privacy
 - Términos y condiciones: https://qrapido.io/terms
