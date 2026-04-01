@@ -82,7 +82,13 @@ serve(async (req) => {
 
       if (!mpResponse.ok) {
         console.error('Mercado Pago cancel error:', mpData);
-        // Continue anyway to update local status
+        return new Response(
+          JSON.stringify({
+            error: 'No se pudo cancelar la suscripción en MercadoPago. Por favor intentá de nuevo o contactá soporte.',
+            mp_error: mpData,
+          }),
+          { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
     }
 
