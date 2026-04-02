@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     const { data: pendingSubs, error: fetchError } = await supabase
       .from('subscriptions')
-      .select('id, user_id, plan_id, mercadopago_preapproval_id')
+      .select('id, user_id, plan_id, mercadopago_preapproval_id, created_at')
       .eq('status', 'pending')
       .lt('created_at', oneHourAgo);
 
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     if (!pendingSubs || pendingSubs.length === 0) {
       console.log('No pending subscriptions to check');
       return new Response(
-        JSON.stringify({ success: true, checked: 0, activated: 0, cancelled: 0, still_pending: 0, processing_time_ms: Date.now() - startTime }),
+        JSON.stringify({ success: true, checked: 0, activated: 0, cancelled: 0, expired: 0, still_pending: 0, processing_time_ms: Date.now() - startTime }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -63,7 +63,9 @@ Deno.serve(async (req) => {
 
     let activated = 0;
     let cancelled = 0;
+    let expired = 0;
     let stillPending = 0;
+    const PENDING_EXPIRATION_MS = 48 * 60 * 60 * 1000; // 48 hours
 
     for (const sub of pendingSubs) {
       if (!sub.mercadopago_preapproval_id) {
@@ -184,9 +186,26 @@ Deno.serve(async (req) => {
           cancelled++; // count as resolved
 
         } else {
-          // pending or unknown — skip, will retry next run
-          console.log(`Subscription ${sub.id} still pending in MP (status=${mpStatus}), will retry`);
-          stillPending++;
+          // pending or unknown in MP
+          const ageMs = Date.now() - new Date(sub.created_at).getTime();
+          if (ageMs > PENDING_EXPIRATION_MS) {
+            // Older than 48h and still pending in MP — user never paid, delete the record
+            const { error: deleteError } = await supabase
+              .from('subscriptions')
+              .delete()
+              .eq('id', sub.id);
+
+            if (deleteError) {
+              console.error(`Error deleting expired pending subscription ${sub.id}:`, deleteError);
+              stillPending++;
+            } else {
+              console.log(`Subscription ${sub.id} deleted — pending for ${Math.round(ageMs / 3600000)}h, user never paid (preapproval=${sub.mercadopago_preapproval_id}, user=${sub.user_id})`);
+              expired++;
+            }
+          } else {
+            console.log(`Subscription ${sub.id} still pending in MP (status=${mpStatus}, age=${Math.round(ageMs / 3600000)}h), will retry`);
+            stillPending++;
+          }
         }
 
       } catch (mpError) {
@@ -199,7 +218,7 @@ Deno.serve(async (req) => {
     }
 
     const processingTime = Date.now() - startTime;
-    console.log(`Reconciliation complete: checked=${pendingSubs.length}, activated=${activated}, cancelled=${cancelled}, still_pending=${stillPending}, time=${processingTime}ms`);
+    console.log(`Reconciliation complete: checked=${pendingSubs.length}, activated=${activated}, cancelled=${cancelled}, expired=${expired}, still_pending=${stillPending}, time=${processingTime}ms`);
 
     return new Response(
       JSON.stringify({
@@ -207,6 +226,7 @@ Deno.serve(async (req) => {
         checked: pendingSubs.length,
         activated,
         cancelled,
+        expired,
         still_pending: stillPending,
         processing_time_ms: processingTime,
       }),
