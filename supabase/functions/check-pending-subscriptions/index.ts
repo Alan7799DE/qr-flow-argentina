@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     if (!pendingSubs || pendingSubs.length === 0) {
       console.log('No pending subscriptions to check');
       return new Response(
-        JSON.stringify({ success: true, checked: 0, activated: 0, cancelled: 0, still_pending: 0, processing_time_ms: Date.now() - startTime }),
+        JSON.stringify({ success: true, checked: 0, activated: 0, cancelled: 0, expired: 0, still_pending: 0, processing_time_ms: Date.now() - startTime }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
