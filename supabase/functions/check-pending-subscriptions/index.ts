@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     const { data: pendingSubs, error: fetchError } = await supabase
       .from('subscriptions')
-      .select('id, user_id, plan_id, mercadopago_preapproval_id')
+      .select('id, user_id, plan_id, mercadopago_preapproval_id, created_at')
       .eq('status', 'pending')
       .lt('created_at', oneHourAgo);
 
