@@ -186,9 +186,26 @@ Deno.serve(async (req) => {
           cancelled++; // count as resolved
 
         } else {
-          // pending or unknown — skip, will retry next run
-          console.log(`Subscription ${sub.id} still pending in MP (status=${mpStatus}), will retry`);
-          stillPending++;
+          // pending or unknown in MP
+          const ageMs = Date.now() - new Date(sub.created_at).getTime();
+          if (ageMs > PENDING_EXPIRATION_MS) {
+            // Older than 48h and still pending in MP — user never paid, delete the record
+            const { error: deleteError } = await supabase
+              .from('subscriptions')
+              .delete()
+              .eq('id', sub.id);
+
+            if (deleteError) {
+              console.error(`Error deleting expired pending subscription ${sub.id}:`, deleteError);
+              stillPending++;
+            } else {
+              console.log(`Subscription ${sub.id} deleted — pending for ${Math.round(ageMs / 3600000)}h, user never paid (preapproval=${sub.mercadopago_preapproval_id}, user=${sub.user_id})`);
+              expired++;
+            }
+          } else {
+            console.log(`Subscription ${sub.id} still pending in MP (status=${mpStatus}, age=${Math.round(ageMs / 3600000)}h), will retry`);
+            stillPending++;
+          }
         }
 
       } catch (mpError) {
