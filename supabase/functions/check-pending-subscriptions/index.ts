@@ -63,7 +63,9 @@ Deno.serve(async (req) => {
 
     let activated = 0;
     let cancelled = 0;
+    let expired = 0;
     let stillPending = 0;
+    const PENDING_EXPIRATION_MS = 48 * 60 * 60 * 1000; // 48 hours
 
     for (const sub of pendingSubs) {
       if (!sub.mercadopago_preapproval_id) {
