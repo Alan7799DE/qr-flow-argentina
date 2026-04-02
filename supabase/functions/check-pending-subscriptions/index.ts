@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
     }
 
     const processingTime = Date.now() - startTime;
-    console.log(`Reconciliation complete: checked=${pendingSubs.length}, activated=${activated}, cancelled=${cancelled}, still_pending=${stillPending}, time=${processingTime}ms`);
+    console.log(`Reconciliation complete: checked=${pendingSubs.length}, activated=${activated}, cancelled=${cancelled}, expired=${expired}, still_pending=${stillPending}, time=${processingTime}ms`);
 
     return new Response(
       JSON.stringify({
@@ -226,6 +226,7 @@ Deno.serve(async (req) => {
         checked: pendingSubs.length,
         activated,
         cancelled,
+        expired,
         still_pending: stillPending,
         processing_time_ms: processingTime,
       }),
