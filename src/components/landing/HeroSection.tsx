@@ -2,7 +2,7 @@ import { QRCreatorPublic } from "./QRCreatorPublic";
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-screen gradient-hero pt-24 pb-16 overflow-hidden">
+    <section className="relative min-h-screen gradient-hero pt-20 sm:pt-24 pb-16 overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] rounded-full bg-primary/5 blur-3xl" />
