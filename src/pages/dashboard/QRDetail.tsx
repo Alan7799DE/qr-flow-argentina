@@ -414,7 +414,7 @@ export default function QRDetail() {
                 />
               </div>
               {isEditing && (
-                <Button onClick={handleSaveUrl} <Button onClick={handleSaveUrl} disabled={updateQR.isPending || isValidatingUrl}>>
+                <Button onClick={handleSaveUrl} disabled={updateQR.isPending || isValidatingUrl}>
                   {isValidatingUrl ? <Loader2 className="w-4 h-4 animate-spin" /> : updateQR.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar"}
                 </Button>
               )}
