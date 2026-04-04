@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Link2, Download, QrCode, Wand2, ChevronDown, ChevronUp, Palette, Type } from "lucide-react";
+import { toast } from "sonner";
+import { validateDestinationUrl } from "@/lib/validateDestinationUrl";
 import { supabase } from "@/integrations/supabase/client";
 import { StyledQRCode, downloadStyledQR, type QRDotStyle } from "@/components/dashboard/StyledQRCode";
 import { DotStyleSelector } from "@/components/dashboard/DotStyleSelector";
@@ -65,6 +67,12 @@ export function QRCreatorPublic() {
   };
 
   const handleDownload = async () => {
+    const validation = validateDestinationUrl(url);
+    if (!validation.valid) {
+      toast.error(validation.error || "La URL ingresada no es válida. Ejemplo: https://misitioweb.com");
+      return;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -218,7 +226,7 @@ export function QRCreatorPublic() {
           size="lg"
           className="w-full mt-4"
           onClick={handleDownload}
-          disabled={!url}
+          disabled={false}
           data-gtm="btn-download-qr"
         >
           <Download className="w-5 h-5" />
@@ -373,7 +381,7 @@ export function QRCreatorPublic() {
             size="xl"
             className="w-full max-w-[280px]"
             onClick={handleDownload}
-            disabled={!url}
+            disabled={false}
             data-gtm="btn-download-qr"
           >
             <Download className="w-5 h-5" />

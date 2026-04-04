@@ -259,7 +259,7 @@ export default function CreateQR() {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button type="submit" variant="hero" size="lg" className="flex-1" disabled={createQR.isPending || isValidatingUrl || !isUrlValid}>
+          <Button type="submit" variant="hero" size="lg" className="flex-1" disabled={createQR.isPending || isValidatingUrl}>
             {isValidatingUrl ? (
               <><Loader2 className="w-4 h-4 animate-spin" />Verificando URL...</>
             ) : createQR.isPending ? (
