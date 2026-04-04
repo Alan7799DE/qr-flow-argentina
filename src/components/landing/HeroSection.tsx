@@ -2,7 +2,7 @@ import { QRCreatorPublic } from "./QRCreatorPublic";
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-screen gradient-hero pt-24 pb-16 overflow-hidden">
+    <section className="relative min-h-screen gradient-hero pt-20 sm:pt-24 pb-16 overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] rounded-full bg-primary/5 blur-3xl" />
@@ -11,7 +11,7 @@ export function HeroSection() {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Compact heading */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4 sm:mb-8">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-3">
             Creá tu <span className="gradient-text">código QR</span>
           </h1>
