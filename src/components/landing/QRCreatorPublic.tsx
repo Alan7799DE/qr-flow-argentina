@@ -119,7 +119,7 @@ export function QRCreatorPublic() {
           {url && <Separator />}
 
           {/* Step 2 */}
-          <div className="space-y-3">
+          {url && <div className="space-y-3">
             {isMobile ? (
               <button
                 type="button"
