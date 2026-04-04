@@ -188,7 +188,7 @@ export default function QRDetail() {
   const handleSaveUrl = async () => {
     if (!qr) return;
     if (!urlValidation.valid) {
-      setUrlError(urlValidation.error);
+      setUrlError((urlValidation as { valid: false; error: string }).error);
       return;
     }
     const finalUrl = urlValidation.url;

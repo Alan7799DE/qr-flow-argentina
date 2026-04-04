@@ -80,7 +80,7 @@ export default function CreateQR() {
     if (!nameResult.success) newErrors.name = nameResult.error.errors[0].message;
 
     if (!urlValidation.valid) {
-      newErrors.url = urlValidation.error;
+      newErrors.url = (urlValidation as { valid: false; error: string }).error;
     }
 
     const utmValidation = validateUtmParams({
