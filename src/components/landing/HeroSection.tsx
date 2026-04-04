@@ -11,7 +11,7 @@ export function HeroSection() {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Compact heading */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4 sm:mb-8">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-3">
             Creá tu <span className="gradient-text">código QR</span>
           </h1>
