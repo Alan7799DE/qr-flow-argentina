@@ -1,30 +1,27 @@
 
 
-## Plan: Agregar email de aviso 48hs antes de expiración del trial
+## Problem
 
-Actualmente el sistema envía **un solo aviso** previo a la expiración, controlado por `trial_notice_at` y `trial_notice_sent` en `profiles`. Para agregar un segundo aviso a las 48hs sin romper el existente (24hs), se necesitan nuevos campos y lógica.
+On mobile (single column), the CSS `order` classes cause Step 3 (QR preview, `order-1`) to render first, then Steps 1 and 2 (`order-2`). The user wants: Step 1 → Step 2 (collapsed) → Step 3.
 
-### Cambios propuestos
+## Plan
 
-**1. Migración de base de datos — Agregar campos para el segundo aviso**
-- Agregar a `profiles`: `trial_notice_48h_at` (timestamptz, nullable) y `trial_notice_48h_sent` (boolean, default false)
+### File: `src/components/landing/QRCreatorPublic.tsx`
 
-**2. Actualizar `src/hooks/useQRCodes.ts` — Calcular fecha del aviso de 48hs**
-- Al iniciar el trial, calcular `trial_notice_48h_at` = `trial_expires_at - 2 días` y guardarlo en el profile junto con los campos existentes
+1. **Remove the CSS order trick** — remove `order-2 lg:order-1` and `order-1 lg:order-2` classes. Restructure the layout so on mobile everything flows naturally: Step 1, Step 2, Step 3. On desktop (`lg:`), keep the current two-column layout with the QR preview on the right.
 
-**3. Actualizar `supabase/functions/process-trial-expirations/index.ts` — Enviar el email de 48hs**
-- Agregar un nuevo Step (entre Step 1 y Step 2 actuales) que:
-  - Busque profiles con `trial_notice_48h_at <= now` y `trial_notice_48h_sent = false`
-  - Verifique que no tengan suscripción activa
-  - Envíe email con asunto "⏰ Tu período de prueba vence en 2 días"
-  - Registre en `email_logs` con tipo `trial_48h_notice`
-  - Marque `trial_notice_48h_sent = true`
+2. **Make Step 2 collapsible on mobile** — Add a `showDesign` state (default `false`). On mobile, Step 2's header becomes a clickable toggle that expands/collapses the color picker and dot style options (using ChevronDown/ChevronUp). On desktop (`lg:`) the content is always visible.
 
-**4. Actualizar `supabase/functions/mercadopago-webhook/index.ts` — Limpiar campos al suscribirse**
-- Agregar `trial_notice_48h_at: null, trial_notice_48h_sent: true` al update que se hace cuando el usuario se suscribe
+3. **Restructure the grid layout** for mobile:
+   - Single column: Step 1 (URL input) → Step 2 (collapsed design options) → Step 3 (QR preview + download button)
+   - Desktop (`lg:`): Left column has Steps 1 and 2 (both expanded), right column has Step 3 — same as current desktop layout
 
-### Detalles técnicos
-- El email de 48hs tiene contenido similar al de 24hs pero con "vence en 2 días" en lugar de "está por expirar"
-- Si `trial_expire_days` es menor a 3, el aviso de 48hs se omite (coincidiría con o antes del inicio del trial)
-- El cron job existente (3 AM UTC) procesa ambos avisos en la misma ejecución
+### Technical details
+
+- Add `const [showDesign, setShowDesign] = useState(false)` state
+- Use `useIsMobile()` hook (already exists in the project) to determine if Step 2 content should be collapsible
+- Step 2 header: wrap in a `button` on mobile with chevron icon; on desktop keep as static heading
+- Step 2 content: conditionally render based on `showDesign || !isMobile`
+- Remove the `order-*` classes from both panels
+- Keep the UTM builder inside Step 2's collapsible area (or move after Step 2, before Step 3)
 
