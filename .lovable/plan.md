@@ -1,59 +1,25 @@
 
 
-## Rediseño mobile del Hero — Layout estilo qr.io
+## Cambio: No deshabilitar botón, mostrar error al tocar
 
-### Concepto
-
-En mobile, reorganizar el `QRCreatorPublic` para que el QR preview esté arriba y los pasos 1/2 se manejen como tabs debajo (similar a la referencia de qr.io), manteniendo la estética actual de QRapido. El título y subtítulo del hero se mantienen visibles arriba de todo.
-
-En desktop (`lg:`), no se cambia nada — se mantiene el layout actual de dos columnas.
-
-### Layout mobile propuesto
-
-```text
-┌──────────────────────────┐
-│   Creá tu código QR      │  ← título + subtítulo (ya existe en HeroSection)
-│   Generá QRs dinámicos...│
-├──────────────────────────┤
-│  Vista previa del QR     │  ← QR preview (arriba en mobile)
-│       ┌──────────┐       │
-│       │  QR Code │       │
-│       └──────────┘       │
-├──────────────────────────┤
-│ [1 Contenido] [2 Diseño] │  ← tabs (solo mobile)
-├──────────────────────────┤
-│  (contenido del tab      │  ← URL input o color/dot style
-│   activo)                │
-├──────────────────────────┤
-│  [  Descargar QR  ]      │  ← botón siempre visible
-└──────────────────────────┘
-```
+En vez de deshabilitar los botones de guardar/crear cuando la URL es inválida, permitir que el usuario los toque y mostrar el error inline en ese momento.
 
 ### Cambios
 
+#### `src/pages/dashboard/CreateQR.tsx`
+1. Quitar `!isUrlValid` de la condición `disabled` del botón submit (línea 262) — dejar solo `createQR.isPending || isValidatingUrl`
+2. La validación ya se ejecuta en `validate()` y en `handleSubmit` (líneas 82-84 y 100), así que al tocar el botón con URL inválida se mostrará el error inline existente y no se enviará el form
+
+#### `src/pages/dashboard/QRDetail.tsx`
+1. Quitar `!urlValidation.valid` de la condición `disabled` del botón "Guardar" (línea 417) — dejar solo `updateQR.isPending || isValidatingUrl`
+2. La función `handleSaveUrl` (línea 190) ya valida y muestra el error inline si la URL es inválida, así que el flujo funciona correctamente
+
 #### `src/components/landing/QRCreatorPublic.tsx`
-
-1. Agregar estado `activeTab: "content" | "design"` (default `"content"`)
-
-2. **Mobile layout** (`isMobile`): Reestructurar el orden dentro del card:
-   - **QR Preview** primero (mover arriba, con label "Vista previa del código QR")
-   - **Tab bar** con dos botones: "1 Contenido" y "2 Diseño" — estilizados como pills/chips con el badge de step, tab activo con bg-primary/10 y texto primary, inactivo con texto muted
-   - **Tab content**: si tab es "content" mostrar el input de URL + UTM builder; si tab es "design" mostrar color picker + dot style selector
-   - **Botón Descargar** siempre al final, fuera del área de tabs
-   - Eliminar los `StepBadge` y headers separados de Step 1/2/3 en mobile — se reemplazan por los tabs
-   - Eliminar el `Separator` entre steps en mobile
-
-3. **Desktop layout** (`!isMobile`): Sin cambios — mantener el grid de dos columnas con Steps 1, 2 a la izquierda y Step 3 (preview + download) a la derecha
-
-4. Reducir el tamaño del QR preview en mobile a `size={220}` y `max-w-[240px]` para que ocupe menos espacio vertical
-
-#### `src/components/landing/HeroSection.tsx`
-
-5. En mobile, reducir el `mb-8` del heading a `mb-4` y el `pt-24` a `pt-20` para ganar espacio vertical
+1. En el botón "Descargar QR" del mobile y desktop, actualmente está `disabled={!url}` — cambiar para que nunca esté deshabilitado
+2. En `handleDownload`, antes de proceder, validar con `validateDestinationUrl(url)`: si no es válida, mostrar un toast con el mensaje de error pidiendo reingresar la URL
 
 ### Lo que NO cambia
-- Desktop layout (dos columnas)
-- Lógica de auth, download, UTM, session storage
-- Estilos del QR preview (bordes, shadow)
-- Ningún otro archivo
+- La lógica de validación en `validateDestinationUrl.ts`
+- Los mensajes de error inline debajo de los inputs
+- El flujo de auth en la landing
 
