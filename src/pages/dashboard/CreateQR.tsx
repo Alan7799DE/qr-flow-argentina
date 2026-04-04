@@ -12,7 +12,6 @@ import { validateDestinationUrl } from "@/lib/validateDestinationUrl";
 import { StyledQRCode, type QRDotStyle } from "@/components/dashboard/StyledQRCode";
 import { DotStyleSelector } from "@/components/dashboard/DotStyleSelector";
 
-const urlSchema = z.string().url("Ingresá una URL válida (ej: https://tusitio.com)");
 const nameSchema = z.string().min(1, "El nombre es requerido").max(100, "Máximo 100 caracteres");
 
 export default function CreateQR() {
