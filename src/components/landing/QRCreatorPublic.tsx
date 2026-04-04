@@ -116,7 +116,7 @@ export function QRCreatorPublic() {
             </div>
           </div>
 
-          <Separator />
+          {url && <Separator />}
 
           {/* Step 2 */}
           <div className="space-y-3">
