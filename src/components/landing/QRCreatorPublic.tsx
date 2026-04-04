@@ -101,9 +101,9 @@ export function QRCreatorPublic() {
 
   const finalUrl = buildFinalUrl();
 
-  // --- Shared sub-components ---
+  // --- Shared JSX blocks (not components, to avoid remounting) ---
 
-  const ContentPanel = () => (
+  const contentPanel = (
     <div className="space-y-3">
       <div className="relative">
         <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -119,7 +119,7 @@ export function QRCreatorPublic() {
     </div>
   );
 
-  const DesignPanel = () => (
+  const designPanel = (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label className="text-sm font-medium">Color del QR</Label>
@@ -217,7 +217,7 @@ export function QRCreatorPublic() {
 
         {/* Tab content */}
         <div>
-          {activeTab === "content" ? <ContentPanel /> : <DesignPanel />}
+          {activeTab === "content" ? contentPanel : designPanel}
         </div>
 
         {/* Download button */}
