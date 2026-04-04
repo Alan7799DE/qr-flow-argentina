@@ -216,7 +216,7 @@ export function QRCreatorPublic() {
                 </div>
               </div>
             )}
-          </div>
+          </div>}
         </div>
 
         {/* Right panel / Step 3 - Preview + Download */}
