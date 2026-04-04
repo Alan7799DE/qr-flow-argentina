@@ -97,7 +97,7 @@ export default function CreateQR() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    if (!urlValidation.valid) return;
+    if (!urlValidation.valid || !urlValidation.url) return;
 
     const finalUrl = urlValidation.url;
 
