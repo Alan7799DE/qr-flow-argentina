@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { z } from "zod";
+import { validateDestinationUrl } from "@/lib/validateDestinationUrl";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
