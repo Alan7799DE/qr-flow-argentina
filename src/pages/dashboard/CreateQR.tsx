@@ -97,17 +97,9 @@ export default function CreateQR() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    if (!urlValidation.valid) return;
 
-    const rawUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
-    const finalUrl = sanitizeUrl(rawUrl);
-    if (!finalUrl) {
-      toast({
-        variant: "destructive",
-        title: "URL no permitida",
-        description: "Solo se permiten URLs con protocolo http:// o https://.",
-      });
-      return;
-    }
+    const finalUrl = urlValidation.url;
 
     const urlCheck = await checkUrlReachability(finalUrl);
     if (urlCheck && !urlCheck.reachable) {
