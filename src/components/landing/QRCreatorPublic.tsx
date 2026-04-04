@@ -116,10 +116,10 @@ export function QRCreatorPublic() {
             </div>
           </div>
 
-          <Separator />
+          {url && <Separator />}
 
           {/* Step 2 */}
-          <div className="space-y-3">
+          {url && <div className="space-y-3">
             {isMobile ? (
               <button
                 type="button"
@@ -216,7 +216,7 @@ export function QRCreatorPublic() {
                 </div>
               </div>
             )}
-          </div>
+          </div>}
         </div>
 
         {/* Right panel / Step 3 - Preview + Download */}
