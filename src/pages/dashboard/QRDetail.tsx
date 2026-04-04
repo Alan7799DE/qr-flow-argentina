@@ -183,19 +183,15 @@ export default function QRDetail() {
 
   const [urlError, setUrlError] = useState("");
 
+  const urlValidation = validateDestinationUrl(destinationUrl);
+
   const handleSaveUrl = async () => {
     if (!qr) return;
-    const rawUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
-    const finalUrl = sanitizeUrl(rawUrl);
-    if (!finalUrl) {
-      setUrlError("Solo se permiten URLs con protocolo http:// o https://");
+    if (!urlValidation.valid) {
+      setUrlError(urlValidation.error);
       return;
     }
-    const result = z.string().url("Ingresá una URL válida (ej: https://tusitio.com)").safeParse(finalUrl);
-    if (!result.success) {
-      setUrlError(result.error.errors[0].message);
-      return;
-    }
+    const finalUrl = urlValidation.url;
     setUrlError("");
 
     const urlCheck = await checkUrlReachability(finalUrl);
