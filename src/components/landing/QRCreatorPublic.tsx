@@ -217,7 +217,7 @@ export function QRCreatorPublic() {
 
         {/* Tab content */}
         <div>
-          {activeTab === "content" ? <ContentPanel /> : <DesignPanel />}
+          {activeTab === "content" ? contentPanel : designPanel}
         </div>
 
         {/* Download button */}
