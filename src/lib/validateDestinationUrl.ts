@@ -7,9 +7,11 @@
  * 
  * Returns { valid: true, url: normalizedUrl } or { valid: false, error: string }
  */
-export function validateDestinationUrl(input: string): 
-  | { valid: true; url: string }
-  | { valid: false; error: string } {
+export function validateDestinationUrl(input: string): {
+  valid: boolean;
+  url?: string;
+  error?: string;
+} {
   const trimmed = input.trim();
 
   if (!trimmed) {
