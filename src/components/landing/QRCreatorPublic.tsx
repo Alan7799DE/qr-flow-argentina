@@ -67,6 +67,12 @@ export function QRCreatorPublic() {
   };
 
   const handleDownload = async () => {
+    const validation = validateDestinationUrl(url);
+    if (!validation.valid) {
+      toast.error(validation.error || "La URL ingresada no es válida. Ejemplo: https://misitioweb.com");
+      return;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
