@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { z } from "zod";
+import { validateDestinationUrl } from "@/lib/validateDestinationUrl";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +22,7 @@ import {
   Save
 } from "lucide-react";
 import { useQRCode, useUpdateQR, useDeleteQR } from "@/hooks/useQRCodes";
-import { sanitizeUrl } from "@/lib/sanitizeUrl";
+
 import { useValidateUrl } from "@/hooks/useValidateUrl";
 
 import { useToast } from "@/hooks/use-toast";
@@ -183,19 +183,15 @@ export default function QRDetail() {
 
   const [urlError, setUrlError] = useState("");
 
+  const urlValidation = validateDestinationUrl(destinationUrl);
+
   const handleSaveUrl = async () => {
     if (!qr) return;
-    const rawUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
-    const finalUrl = sanitizeUrl(rawUrl);
-    if (!finalUrl) {
-      setUrlError("Solo se permiten URLs con protocolo http:// o https://");
+    if (!urlValidation.valid) {
+      setUrlError(urlValidation.error || "URL inválida");
       return;
     }
-    const result = z.string().url("Ingresá una URL válida (ej: https://tusitio.com)").safeParse(finalUrl);
-    if (!result.success) {
-      setUrlError(result.error.errors[0].message);
-      return;
-    }
+    const finalUrl = urlValidation.url!;
     setUrlError("");
 
     const urlCheck = await checkUrlReachability(finalUrl);
@@ -418,7 +414,7 @@ export default function QRDetail() {
                 />
               </div>
               {isEditing && (
-                <Button onClick={handleSaveUrl} disabled={updateQR.isPending || isValidatingUrl}>
+                <Button onClick={handleSaveUrl} disabled={updateQR.isPending || isValidatingUrl || !urlValidation.valid}>
                   {isValidatingUrl ? <Loader2 className="w-4 h-4 animate-spin" /> : updateQR.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar"}
                 </Button>
               )}

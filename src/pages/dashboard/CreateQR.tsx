@@ -5,14 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { QrCode, Link2, Wand2, ArrowRight, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useCreateQR, validateUtmParams } from "@/hooks/useQRCodes";
-import { sanitizeUrl } from "@/lib/sanitizeUrl";
 import { useValidateUrl } from "@/hooks/useValidateUrl";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { validateDestinationUrl } from "@/lib/validateDestinationUrl";
 import { StyledQRCode, type QRDotStyle } from "@/components/dashboard/StyledQRCode";
 import { DotStyleSelector } from "@/components/dashboard/DotStyleSelector";
 
-const urlSchema = z.string().url("Ingresá una URL válida (ej: https://tusitio.com)");
 const nameSchema = z.string().min(1, "El nombre es requerido").max(100, "Máximo 100 caracteres");
 
 export default function CreateQR() {
@@ -72,14 +71,17 @@ export default function CreateQR() {
     }
   };
 
+  const urlValidation = validateDestinationUrl(destinationUrl);
+  const isUrlValid = urlValidation.valid;
+
   const validate = () => {
     const newErrors: typeof errors = {};
     const nameResult = nameSchema.safeParse(name);
     if (!nameResult.success) newErrors.name = nameResult.error.errors[0].message;
 
-    const urlToValidate = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
-    const urlResult = urlSchema.safeParse(urlToValidate);
-    if (!urlResult.success) newErrors.url = urlResult.error.errors[0].message;
+    if (!urlValidation.valid && urlValidation.error) {
+      newErrors.url = urlValidation.error;
+    }
 
     const utmValidation = validateUtmParams({
       utm_source: utmSource || undefined,
@@ -95,17 +97,9 @@ export default function CreateQR() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    if (!urlValidation.valid || !urlValidation.url) return;
 
-    const rawUrl = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
-    const finalUrl = sanitizeUrl(rawUrl);
-    if (!finalUrl) {
-      toast({
-        variant: "destructive",
-        title: "URL no permitida",
-        description: "Solo se permiten URLs con protocolo http:// o https://.",
-      });
-      return;
-    }
+    const finalUrl = urlValidation.url;
 
     const urlCheck = await checkUrlReachability(finalUrl);
     if (urlCheck && !urlCheck.reachable) {
@@ -265,7 +259,7 @@ export default function CreateQR() {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button type="submit" variant="hero" size="lg" className="flex-1" disabled={createQR.isPending || isValidatingUrl}>
+          <Button type="submit" variant="hero" size="lg" className="flex-1" disabled={createQR.isPending || isValidatingUrl || !isUrlValid}>
             {isValidatingUrl ? (
               <><Loader2 className="w-4 h-4 animate-spin" />Verificando URL...</>
             ) : createQR.isPending ? (
