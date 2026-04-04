@@ -208,7 +208,7 @@ export function QRCreatorPublic() {
         </div>
 
         {/* Tab content */}
-        <div className="min-h-[120px]">
+        <div>
           {activeTab === "content" ? <ContentPanel /> : <DesignPanel />}
         </div>
 
@@ -216,7 +216,7 @@ export function QRCreatorPublic() {
         <Button
           variant="hero"
           size="lg"
-          className="w-full mt-5"
+          className="w-full mt-4"
           onClick={handleDownload}
           disabled={!url}
           data-gtm="btn-download-qr"
