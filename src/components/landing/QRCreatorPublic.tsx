@@ -4,11 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Link2, Download, QrCode, Wand2, ChevronDown, ChevronUp } from "lucide-react";
+import { Link2, Download, QrCode, Wand2, ChevronDown, ChevronUp, Palette } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { StyledQRCode, downloadStyledQR, type QRDotStyle } from "@/components/dashboard/StyledQRCode";
 import { DotStyleSelector } from "@/components/dashboard/DotStyleSelector";
 import { AuthDialog } from "./AuthDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const PRESET_COLORS = [
   { value: "#000000", label: "Negro" },
@@ -28,9 +29,11 @@ function StepBadge({ step }: { step: number }) {
 
 export function QRCreatorPublic() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [url, setUrl] = useState("");
   const [color, setColor] = useState("#000000");
   const [dotStyle, setDotStyle] = useState<QRDotStyle>("square");
+  const [showDesign, setShowDesign] = useState(false);
   const [showUtm, setShowUtm] = useState(false);
   const [utmSource, setUtmSource] = useState("");
   const [utmMedium, setUtmMedium] = useState("");
@@ -87,12 +90,13 @@ export function QRCreatorPublic() {
   };
 
   const finalUrl = buildFinalUrl();
+  const isStep2Visible = !isMobile || showDesign;
 
   return (
     <div className="bg-background border border-border rounded-2xl shadow-lg p-6 sm:p-8">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
-        {/* Left panel - Form */}
-        <div className="space-y-6 order-2 lg:order-1">
+        {/* Left panel - Steps 1 & 2 */}
+        <div className="space-y-6">
           {/* Step 1 */}
           <div className="space-y-3">
             <div className="flex items-center gap-3">
@@ -116,87 +120,107 @@ export function QRCreatorPublic() {
 
           {/* Step 2 */}
           <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <StepBadge step={2} />
-              <h2 className="text-lg font-semibold text-foreground">Diseñá tu código QR</h2>
-            </div>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Color del QR</Label>
-                <div className="flex items-center gap-2">
-                  {PRESET_COLORS.map((c) => (
-                    <button
-                      key={c.value}
-                      type="button"
-                      onClick={() => setColor(c.value)}
-                      className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
-                        color === c.value
-                          ? "border-primary scale-110 shadow-md"
-                          : "border-border hover:scale-105"
-                      }`}
-                      style={{ backgroundColor: c.value }}
-                      aria-label={c.label}
-                    />
-                  ))}
-                  <div className="relative ml-1">
-                    <input
-                      type="color"
+            {isMobile ? (
+              <button
+                type="button"
+                onClick={() => setShowDesign(!showDesign)}
+                className="flex items-center gap-3 w-full text-left"
+              >
+                <StepBadge step={2} />
+                <h2 className="text-lg font-semibold text-foreground flex-1">Personalizar diseño</h2>
+                <Palette className="w-4 h-4 text-muted-foreground" />
+                {showDesign ? (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                )}
+              </button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <StepBadge step={2} />
+                <h2 className="text-lg font-semibold text-foreground">Diseñá tu código QR</h2>
+              </div>
+            )}
+
+            {isStep2Visible && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Color del QR</Label>
+                  <div className="flex items-center gap-2">
+                    {PRESET_COLORS.map((c) => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => setColor(c.value)}
+                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                          color === c.value
+                            ? "border-primary scale-110 shadow-md"
+                            : "border-border hover:scale-105"
+                        }`}
+                        style={{ backgroundColor: c.value }}
+                        aria-label={c.label}
+                      />
+                    ))}
+                    <div className="relative ml-1">
+                      <input
+                        type="color"
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
+                        className="w-8 h-8 rounded-full cursor-pointer border border-border appearance-none bg-transparent [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0"
+                        aria-label="Color personalizado"
+                      />
+                    </div>
+                    <Input
                       value={color}
                       onChange={(e) => setColor(e.target.value)}
-                      className="w-8 h-8 rounded-full cursor-pointer border border-border appearance-none bg-transparent [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0"
-                      aria-label="Color personalizado"
+                      className="w-24 h-8 text-xs"
+                      placeholder="#000000"
+                      aria-label="Código hex"
                     />
                   </div>
-                  <Input
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    className="w-24 h-8 text-xs"
-                    placeholder="#000000"
-                    aria-label="Código hex"
-                  />
                 </div>
-              </div>
 
-              <DotStyleSelector value={dotStyle} onChange={setDotStyle} />
-            </div>
-          </div>
+                <DotStyleSelector value={dotStyle} onChange={setDotStyle} />
 
-          <Separator />
+                <Separator />
 
-          {/* UTM Builder */}
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowUtm(!showUtm)}
-              className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-            >
-              <Wand2 className="w-4 h-4" />
-              UTM Builder
-              <span className="text-xs font-normal text-muted-foreground">(opcional)</span>
-              {showUtm ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
+                {/* UTM Builder */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowUtm(!showUtm)}
+                    className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <Wand2 className="w-4 h-4" />
+                    UTM Builder
+                    <span className="text-xs font-normal text-muted-foreground">(opcional)</span>
+                    {showUtm ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
 
-            {showUtm && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
-                <div className="space-y-1">
-                  <Label htmlFor="pub-utm-source" className="text-xs">utm_source</Label>
-                  <Input id="pub-utm-source" placeholder="google" value={utmSource} onChange={(e) => setUtmSource(e.target.value)} maxLength={255} className="h-9 text-sm" />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="pub-utm-medium" className="text-xs">utm_medium</Label>
-                  <Input id="pub-utm-medium" placeholder="qr" value={utmMedium} onChange={(e) => setUtmMedium(e.target.value)} maxLength={255} className="h-9 text-sm" />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="pub-utm-campaign" className="text-xs">utm_campaign</Label>
-                  <Input id="pub-utm-campaign" placeholder="verano2024" value={utmCampaign} onChange={(e) => setUtmCampaign(e.target.value)} maxLength={255} className="h-9 text-sm" />
+                  {showUtm && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                      <div className="space-y-1">
+                        <Label htmlFor="pub-utm-source" className="text-xs">utm_source</Label>
+                        <Input id="pub-utm-source" placeholder="google" value={utmSource} onChange={(e) => setUtmSource(e.target.value)} maxLength={255} className="h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="pub-utm-medium" className="text-xs">utm_medium</Label>
+                        <Input id="pub-utm-medium" placeholder="qr" value={utmMedium} onChange={(e) => setUtmMedium(e.target.value)} maxLength={255} className="h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="pub-utm-campaign" className="text-xs">utm_campaign</Label>
+                        <Input id="pub-utm-campaign" placeholder="verano2024" value={utmCampaign} onChange={(e) => setUtmCampaign(e.target.value)} maxLength={255} className="h-9 text-sm" />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right panel - Preview + Download */}
-        <div className="flex flex-col items-center gap-6 order-1 lg:order-2">
+        {/* Right panel / Step 3 - Preview + Download */}
+        <div className="flex flex-col items-center gap-6">
           <div className="flex items-center gap-3 self-start">
             <StepBadge step={3} />
             <h2 className="text-lg font-semibold text-foreground">Descargá tu QR</h2>
