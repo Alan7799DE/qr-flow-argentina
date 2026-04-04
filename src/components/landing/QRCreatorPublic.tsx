@@ -108,35 +108,6 @@ export function QRCreatorPublic() {
           className="pl-10 h-12 text-base"
         />
       </div>
-      {/* UTM Builder */}
-      <div>
-        <button
-          type="button"
-          onClick={() => setShowUtm(!showUtm)}
-          className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-        >
-          <Wand2 className="w-4 h-4" />
-          UTM Builder
-          <span className="text-xs font-normal text-muted-foreground">(opcional)</span>
-          {showUtm ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
-        {showUtm && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
-            <div className="space-y-1">
-              <Label htmlFor="pub-utm-source" className="text-xs">utm_source</Label>
-              <Input id="pub-utm-source" placeholder="google" value={utmSource} onChange={(e) => setUtmSource(e.target.value)} maxLength={255} className="h-9 text-sm" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="pub-utm-medium" className="text-xs">utm_medium</Label>
-              <Input id="pub-utm-medium" placeholder="qr" value={utmMedium} onChange={(e) => setUtmMedium(e.target.value)} maxLength={255} className="h-9 text-sm" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="pub-utm-campaign" className="text-xs">utm_campaign</Label>
-              <Input id="pub-utm-campaign" placeholder="verano2024" value={utmCampaign} onChange={(e) => setUtmCampaign(e.target.value)} maxLength={255} className="h-9 text-sm" />
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 
