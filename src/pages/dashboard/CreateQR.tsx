@@ -71,14 +71,17 @@ export default function CreateQR() {
     }
   };
 
+  const urlValidation = validateDestinationUrl(destinationUrl);
+  const isUrlValid = urlValidation.valid;
+
   const validate = () => {
     const newErrors: typeof errors = {};
     const nameResult = nameSchema.safeParse(name);
     if (!nameResult.success) newErrors.name = nameResult.error.errors[0].message;
 
-    const urlToValidate = destinationUrl.startsWith("http") ? destinationUrl : `https://${destinationUrl}`;
-    const urlResult = urlSchema.safeParse(urlToValidate);
-    if (!urlResult.success) newErrors.url = urlResult.error.errors[0].message;
+    if (!urlValidation.valid) {
+      newErrors.url = urlValidation.error;
+    }
 
     const utmValidation = validateUtmParams({
       utm_source: utmSource || undefined,
