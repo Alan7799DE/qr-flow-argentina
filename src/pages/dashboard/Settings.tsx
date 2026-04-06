@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { SEOHead } from "@/components/SEOHead";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl space-y-8">
+      <SEOHead title="Configuración" description="Configurá tu cuenta y preferencias en QRapido." noindex />
       {/* Header */}
       <div>
         <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Configuración</h1>

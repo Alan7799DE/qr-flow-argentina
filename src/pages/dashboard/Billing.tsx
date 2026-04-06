@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { SEOHead } from "@/components/SEOHead";
 import { CreditCard, Check, AlertCircle, Loader2, ExternalLink, XCircle } from "lucide-react";
 import { usePlans, useSubscription } from "@/hooks/useSubscription";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -88,6 +89,7 @@ export default function Billing() {
 
   return (
     <div className="space-y-8">
+      <SEOHead title="Facturación" description="Gestioná tu suscripción y método de pago en QRapido." noindex />
       {/* Header */}
       <div>
         <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Facturación</h1>

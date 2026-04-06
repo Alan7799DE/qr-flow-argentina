@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { SEOHead } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { QrCode, AlertCircle, Loader2, Check, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,9 +131,12 @@ export default function ActivatePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      <>
+        <SEOHead title="Activar QR" description="Reactivá tu código QR dinámico en QRapido." noindex />
+        <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </>
     );
   }
 

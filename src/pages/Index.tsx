@@ -88,8 +88,8 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <SEOHead
-        title="QRapido — Creá QRs dinámicos con analytics"
-        description="Creá códigos QR dinámicos, editá el destino cuando quieras y medí cada escaneo con analytics detallados. Plataforma simple y poderosa."
+        title="Creá y gestioná tus QR dinámicos | QRapido"
+        description="Creá códigos QR dinámicos, editá el destino cuando quieras y medí cada escaneo. Probá gratis 7 días sin tarjeta de crédito."
         canonical="/"
       />
       <script

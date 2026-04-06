@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEOHead } from "@/components/SEOHead";
 import { BarChart3, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQRCodes } from "@/hooks/useQRCodes";
@@ -50,6 +51,7 @@ export default function Stats() {
 
   return (
     <div className="space-y-6">
+      <SEOHead title="Estadísticas" description="Visualizá las estadísticas de escaneos de tus códigos QR dinámicos." noindex />
       <h1 className="text-2xl font-bold text-foreground">Estadísticas</h1>
 
       <Alert variant="default" className="bg-muted/50 border-muted-foreground/20">
