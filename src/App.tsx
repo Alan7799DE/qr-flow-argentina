@@ -65,48 +65,49 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <OAuthRedirectHandler>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            
-            {/* Dashboard routes */}
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="create" element={<CreateQR />} />
-              <Route path="qr/:id" element={<QRDetail />} />
-              <Route path="billing" element={<Billing />} />
-              <Route path="stats" element={<Stats />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="trash" element={<Trash />} />
-            </Route>
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          }>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              
+              {/* Dashboard routes */}
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="create" element={<CreateQR />} />
+                <Route path="qr/:id" element={<QRDetail />} />
+                <Route path="billing" element={<Billing />} />
+                <Route path="stats" element={<Stats />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="trash" element={<Trash />} />
+              </Route>
 
-            {/* Admin routes */}
-            <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="deleted-users" element={<AdminDeletedUsers />} />
-              <Route path="plans" element={<AdminPlans />} />
-              <Route path="qr-codes" element={<AdminQRCodes />} />
-              <Route path="config" element={<AdminConfig />} />
-              <Route path="webhooks" element={<AdminWebhooks />} />
-            </Route>
+              {/* Admin routes */}
+              <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="deleted-users" element={<AdminDeletedUsers />} />
+                <Route path="plans" element={<AdminPlans />} />
+                <Route path="qr-codes" element={<AdminQRCodes />} />
+                <Route path="config" element={<AdminConfig />} />
+                <Route path="webhooks" element={<AdminWebhooks />} />
+              </Route>
 
-            {/* Static pages */}
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
+              {/* Static pages */}
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
 
-            {/* QR Redirect and Activation */}
-            <Route path="/r/:slug" element={<RedirectPage />} />
-            <Route path="/activate/:slug" element={<ActivatePage />} />
+              {/* QR Redirect and Activation */}
+              <Route path="/r/:slug" element={<RedirectPage />} />
+              <Route path="/activate/:slug" element={<ActivatePage />} />
 
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </OAuthRedirectHandler>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
 
 export default App;
