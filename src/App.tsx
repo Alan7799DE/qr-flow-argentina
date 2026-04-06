@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,30 +8,33 @@ import { supabase } from "@/integrations/supabase/client";
 import { isValidInternalPath } from "@/lib/validateRedirectPath";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import DashboardLayout from "./components/dashboard/DashboardLayout";
-import Dashboard from "./pages/dashboard/Dashboard";
-import CreateQR from "./pages/dashboard/CreateQR";
-import QRDetail from "./pages/dashboard/QRDetail";
-import Billing from "./pages/dashboard/Billing";
-import Settings from "./pages/dashboard/Settings";
-import Trash from "./pages/dashboard/Trash";
-import Stats from "./pages/dashboard/Stats";
-
 import ActivatePage from "./pages/ActivatePage";
 import RedirectPage from "./pages/RedirectPage";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
-import AdminLayout from "./components/admin/AdminLayout";
-import AdminRoute from "./components/admin/AdminRoute";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminPlans from "./pages/admin/AdminPlans";
-import AdminConfig from "./pages/admin/AdminConfig";
-import AdminWebhooks from "./pages/admin/AdminWebhooks";
-import AdminQRCodes from "./pages/admin/AdminQRCodes";
-import AdminDeletedUsers from "./pages/admin/AdminDeletedUsers";
+
+// Lazy-loaded dashboard routes
+const DashboardLayout = lazy(() => import("./components/dashboard/DashboardLayout"));
+const Dashboard = lazy(() => import("./pages/dashboard/Dashboard"));
+const CreateQR = lazy(() => import("./pages/dashboard/CreateQR"));
+const QRDetail = lazy(() => import("./pages/dashboard/QRDetail"));
+const Billing = lazy(() => import("./pages/dashboard/Billing"));
+const Settings = lazy(() => import("./pages/dashboard/Settings"));
+const Trash = lazy(() => import("./pages/dashboard/Trash"));
+const Stats = lazy(() => import("./pages/dashboard/Stats"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+
+// Lazy-loaded admin routes
+const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
+const AdminRoute = lazy(() => import("./components/admin/AdminRoute"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminPlans = lazy(() => import("./pages/admin/AdminPlans"));
+const AdminConfig = lazy(() => import("./pages/admin/AdminConfig"));
+const AdminWebhooks = lazy(() => import("./pages/admin/AdminWebhooks"));
+const AdminQRCodes = lazy(() => import("./pages/admin/AdminQRCodes"));
+const AdminDeletedUsers = lazy(() => import("./pages/admin/AdminDeletedUsers"));
 
 const queryClient = new QueryClient();
 
