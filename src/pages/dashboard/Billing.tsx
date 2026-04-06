@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { SEOHead } from "@/components/SEOHead";
 import { CreditCard, Check, AlertCircle, Loader2, ExternalLink, XCircle } from "lucide-react";
 import { usePlans, useSubscription } from "@/hooks/useSubscription";
 import { Skeleton } from "@/components/ui/skeleton";

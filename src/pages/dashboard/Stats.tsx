@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEOHead } from "@/components/SEOHead";
 import { BarChart3, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQRCodes } from "@/hooks/useQRCodes";

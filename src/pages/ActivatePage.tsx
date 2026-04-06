@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { SEOHead } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { QrCode, AlertCircle, Loader2, Check, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

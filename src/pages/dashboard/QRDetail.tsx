@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { SEOHead } from "@/components/SEOHead";
 import { validateDestinationUrl } from "@/lib/validateDestinationUrl";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";

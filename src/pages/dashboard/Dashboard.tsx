@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { SEOHead } from "@/components/SEOHead";
 import { QrCode, Plus, Search, Download, MoreVertical, Eye, Pencil, Trash2, Link as LinkIcon, ExternalLink, BarChart3, Palette } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { StyledQRCode, type QRDotStyle } from "@/components/dashboard/StyledQRCode";

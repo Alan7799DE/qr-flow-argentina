@@ -1,4 +1,5 @@
 import { Trash2, RotateCcw, QrCode, Clock } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useDeletedQRCodes, useRestoreQR } from "@/hooks/useQRCodes";
