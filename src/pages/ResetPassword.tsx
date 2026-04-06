@@ -112,32 +112,31 @@ export default function ResetPassword() {
 
   if (!isValidSession) {
     return (
-      <SEOHead title="Restablecer contraseña" description="Restablecé tu contraseña de QRapido para recuperar el acceso a tu cuenta." noindex />
-      <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute -bottom-1/2 -left-1/4 w-[600px] h-[600px] rounded-full bg-accent/5 blur-3xl" />
-        </div>
-        <div className="w-full max-w-md relative">
-          <div className="bg-card rounded-2xl shadow-xl border p-8 text-center">
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <div className="w-10 h-10 rounded-lg gradient-bg flex items-center justify-center shadow-md">
-                <QrCode className="w-5 h-5 text-primary-foreground" />
+      <>
+        <SEOHead title="Restablecer contraseña" description="Restablecé tu contraseña de QRapido para recuperar el acceso a tu cuenta." noindex />
+        <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] rounded-full bg-primary/5 blur-3xl" />
+            <div className="absolute -bottom-1/2 -left-1/4 w-[600px] h-[600px] rounded-full bg-accent/5 blur-3xl" />
+          </div>
+          <div className="w-full max-w-md relative">
+            <div className="bg-card rounded-2xl shadow-xl border p-8 text-center">
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <div className="w-10 h-10 rounded-lg gradient-bg flex items-center justify-center shadow-md">
+                  <QrCode className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <span className="text-2xl font-bold text-foreground">QRapido</span>
               </div>
-              <span className="text-2xl font-bold text-foreground">QRapido</span>
-            </div>
-            <h1 className="text-xl font-bold text-foreground mb-2">Enlace inválido o expirado</h1>
-            <p className="text-muted-foreground mb-6">
-              El enlace para restablecer la contraseña ya no es válido. Solicitá uno nuevo.
-            </p>
-            <Link to="/auth">
-              <Button variant="hero" size="lg" className="w-full">
-                Volver al login
+              <p className="text-muted-foreground mb-6">
+                Este enlace no es válido o ya expiró. Solicitá un nuevo enlace de recuperación.
+              </p>
+              <Button variant="hero" asChild>
+                <Link to="/auth">Volver al login</Link>
               </Button>
-            </Link>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 

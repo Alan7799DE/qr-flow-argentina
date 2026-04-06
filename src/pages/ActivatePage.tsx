@@ -131,10 +131,12 @@ export default function ActivatePage() {
 
   if (isLoading) {
     return (
-      <SEOHead title="Activar QR" description="Reactivá tu código QR dinámico en QRapido." noindex />
-      <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      <>
+        <SEOHead title="Activar QR" description="Reactivá tu código QR dinámico en QRapido." noindex />
+        <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </>
     );
   }
 
