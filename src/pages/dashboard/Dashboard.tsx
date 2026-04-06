@@ -183,6 +183,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <SEOHead title="Mi panel" description="Gestioná tus códigos QR dinámicos desde tu panel de control en QRapido." noindex />
       <DownloadQRDialog
         open={downloadDialog.open}
         onOpenChange={(open) => setDownloadDialog((prev) => ({ ...prev, open }))}

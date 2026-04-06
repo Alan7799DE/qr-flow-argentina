@@ -89,6 +89,7 @@ export default function Billing() {
 
   return (
     <div className="space-y-8">
+      <SEOHead title="Facturación" description="Gestioná tu suscripción y método de pago en QRapido." noindex />
       {/* Header */}
       <div>
         <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Facturación</h1>

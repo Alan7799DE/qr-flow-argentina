@@ -112,6 +112,7 @@ export default function ResetPassword() {
 
   if (!isValidSession) {
     return (
+      <SEOHead title="Restablecer contraseña" description="Restablecé tu contraseña de QRapido para recuperar el acceso a tu cuenta." noindex />
       <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] rounded-full bg-primary/5 blur-3xl" />

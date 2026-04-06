@@ -131,6 +131,7 @@ export default function CreateQR() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
+      <SEOHead title="Crear nuevo QR" description="Creá un nuevo código QR dinámico con URL editable en QRapido." noindex />
       <div>
         <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Crear nuevo QR</h1>
         <p className="text-muted-foreground mt-1">Configurá tu QR dinámico con URL editable</p>

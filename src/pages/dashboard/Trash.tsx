@@ -21,6 +21,7 @@ export default function Trash() {
 
   return (
     <div className="space-y-8">
+      <SEOHead title="Papelera" description="QRs eliminados en QRapido. Restauralos dentro de los 7 días." noindex />
       {/* Header */}
       <div>
         <h1 className="text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-3">

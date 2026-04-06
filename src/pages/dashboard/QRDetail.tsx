@@ -275,6 +275,7 @@ export default function QRDetail() {
 
   return (
     <div className="space-y-6">
+      <SEOHead title={`${qr.name} — Detalle QR`} description="Editá, descargá y visualizá las estadísticas de tu código QR dinámico." noindex />
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild aria-label="Volver al dashboard">
