@@ -123,6 +123,17 @@ serve(async (req) => {
         console.error(`[redirect] Blocked unsafe protocol: ${protocol} for QR: ${qr.id}`);
         return new Response("Invalid destination", { status: 400, headers: corsHeaders });
       }
+
+      // Prevent infinite redirect loops (destination pointing back to QRapido redirect)
+      const destHost = destUrl.hostname.toLowerCase();
+      if (
+        (destHost === "qrapido.io" || destHost === "www.qrapido.io" || destHost === "qrapido.lovable.app") &&
+        destUrl.pathname.startsWith("/r/")
+      ) {
+        console.error(`[redirect] Blocked self-referencing redirect for QR: ${qr.id}`);
+        return new Response("Invalid destination: self-referencing redirect", { status: 400, headers: corsHeaders });
+      }
+
       if (qr.utm_source) destUrl.searchParams.set("utm_source", qr.utm_source);
       if (qr.utm_medium) destUrl.searchParams.set("utm_medium", qr.utm_medium);
       if (qr.utm_campaign) destUrl.searchParams.set("utm_campaign", qr.utm_campaign);
