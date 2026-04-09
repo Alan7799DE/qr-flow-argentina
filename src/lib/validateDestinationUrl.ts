@@ -32,6 +32,18 @@ export function validateDestinationUrl(input: string): {
       };
     }
 
+    // Prevent self-referencing QR URLs (causes infinite redirect loops)
+    const hostname = parsed.hostname.toLowerCase();
+    if (
+      (hostname === "qrapido.io" || hostname === "www.qrapido.io" || hostname === "qrapido.lovable.app") &&
+      parsed.pathname.startsWith("/r/")
+    ) {
+      return {
+        valid: false,
+        error: "No podés usar una URL de redirección de QRapido como destino. Ingresá la URL final (ej: https://drive.google.com/...).",
+      };
+    }
+
     return { valid: true, url: parsed.toString() };
   } catch {
     return {
