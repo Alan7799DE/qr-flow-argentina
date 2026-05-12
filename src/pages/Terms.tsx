@@ -2,6 +2,20 @@ import { SEOHead } from "@/components/SEOHead";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 
+const termsJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Términos de Servicio — QRapido",
+  "description": "Términos y condiciones de uso de QRapido. Conocé las reglas que rigen el uso de nuestra plataforma de códigos QR dinámicos.",
+  "url": "https://qrapido.io/terms",
+  "inLanguage": "es-AR",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "QRapido",
+    "url": "https://qrapido.io"
+  }
+};
+
 const Terms = () => {
   return (
     <div className="min-h-screen flex flex-col">
@@ -9,6 +23,10 @@ const Terms = () => {
         title="Términos de Servicio"
         description="Términos y condiciones de uso de QRapido. Conocé las reglas que rigen el uso de nuestra plataforma de códigos QR dinámicos."
         canonical="/terms"
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(termsJsonLd) }}
       />
       <Navbar />
       <main className="flex-1 pt-24 pb-16">

@@ -2,6 +2,20 @@ import { SEOHead } from "@/components/SEOHead";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 
+const privacyJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Política de Privacidad — QRapido",
+  "description": "Política de privacidad de QRapido. Conocé cómo recopilamos, usamos y protegemos tus datos personales.",
+  "url": "https://qrapido.io/privacy",
+  "inLanguage": "es-AR",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "QRapido",
+    "url": "https://qrapido.io"
+  }
+};
+
 const Privacy = () => {
   return (
     <div className="min-h-screen flex flex-col">
@@ -9,6 +23,10 @@ const Privacy = () => {
         title="Política de Privacidad"
         description="Política de privacidad de QRapido. Conocé cómo recopilamos, usamos y protegemos tus datos personales."
         canonical="/privacy"
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(privacyJsonLd) }}
       />
       <Navbar />
       <main className="flex-1 pt-24 pb-16">
