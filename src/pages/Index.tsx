@@ -38,35 +38,56 @@ const faqs = [
 
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "QRapido",
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web",
-  url: "https://qrapido.io",
-  description: "Plataforma para crear códigos QR dinámicos con analytics detallados. Editá el destino, medí escaneos y optimizá tus campañas.",
-  offers: {
-    "@type": "Offer",
-    priceCurrency: "ARS",
-    price: "7500",
-    name: "Plan Pro",
-  },
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "4.8",
-    ratingCount: "150",
-  },
-  FAQPage: {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "QRapido",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "url": "https://qrapido.io",
+      "description": "Plataforma para crear códigos QR dinámicos con analytics detallados. Editá el destino, medí escaneos y optimizá tus campañas.",
+      "inLanguage": "es-AR",
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "ARS",
+        "price": "7500",
+        "name": "Plan Pro",
+        "priceSpecification": {
+          "@type": "UnitPriceSpecification",
+          "billingDuration": "P1M"
+        }
       },
-    })),
-  },
+      "areaServed": {
+        "@type": "Country",
+        "name": "Argentina"
+      },
+      "featureList": [
+        "Códigos QR dinámicos editables",
+        "Analytics de escaneos en tiempo real",
+        "Personalización de colores y diseño",
+        "Descarga en JPG, PNG y SVG",
+        "Panel de administración multi-QR",
+        "Historial de escaneos"
+      ],
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "150"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": faqs.map((faq) => ({
+        "@type": "Question",
+        "name": faq.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": faq.answer,
+        },
+      })),
+    }
+  ]
 };
 
 const Index = () => {
