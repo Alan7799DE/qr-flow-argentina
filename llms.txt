@@ -12,16 +12,15 @@ Los códigos QR creados en QRapido son completamente editables: el destino se pu
 
 ## Plan y precios
 
-QRapido ofrece un único plan llamado Pro, con un precio de ARS 8.500 por mes. Incluye una prueba gratuita de 7 días sin necesidad de tarjeta de crédito al inicio. Los pagos se procesan exclusivamente en pesos argentinos a través de Mercado Pago.
+QRapido ofrece un único plan llamado Pro, con un precio de ARS 7.500 por mes. Incluye una prueba gratuita de 7 días sin necesidad de tarjeta de crédito al inicio. Los pagos se procesan exclusivamente en pesos argentinos a través de Mercado Pago.
 
 ## Audiencia objetivo
 
 QRapido está pensado para emprendedores, negocios y profesionales argentinos que necesitan una solución simple y local para gestionar códigos QR con seguimiento de escaneos. Al estar enfocado en Argentina, el soporte, la moneda y la experiencia de pago son 100% locales.
 
-## URLs importantes
+## Pages
 
-- Sitio principal: https://qrapido.io
-- Registro / prueba gratuita: https://qrapido.io/register
-- Precios: https://qrapido.io/pricing
-- Política de privacidad: https://qrapido.io/privacy
-- Términos y condiciones: https://qrapido.io/terms
+- [/](https://qrapido.io/): Página principal, creador de QR público y punto de entrada al servicio.
+- [/auth](https://qrapido.io/auth): Registro e inicio de sesión de usuarios.
+- [/privacy](https://qrapido.io/privacy): Política de privacidad adaptada a la Ley 25.326 de Argentina.
+- [/terms](https://qrapido.io/terms): Términos y condiciones de uso del servicio.
