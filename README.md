@@ -2,7 +2,7 @@
 
 Plataforma SaaS de generación y gestión de **códigos QR dinámicos** con analítica de escaneos, planes de suscripción pagos vía **Mercado Pago** y panel de administración. Pensada para el mercado argentino/LATAM.
 
-> El frontend fue inicialmente prototipado con [Lovable](https://lovable.dev) y luego desarrollado e iterado directamente en código (lógica de negocio, backend serverless, seguridad y pagos).
+> Primera iteración generada con [Lovable](https://lovable.dev). El desarrollo posterior (lógica de negocio, backend serverless, seguridad y pagos) se hizo iterando directamente sobre el código con [Claude Code](https://claude.com/claude-code).
 
 ## ¿Qué hace?
 
@@ -77,32 +77,6 @@ src/
 supabase/
   functions/     # Edge Functions (backend serverless)
   migrations/    # Historial versionado del esquema de base de datos
-```
-
-## Desarrollo local
-
-Requiere Node.js.
-
-```bash
-git clone <URL_DEL_REPO>
-cd qr-flow-argentina
-npm install
-npm run dev
-```
-
-Variables de entorno necesarias (ver `.env`):
-
-```
-VITE_SUPABASE_URL=
-VITE_SUPABASE_PUBLISHABLE_KEY=
-```
-
-Otros scripts disponibles:
-
-```bash
-npm run build       # build de producción
-npm run lint         # linting
-npm run test         # tests con Vitest
 ```
 
 ## Despliegue
