@@ -1,8 +1,8 @@
-# QR Flow Argentina
+# QRapido
 
-Plataforma SaaS de generación y gestión de **códigos QR dinámicos** con analítica de escaneos, planes de suscripción pagos vía **Mercado Pago** y panel de administración. Pensada para el mercado argentino/LATAM.
+App para crear tus propios **códigos QR dinámicos**, personalizarlos y descargarlos, con analítica de escaneos y planes de suscripción pagos vía **Mercado Pago**.
 
-> Primera iteración generada con [Lovable](https://lovable.dev). El desarrollo posterior (lógica de negocio, backend serverless, seguridad y pagos) se hizo iterando directamente sobre el código con [Claude Code](https://claude.com/claude-code).
+> Primera iteración generada con Lovable. El desarrollo posterior (lógica de negocio, backend serverless, seguridad y pagos) se hizo iterando directamente sobre el código con Claude Code.
 
 ## ¿Qué hace?
 
