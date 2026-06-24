@@ -1,73 +1,84 @@
-# Welcome to your Lovable project
+# QRapido
 
-## Project info
+App para crear tus propios **códigos QR dinámicos**, personalizarlos y descargarlos, con analítica de escaneos y planes de suscripción pagos vía **Mercado Pago**.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+> Primera iteración generada con Lovable. El desarrollo posterior (lógica de negocio, backend serverless, seguridad y pagos) se hizo iterando directamente sobre el código con Claude Code.
 
-## How can I edit this code?
+## ¿Qué hace?
 
-There are several ways of editing your application.
+- **QR dinámicos**: el destino de un QR se puede editar sin reimprimir el código (el QR apunta a una URL corta propia que redirige al destino real).
+- **Personalización visual** de cada QR (colores, estilos de punto, logo) con `qr-code-styling`.
+- **Analítica de escaneos**: estadísticas por dispositivo, ubicación y tiempo, con gráficos (`recharts`).
+- **Planes y suscripciones** recurrentes con **Mercado Pago** (alta, cobro, cancelación, webhooks firmados).
+- **Panel de administración**: gestión de usuarios, planes, QRs, webhooks y usuarios eliminados.
+- **Papelera con expiración**: soft-delete de QRs con limpieza automática programada.
+- **Emails transaccionales** (bienvenida, fin de período de prueba, etc.) vía **Resend**, con cola propia y manejo de bajas (unsubscribe).
 
-**Use Lovable**
+## Stack técnico
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+**Frontend**
+- React 18 + TypeScript + Vite
+- Tailwind CSS + shadcn/ui (Radix UI primitives)
+- React Router, React Hook Form + Zod (validación), TanStack Query
+- Vitest + Testing Library para tests de componentes
 
-Changes made via Lovable will be committed automatically to this repo.
+**Backend / Infraestructura**
+- **Supabase** como backend completo:
+  - Postgres con **Row Level Security (RLS)** en todas las tablas sensibles
+  - Auth (registro, login, recuperación de contraseña)
+  - **38 migraciones SQL** versionadas (`supabase/migrations`), incluyendo infraestructura de cola de emails con vault de secretos
+  - **16 Edge Functions** en Deno/TypeScript (`supabase/functions`) para toda la lógica server-side
 
-**Use your preferred IDE**
+**Pagos**
+- Integración con **Mercado Pago** (suscripciones recurrentes / preapproval):
+  - `create-subscription`, `cancel-subscription`, `check-pending-subscriptions`
+  - `mercadopago-webhook` con **verificación de firma HMAC-SHA256** de las notificaciones (siguiendo el esquema oficial de Mercado Pago)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+**Email**
+- **Resend** para envío transaccional, con cola en Postgres y manejo de tokens de baja (`process-email-queue`, `process-trial-expirations`, `send-first-qr-email`)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Edge Functions (Deno)
 
-Follow these steps:
+| Función | Propósito |
+|---|---|
+| `redirect` | Resuelve el QR corto y redirige al destino, registrando el escaneo |
+| `validate-url` / `validate-email-domain` | Validación server-side de URLs y dominios de email |
+| `create-subscription` / `cancel-subscription` / `check-pending-subscriptions` | Ciclo de vida de suscripciones con Mercado Pago |
+| `mercadopago-webhook` | Recepción y verificación de notificaciones de pago |
+| `admin-users` / `verify-admin` | Gestión y verificación de rol admin (JWT + chequeo de rol en DB) |
+| `process-email-queue` / `process-trial-expirations` / `send-first-qr-email` | Envío de emails transaccionales vía Resend |
+| `aggregate-scans` | Agregación periódica de estadísticas de escaneos |
+| `cleanup-trash` | Limpieza automática de QRs en papelera |
+| `delete-user` | Baja de cuenta de usuario |
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Seguridad
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- Autenticación basada en JWT de Supabase, validada en cada Edge Function sensible.
+- Roles de administrador verificados contra la base de datos (no hardcodeados ni asumidos por el JWT).
+- Webhooks de Mercado Pago verificados criptográficamente (HMAC) antes de procesar cualquier notificación.
+- Secretos de servidor (`SUPABASE_SERVICE_ROLE_KEY`, `MERCADOPAGO_ACCESS_TOKEN`, `RESEND_API_KEY`) gestionados como variables de entorno de las Edge Functions, nunca expuestos en el cliente.
+- Rate limiting en intentos de autenticación (`useAuthRateLimit`) y validación de fuerza de contraseña.
 
-# Step 3: Install the necessary dependencies.
-npm i
+## Estructura del proyecto
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+src/
+  components/
+    landing/     # Landing page pública (hero, pricing, FAQ, etc.)
+    dashboard/   # Componentes del panel de usuario
+    admin/       # Componentes del panel de administración
+    ui/          # Design system (shadcn/ui)
+  pages/
+    dashboard/   # Crear QR, estadísticas, facturación, papelera, ajustes
+    admin/       # Usuarios, planes, QRs, webhooks
+  hooks/         # Lógica de datos y estado (QRs, suscripción, límites, stats)
+  lib/           # Validaciones y utilidades compartidas
+
+supabase/
+  functions/     # Edge Functions (backend serverless)
+  migrations/    # Historial versionado del esquema de base de datos
 ```
 
-**Edit a file directly in GitHub**
+## Despliegue
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+El frontend se despliega como sitio estático (build de Vite); el backend corre íntegramente en Supabase (Postgres + Edge Functions). Las migraciones en `supabase/migrations` definen el esquema de forma reproducible.
